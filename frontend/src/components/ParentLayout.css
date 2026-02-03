@@ -1,0 +1,107 @@
+.parent-app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+.parent-main-content {
+  flex: 1;
+  padding: 30px;
+  margin-top: 80px;
+  width: 100vw;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.parent-main-content h1,
+.parent-main-content h2,
+.parent-main-content h3 {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.parent-main-content h1 {
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+.parent-main-content h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.parent-main-content h3 {
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+/* Parent Page Header */
+.parent-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.parent-page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.parent-page-actions {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .parent-main-content {
+    padding: 20px;
+    margin-top: 65px;
+    width: 100vw;
+  }
+  
+  .parent-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .parent-page-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .parent-page-actions .btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .parent-main-content {
+    padding: 16px;
+    margin-top: 60px;
+    width: 100%;
+  }
+  
+  .parent-page-title {
+    font-size: 24px;
+  }
+}
+
+/* Ultra-wide screens (4K/2K monitors) */
+@media (min-width: 1920px) {
+  .parent-main-content {
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

@@ -1,0 +1,773 @@
+/* Shared Styles for All Student Pages - Matching Teacher View Design */
+
+/* Common Elements */
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+}
+
+.no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.no-data svg {
+  color: var(--border);
+  margin-bottom: 16px;
+}
+
+.no-data p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+/* Stat Boxes */
+.attendance-stats,
+.payment-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-box {
+  background: var(--background-card);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px var(--shadow);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+.stat-box svg {
+  flex-shrink: 0;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.present-box svg { color: var(--success); }
+.absent-box svg { color: var(--danger); }
+.late-box svg { color: var(--warning); }
+.paid-box svg { color: var(--success); }
+.pending-box svg { color: var(--warning); }
+.overdue-box svg { color: var(--danger); }
+
+.percentage-box {
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+}
+
+.percentage-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Attendance Records */
+.attendance-records {
+  margin-top: 30px;
+}
+
+.records-list {
+  display: grid;
+  gap: 12px;
+}
+
+.attendance-record-card {
+  background: var(--background-card);
+  border-radius: 12px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  box-shadow: 0 2px 8px var(--shadow);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.attendance-record-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+.record-date {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  grid-column: 1 / -1;
+}
+
+.record-subject {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.record-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.record-status.status-present {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.record-status.status-absent {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.record-status.status-late {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+/* Feedback Page */
+.feedback-list {
+  display: grid;
+  gap: 20px;
+}
+
+.feedback-card {
+  background: var(--background-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.feedback-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow-hover);
+}
+
+.feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.feedback-subject {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.feedback-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.feedback-body {
+  display: grid;
+  gap: 16px;
+}
+
+.feedback-performance,
+.feedback-comment {
+  display: grid;
+  gap: 10px;
+}
+
+.feedback-performance .label,
+.feedback-comment .label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rating {
+  display: flex;
+  gap: 6px;
+}
+
+.rating svg {
+  color: var(--border);
+  width: 20px;
+  height: 20px;
+}
+
+.rating svg.filled {
+  color: var(--warning);
+}
+
+.feedback-comment p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.feedback-teacher {
+  font-size: 14px;
+  color: var(--primary);
+  font-style: italic;
+  text-align: right;
+  margin-top: 12px;
+}
+
+.exam-score-item {
+  grid-column: 1 / -1;
+  background: #f0f9ff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.exam-score-item .label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0369a1;
+}
+
+.exam-score-item .score-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0369a1;
+}
+
+/* Exams Page */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.exams-list,
+.results-list {
+  display: grid;
+  gap: 20px;
+}
+
+.exam-card {
+  background: var(--background-card);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  gap: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.exam-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow-hover);
+}
+
+.exam-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.exam-details {
+  flex: 1;
+}
+
+.exam-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.exam-info {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.exam-info span {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.exam-marks {
+  font-size: 14px;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.result-card {
+  background: var(--background-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow-hover);
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-status {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.result-status.pass {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.result-status.fail {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.result-body {
+  display: grid;
+  gap: 14px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+}
+
+.result-item span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.result-item strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.grade {
+  color: var(--primary) !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+/* Payment Cards */
+.payment-cards {
+  display: grid;
+  gap: 20px;
+}
+
+.payment-card {
+  background: var(--background-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.payment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow-hover);
+}
+
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.payment-type {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.payment-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.payment-status.status-paid {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.payment-status.status-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+.payment-status.status-overdue {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.payment-amount {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.payment-details {
+  display: grid;
+  gap: 10px;
+}
+
+.payment-detail-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.payment-detail-item span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.payment-detail-item strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+  .attendance-stats,
+  .payment-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .feedback-list,
+  .exams-list,
+  .results-list {
+    gap: 16px;
+  }
+
+  .tabs {
+    gap: 0;
+  }
+
+  .tab-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .stat-box {
+    padding: 16px;
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+
+  .feedback-card,
+  .exam-card,
+  .result-card,
+  .payment-card {
+    padding: 20px;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+  .attendance-stats,
+  .payment-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-box {
+    padding: 14px;
+  }
+
+  .percentage-circle {
+    width: 64px;
+    height: 64px;
+    font-size: 18px;
+  }
+
+  .feedback-header,
+  .payment-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .exam-card {
+    flex-direction: column;
+  }
+
+  .exam-icon {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* ============================================
+   STUDENT TIMETABLE PAGE
+   ============================================ */
+
+.student-timetable-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.student-day-schedule {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.student-day-schedule h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #2563eb;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 10px;
+}
+
+.student-day-classes {
+  display: grid;
+  gap: 12px;
+}
+
+.student-class-card {
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #2563eb;
+}
+
+.student-class-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 10px;
+}
+
+.student-class-card-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.student-class-card-info p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.student-class-card-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #e0f2fe;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0369a1;
+  white-space: nowrap;
+}
+
+.student-class-card-details {
+  display: flex;
+  gap: 15px;
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.student-class-card-details div span {
+  font-weight: 600;
+}
+
+/* ============================================
+   RESPONSIVE - TIMETABLE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .student-timetable-grid {
+    gap: 16px;
+  }
+
+  .student-day-schedule {
+    padding: 16px;
+  }
+
+  .student-day-schedule h2 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .student-day-classes {
+    gap: 10px;
+  }
+
+  .student-class-card {
+    padding: 12px;
+  }
+
+  .student-class-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .student-class-card-info h3 {
+    font-size: 15px;
+  }
+
+  .student-class-card-info p {
+    font-size: 12px;
+  }
+
+  .student-class-card-time {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+
+  .student-class-card-details {
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-timetable-grid {
+    gap: 12px;
+  }
+
+  .student-day-schedule {
+    padding: 14px;
+  }
+
+  .student-day-schedule h2 {
+    font-size: 15px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+
+  .student-day-classes {
+    gap: 8px;
+  }
+
+  .student-class-card {
+    padding: 10px;
+  }
+
+  .student-class-card-info h3 {
+    font-size: 14px;
+  }
+
+  .student-class-card-time {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "student-management-backend",
+  "version": "1.0.0",
+  "description": "Backend for Student Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node seedData.js"
+  },
+  "keywords": [
+    "student",
+    "management",
+    "education"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb-memory-server": "^10.4.1",
+    "mongoose": "^8.0.3",
+    "multer": "^2.0.0",
+    "nedb": "^1.8.0",
+    "web-push": "^3.6.7",
+    "xss": "^1.0.15"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

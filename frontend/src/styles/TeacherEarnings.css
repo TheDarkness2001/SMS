@@ -1,0 +1,321 @@
+.teacher-earnings__container {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 60px);
+}
+
+.teacher-earnings__header {
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.teacher-earnings__title {
+  margin: 0;
+  color: #333;
+  font-size: 24px;
+}
+
+.teacher-earnings__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.teacher-earnings__summary-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.teacher-earnings__summary-title {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 16px;
+}
+
+.teacher-earnings__summary-amount {
+  font-size: 28px;
+  font-weight: bold;
+  color: #28a745;
+  margin: 0;
+}
+
+.teacher-earnings__tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.teacher-earnings__tab {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.teacher-earnings__tab:hover {
+  background-color: #f8f9fa;
+}
+
+.teacher-earnings__tab--active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.teacher-earnings__actions {
+  margin-bottom: 20px;
+  text-align: right;
+}
+
+.teacher-earnings__payout-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.teacher-earnings__payout-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.teacher-earnings__payout-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.teacher-earnings__earnings-list {
+  margin-bottom: 40px;
+}
+
+.teacher-earnings__table-container {
+  overflow-x: auto;
+}
+
+.teacher-earnings__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.teacher-earnings__thead {
+  background-color: #f8f9fa;
+}
+
+.teacher-earnings__header {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.teacher-earnings__header input[type="checkbox"] {
+  margin: 0;
+}
+
+.teacher-earnings__tbody {
+  background: white;
+}
+
+.teacher-earnings__row:hover {
+  background-color: #f8f9fa;
+}
+
+.teacher-earnings__cell {
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.teacher-earnings__cell input[type="checkbox"] {
+  margin: 0;
+}
+
+.teacher-earnings__status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.teacher-earnings__status--pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.teacher-earnings__status--paid {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.teacher-earnings__status--locked {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.teacher-earnings__view-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.teacher-earnings__view-btn:hover {
+  background-color: #0056b3;
+}
+
+.teacher-earnings__empty {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.teacher-earnings__payout-history {
+  margin-top: 40px;
+}
+
+.teacher-earnings__history-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.teacher-earnings__history-item {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+
+.teacher-earnings__history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.teacher-earnings__history-date {
+  font-weight: 500;
+  color: #333;
+}
+
+.teacher-earnings__history-amount {
+  font-weight: bold;
+  color: #28a745;
+  font-size: 18px;
+}
+
+.teacher-earnings__history-details p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.teacher-earnings__history-details strong {
+  color: #333;
+}
+
+/* Modal Styles */
+.teacher-earnings__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.teacher-earnings__modal {
+  background: white;
+  border-radius: 8px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.teacher-earnings__modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.teacher-earnings__modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+}
+
+.teacher-earnings__modal-close:hover {
+  color: #333;
+}
+
+.teacher-earnings__modal-body {
+  padding: 20px;
+}
+
+.teacher-earnings__modal-body p {
+  margin: 10px 0;
+  color: #333;
+}
+
+.teacher-earnings__modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+  background-color: #f8f9fa;
+}
+
+.teacher-earnings__modal-cancel,
+.teacher-earnings__modal-confirm {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.teacher-earnings__modal-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+.teacher-earnings__modal-cancel:hover {
+  background-color: #5a6268;
+}
+
+.teacher-earnings__modal-confirm {
+  background-color: #28a745;
+  color: white;
+}
+
+.teacher-earnings__modal-confirm:hover {
+  background-color: #218838;
+}

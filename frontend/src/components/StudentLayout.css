@@ -1,0 +1,236 @@
+/* ============================================
+   STUDENT LAYOUT - MATCHING TEACHER VIEW DESIGN
+   Independent architecture, shared design tokens
+   ============================================ */
+
+.student-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  background: var(--background-light);
+}
+
+.student-layout__container {
+  display: flex;
+  flex: 1;
+  margin-top: 55px;
+}
+
+/* ============================================
+   MAIN CONTENT AREA
+   ============================================ */
+
+.student-layout__main-content {
+  flex: 1;
+  margin-left: 310px;
+  margin-right: 50px;
+  margin-top: 70px;
+  margin-bottom: 50px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: calc(100vh - 80px);
+  width: calc(100% - 290px);
+  max-width: 1600px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.student-layout__content-wrapper {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prevent horizontal scrolling */
+.student-layout__content-wrapper > * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   MOBILE HAMBURGER MENU
+   ============================================ */
+
+.student-layout__menu-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #2d3748;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  z-index: 999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.3s ease;
+}
+
+/* Show on mobile AND for testing */
+@media (max-width: 768px) {
+  .student-layout__menu-toggle {
+    display: flex !important;
+  }
+}
+
+.student-layout__menu-toggle:hover {
+  background: #2d3748;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.student-layout__menu-toggle:active {
+  transform: scale(0.95);
+}
+
+.student-layout__hamburger-line {
+  width: 20px;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* ============================================
+   SIDEBAR OVERLAY (Mobile)
+   ============================================ */
+
+.student-layout__sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 98;
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.student-layout__sidebar-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+/* ============================================
+   COMMON PAGE STYLES FOR STUDENT VIEWS
+   ============================================ */
+
+.student-page {
+  background: var(--background-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px var(--shadow);
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.student-page-header {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.student-page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.student-page-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
+
+/* Tablet and Mobile (768px and below) */
+@media (max-width: 768px) {
+  .student-layout__container {
+    flex-direction: column;
+  }
+
+  .student-layout__main-content {
+    margin-left: 0;
+    margin-top: 65px;
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+    margin-right: 0;
+  }
+
+  .student-layout__content-wrapper {
+    width: 100%;
+  }
+
+  .student-page {
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .student-page-title {
+    font-size: 22px;
+  }
+
+  .student-page-subtitle {
+    font-size: 13px;
+  }
+}
+
+/* Mobile (480px and below) */
+@media (max-width: 480px) {
+  .student-layout__main-content {
+    padding: 12px;
+    margin-top: 60px;
+  }
+
+  .student-page {
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .student-page-title {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+
+  .student-page-subtitle {
+    font-size: 12px;
+  }
+
+  .student-layout__menu-toggle {
+    top: 15px;
+    left: 15px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .student-layout__hamburger-line {
+    width: 18px;
+  }
+}
+
+/* Ultra-wide screens (4K/2K monitors) */
+@media (min-width: 1920px) {
+  .student-layout__main-content {
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

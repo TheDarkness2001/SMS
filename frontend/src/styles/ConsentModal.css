@@ -1,0 +1,294 @@
+.consent-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.consent-modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.consent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+}
+
+.consent-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.consent-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.consent-close-btn:hover {
+  opacity: 1;
+}
+
+/* Body */
+.consent-body {
+  padding: 32px;
+}
+
+.consent-intro {
+  margin-bottom: 28px;
+}
+
+.consent-intro p {
+  margin: 0;
+  font-size: 16px;
+  color: #374151;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* Consent Items */
+.consent-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.consent-item {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.consent-item:hover {
+  border-color: #667eea;
+  background-color: #f9fafb;
+}
+
+.consent-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.consent-checkbox {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin-top: 3px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.consent-checkbox:checked {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+.consent-item-content {
+  flex: 1;
+}
+
+.consent-item-title {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.consent-item-description {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* Agree to All */
+.consent-agree-all {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.consent-agree-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.consent-check-icon {
+  color: #667eea;
+}
+
+/* Terms */
+.consent-terms {
+  background: #f0f4ff;
+  border-left: 4px solid #667eea;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.consent-terms p {
+  margin: 0;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+/* Footer */
+.consent-footer {
+  display: flex;
+  gap: 12px;
+  padding: 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 16px 16px;
+  justify-content: flex-end;
+}
+
+.consent-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.consent-btn-cancel {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.consent-btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.consent-btn-submit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.consent-btn-submit:hover:not(.disabled) {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  transform: translateY(-2px);
+}
+
+.consent-btn-submit.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .consent-modal-overlay {
+    padding: 10px;
+  }
+
+  .consent-modal {
+    max-height: 95vh;
+  }
+
+  .consent-header {
+    padding: 16px;
+  }
+
+  .consent-header h2 {
+    font-size: 20px;
+  }
+
+  .consent-body {
+    padding: 20px;
+  }
+
+  .consent-footer {
+    flex-direction: column-reverse;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .consent-btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .consent-items {
+    gap: 12px;
+  }
+
+  .consent-item {
+    padding: 12px;
+  }
+
+  .consent-item-title {
+    font-size: 14px;
+  }
+
+  .consent-item-description {
+    font-size: 13px;
+  }
+}
+
+/* Tablet Design */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .consent-modal {
+    max-width: 550px;
+  }
+
+  .consent-body {
+    padding: 28px;
+  }
+}

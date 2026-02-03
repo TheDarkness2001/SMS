@@ -1,0 +1,383 @@
+.teacher-timetable-container {
+  padding: 20px;
+}
+
+/* Teacher Selector Card */
+.teacher-selector-card {
+  margin-bottom: 25px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  border: 1px solid #eef2f7;
+  overflow: hidden;
+}
+
+.teacher-selector-header {
+  padding: 15px 20px;
+  background-color: #f8fbff;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.teacher-selector-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.teacher-selector-body {
+  padding: 20px;
+}
+
+.teacher-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.teacher-filter-buttons .btn {
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #2196F3;
+  border-color: #2196F3;
+  color: white;
+}
+
+.btn-outline-primary {
+  border-color: #2196F3;
+  color: #2196F3;
+  background: white;
+}
+
+.btn-outline-primary:hover {
+  background-color: #2196F3;
+  color: white;
+}
+
+.timetable-view {
+  margin-top: 20px;
+}
+
+/* Weekly Timetable Grid */
+.weekly-timetable {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow-x: auto;
+}
+
+.timetable-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  gap: 0;
+  min-width: 900px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.time-column {
+  background: #f5f5f5;
+  border-right: 2px solid #e0e0e0;
+}
+
+.time-header,
+.day-header {
+  padding: 12px;
+  font-weight: bold;
+  text-align: center;
+  background: #2196F3;
+  color: white;
+  border-bottom: 2px solid #1976D2;
+  font-size: 14px;
+}
+
+.time-slot {
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-column {
+  border-right: 1px solid #e0e0e0;
+  position: relative;
+}
+
+.day-column:last-child {
+  border-right: none;
+}
+
+.day-schedule {
+  position: relative;
+  background: white;
+}
+
+.grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid #f0f0f0;
+  pointer-events: none;
+}
+
+.grid-line:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.no-classes {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.class-block {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 4px;
+  padding: 8px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.class-block:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+.class-name {
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.class-time {
+  font-size: 11px;
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+
+.class-room {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.timetable-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.timetable-table th,
+.timetable-table td {
+  border: 1px solid #dee2e6;
+  padding: 8px;
+  text-align: left;
+}
+
+.timetable-table th {
+  background-color: #e9ecef;
+  font-weight: bold;
+}
+
+/* Hide mobile view on desktop */
+.mobile-tablet-only {
+  display: none;
+}
+
+/* Show desktop view by default */
+.desktop-only {
+  display: block;
+}
+
+/* Mobile/Tablet Today's Classes View */
+.today-timetable {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.today-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.today-header h3 {
+  margin: 0 0 8px 0;
+  color: #2196F3;
+  font-size: 24px;
+}
+
+.today-date {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.no-classes-today {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.no-classes-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.no-classes-today h4 {
+  font-size: 20px;
+  margin: 0 0 8px 0;
+  color: #666;
+}
+
+.no-classes-today p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.today-classes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.class-card {
+  background: white;
+  border-left: 4px solid #2196F3;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.class-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.class-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.class-subject {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.class-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.class-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.class-time-info,
+.class-room-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 14px;
+}
+
+.time-icon,
+.room-icon {
+  font-size: 18px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  /* Tablet and Mobile: Hide desktop, show mobile */
+  .desktop-only {
+    display: none;
+  }
+  
+  .mobile-tablet-only {
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-timetable-container {
+    padding: 16px;
+  }
+  
+  .today-timetable {
+    padding: 16px;
+  }
+  
+  .today-header h3 {
+    font-size: 20px;
+  }
+  
+  .class-card {
+    padding: 12px;
+  }
+  
+  .class-subject {
+    font-size: 16px;
+  }
+  
+  .class-time-info,
+  .class-room-info {
+    font-size: 13px;
+  }
+}
+
+/* Old responsive styles - keep for backwards compatibility */
+@media (max-width: 768px) {
+  .timetable-grid {
+    grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
+  }
+  
+  .time-header,
+  .day-header {
+    font-size: 12px;
+    padding: 8px;
+  }
+  
+  .class-block {
+    font-size: 10px;
+    padding: 6px;
+  }
+}

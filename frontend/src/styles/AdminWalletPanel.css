@@ -1,0 +1,348 @@
+.admin-wallet-panel__container {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 60px);
+}
+
+.admin-wallet-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.admin-wallet-panel__title {
+  margin: 0;
+  color: #333;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.admin-wallet-panel__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.admin-wallet-panel__action-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.admin-wallet-panel__action-btn--penalty {
+  background-color: #dc3545;
+  color: white;
+}
+
+.admin-wallet-panel__action-btn--penalty:hover {
+  background-color: #c82333;
+}
+
+.admin-wallet-panel__action-btn--refund {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.admin-wallet-panel__action-btn--refund:hover {
+  background-color: #138496;
+}
+
+.admin-wallet-panel__action-btn--adjustment {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.admin-wallet-panel__action-btn--adjustment:hover {
+  background-color: #e0a800;
+}
+
+.admin-wallet-panel__tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.admin-wallet-panel__tab {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.admin-wallet-panel__tab--active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.admin-wallet-panel__tab:hover {
+  color: #007bff;
+}
+
+.admin-wallet-panel__content {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-wallet-panel__pending-section h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 18px;
+}
+
+.admin-wallet-panel__empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.admin-wallet-panel__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-wallet-panel__table thead {
+  background-color: #f8f9fa;
+}
+
+.admin-wallet-panel__table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.admin-wallet-panel__table td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.admin-wallet-panel__amount {
+  font-weight: 600;
+  color: #28a745;
+  font-size: 15px;
+}
+
+.admin-wallet-panel__payment-method {
+  background: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-wallet-panel__status-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.admin-wallet-panel__action-cell {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-wallet-panel__btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.admin-wallet-panel__btn--confirm {
+  background-color: #28a745;
+  color: white;
+}
+
+.admin-wallet-panel__btn--confirm:hover {
+  background-color: #218838;
+}
+
+.admin-wallet-panel__btn--reject {
+  background-color: #dc3545;
+  color: white;
+}
+
+.admin-wallet-panel__btn--reject:hover {
+  background-color: #c82333;
+}
+
+/* Modal Styles */
+.admin-wallet-panel__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.admin-wallet-panel__modal {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.admin-wallet-panel__modal-title {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 20px;
+}
+
+.admin-wallet-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-wallet-panel__form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-wallet-panel__form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.admin-wallet-panel__input,
+.admin-wallet-panel__select,
+.admin-wallet-panel__textarea {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.admin-wallet-panel__input:focus,
+.admin-wallet-panel__select:focus,
+.admin-wallet-panel__textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.admin-wallet-panel__textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.admin-wallet-panel__modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.admin-wallet-panel__btn-cancel,
+.admin-wallet-panel__btn-submit {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-wallet-panel__btn-cancel {
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.admin-wallet-panel__btn-cancel:hover {
+  background: #e9ecef;
+}
+
+.admin-wallet-panel__btn-submit {
+  background: #007bff;
+  color: white;
+}
+
+.admin-wallet-panel__btn-submit:hover {
+  background: #0056b3;
+}
+
+.admin-wallet-panel__access-denied {
+  background: white;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-wallet-panel__access-denied h2 {
+  color: #dc3545;
+  margin-bottom: 10px;
+}
+
+.admin-wallet-panel__access-denied p {
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-wallet-panel__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .admin-wallet-panel__actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .admin-wallet-panel__action-btn {
+    width: 100%;
+  }
+
+  .admin-wallet-panel__table {
+    font-size: 12px;
+  }
+
+  .admin-wallet-panel__table th,
+  .admin-wallet-panel__table td {
+    padding: 8px;
+  }
+
+  .admin-wallet-panel__action-cell {
+    flex-direction: column;
+  }
+
+  .admin-wallet-panel__btn {
+    width: 100%;
+  }
+}

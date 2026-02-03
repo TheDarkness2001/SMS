@@ -1,0 +1,175 @@
+.view-teacher-container {
+  padding: 20px;
+}
+
+.view-teacher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.teacher-profile-card {
+  margin-bottom: 30px;
+}
+
+.teacher-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.teacher-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #007bff;
+}
+
+.teacher-initials {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #007bff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: bold;
+  color: white;
+}
+
+.teacher-info {
+  flex: 1;
+}
+
+.teacher-name {
+  margin: 0;
+}
+
+.teacher-id {
+  margin: 5px 0;
+  color: #007bff;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.teacher-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.detail-item strong {
+  margin-right: 5px;
+}
+
+.badge-role {
+  margin-left: 10px;
+}
+
+.badge-status {
+  margin-left: 10px;
+}
+
+.permissions-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
+}
+
+.permissions-section h3 {
+  margin-bottom: 15px;
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+}
+
+.permission-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title {
+  margin: 30px 0 15px;
+}
+
+.schedule-card,
+.attendance-card {
+  margin-bottom: 30px;
+}
+
+.empty-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.attendance-table th,
+.attendance-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.attendance-table th {
+  background-color: #e9ecef;
+  font-weight: 600;
+}
+
+.attendance-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-present {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-absent {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-late {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.status-warning {
+  background-color: #ffc107;
+  color: black;
+}
+
+.status-info {
+  background-color: #17a2b8;
+  color: white;
+}

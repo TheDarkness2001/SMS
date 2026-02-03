@@ -1,0 +1,348 @@
+/* Admin Earnings Management Panel */
+.admin-earnings__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.admin-earnings__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.admin-earnings__title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.admin-earnings__subtitle {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+.admin-earnings__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-earnings__action-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.admin-earnings__action-btn--bonus {
+  background: #28a745;
+}
+
+.admin-earnings__action-btn--bonus:hover {
+  background: #218838;
+}
+
+.admin-earnings__action-btn--penalty {
+  background: #dc3545;
+}
+
+.admin-earnings__action-btn--penalty:hover {
+  background: #c82333;
+}
+
+.admin-earnings__action-btn--adjustment {
+  background: #ffc107;
+  color: #000;
+}
+
+.admin-earnings__action-btn--adjustment:hover {
+  background: #e0a800;
+}
+
+/* Tabs */
+.admin-earnings__tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.admin-earnings__tab {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-earnings__tab:hover {
+  color: #007bff;
+}
+
+.admin-earnings__tab--active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+/* Table */
+.admin-earnings__table-container {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.admin-earnings__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-earnings__table thead {
+  background: #f8f9fa;
+}
+
+.admin-earnings__table th {
+  padding: 16px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.admin-earnings__table td {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #333;
+}
+
+.admin-earnings__table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.admin-earnings__amount {
+  font-weight: 600;
+  color: #28a745;
+}
+
+.admin-earnings__amount--negative {
+  color: #dc3545;
+}
+
+.admin-earnings__approve-btn {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.admin-earnings__approve-btn:hover {
+  background: #218838;
+}
+
+.admin-earnings__status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+}
+
+/* Loading & Empty */
+.admin-earnings__loading,
+.admin-earnings__empty {
+  text-align: center;
+  padding: 48px;
+  font-size: 18px;
+  color: #666;
+}
+
+.admin-earnings__access-denied {
+  text-align: center;
+  padding: 64px 24px;
+}
+
+.admin-earnings__access-denied h2 {
+  font-size: 24px;
+  color: #dc3545;
+  margin-bottom: 12px;
+}
+
+/* Modal */
+.admin-earnings__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.admin-earnings__modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.admin-earnings__modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.admin-earnings__modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.admin-earnings__modal-close {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.admin-earnings__modal-close:hover {
+  color: #333;
+}
+
+.admin-earnings__modal-body {
+  padding: 24px;
+}
+
+.admin-earnings__form-group {
+  margin-bottom: 20px;
+}
+
+.admin-earnings__form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.admin-earnings__form-group input,
+.admin-earnings__form-group select,
+.admin-earnings__form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.admin-earnings__form-group input:focus,
+.admin-earnings__form-group select:focus,
+.admin-earnings__form-group textarea:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.admin-earnings__form-group small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #999;
+}
+
+.admin-earnings__modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.admin-earnings__btn-secondary {
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-earnings__btn-secondary:hover {
+  background: #5a6268;
+}
+
+.admin-earnings__btn-primary {
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-earnings__btn-primary:hover {
+  background: #0056b3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-earnings__container {
+    padding: 16px;
+  }
+
+  .admin-earnings__header {
+    flex-direction: column;
+  }
+
+  .admin-earnings__actions {
+    width: 100%;
+  }
+
+  .admin-earnings__action-btn {
+    flex: 1;
+  }
+
+  .admin-earnings__table-container {
+    overflow-x: auto;
+  }
+
+  .admin-earnings__table {
+    min-width: 800px;
+  }
+}

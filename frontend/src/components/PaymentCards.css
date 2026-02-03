@@ -1,0 +1,152 @@
+.subjects-payments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.subject-payment-card {
+  border: 1px solid #e1e5e9;
+  border-radius: 3px;
+  padding: 6px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+.subject-payment-card:hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-color: #007bff;
+}
+
+.subject-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.subject-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 12px;
+}
+
+.expected-amount {
+  background: #007bff;
+  color: white;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.status-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.paid-amount {
+  font-size: 11px;
+  font-weight: 500;
+  color: #333;
+  margin-top: 1px;
+}
+
+.payment-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.status-badge.paid {
+  background: #28a745;
+  color: white;
+}
+
+.status-badge.unpaid {
+  background: #ffc107;
+  color: #212529;
+}
+
+.status-badge.partial {
+  background: #17a2b8;
+  color: white;
+}
+
+.payment-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 3px;
+  margin-left: 5px;
+  align-items: center;
+}
+
+.btn-pay, .btn-edit, .btn-delete {
+  padding: 2px 5px;
+  border: none;
+  border-radius: 2px;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 45px;
+  height: 22px;
+}
+
+.btn-pay {
+  background: #28a745;
+  color: white;
+}
+
+.btn-pay:hover {
+  background: #218838;
+}
+
+.btn-edit {
+  background: #007bff;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #0069d9;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #c82333;
+}
+
+.btn-view-details {
+  background: #6c757d;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 2px;
+  font-size: 10px;
+  cursor: pointer;
+  height: 24px;
+}
+
+.btn-view-details:hover {
+  background: #5a6268;
+}
+
+.btn-group-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 3px;
+}
+
+.partial-payment-info {
+  font-size: 9px;
+  color: #666;
+  margin-top: 2px;
+}

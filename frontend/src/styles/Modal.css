@@ -1,0 +1,196 @@
+.modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal__content {
+  background: white;
+  border-radius: 8px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal__close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  z-index: 1001;
+}
+
+.modal__close:hover {
+  color: #333;
+}
+
+/* Payment Top-Up Modal Styles */
+.payment-top-up__modal {
+  padding: 24px;
+}
+
+.payment-top-up__title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.payment-top-up__subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.payment-top-up__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.payment-top-up__form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.payment-top-up__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.payment-top-up__input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.payment-top-up__input--error {
+  border-color: #dc3545;
+}
+
+.payment-top-up__input:focus,
+.payment-top-up__select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.payment-top-up__error {
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: -4px;
+}
+
+.payment-top-up__preview {
+  font-size: 13px;
+  color: #28a745;
+  font-weight: 500;
+}
+
+.payment-top-up__quick-amounts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payment-top-up__quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.payment-top-up__quick-btn {
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payment-top-up__quick-btn:hover {
+  background: #e9ecef;
+  border-color: #007bff;
+}
+
+.payment-top-up__select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+}
+
+.payment-top-up__info {
+  background: #f8f9fa;
+  border-left: 3px solid #007bff;
+  padding: 12px;
+  border-radius: 4px;
+}
+
+.payment-top-up__info p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+.payment-top-up__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.payment-top-up__cancel-btn,
+.payment-top-up__submit-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payment-top-up__cancel-btn {
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.payment-top-up__cancel-btn:hover {
+  background: #e9ecef;
+}
+
+.payment-top-up__submit-btn {
+  background: #28a745;
+  color: white;
+}
+
+.payment-top-up__submit-btn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.payment-top-up__submit-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}

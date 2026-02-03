@@ -1,0 +1,220 @@
+/* Admin Layout Styles */
+
+.admin-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+.admin-layout__main {
+  display: flex;
+  flex: 1;
+  margin-top: 55px;
+}
+
+.admin-layout__content-area {
+  flex: 1;
+  margin-left: 290px;
+  margin-right: 30px;
+  margin-top: 70px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: calc(100vh - 80px);
+  width: calc(100% - 290px);
+  max-width: 1600px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.admin-layout__content-area h1,
+.admin-layout__content-area h2,
+.admin-layout__content-area h3 {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.admin-layout__content-area h1 {
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+.admin-layout__content-area h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.admin-layout__content-area h3 {
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+/* Page Header */
+.admin-layout__page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-layout__page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.admin-layout__page-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Prevent horizontal scrolling */
+.admin-layout__content-area > * {
+  max-width: 100%;
+  box-sizing: border-box;
+  padding-right: 15px;
+}
+
+/* ============================================
+   MOBILE HAMBURGER MENU (fixed, always visible)
+   ============================================ */
+
+.admin-layout__menu-toggle {
+  position: fixed;
+  top: 75px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #2d3748;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  z-index: 999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: transform 0.3s ease, left 0.3s ease;
+}
+
+/* Show on tablet and mobile (res2 and res3) */
+@media (max-width: 1024px) {
+  .admin-layout__menu-toggle {
+    display: flex !important;
+  }
+}
+
+/* Move button with sidebar when open */
+.admin-layout__main:has(.sidebar.open) .admin-layout__menu-toggle {
+  left: 260px;
+}
+
+.admin-layout__menu-toggle:hover {
+  background: #1a202c;
+  transform: scale(1.05);
+}
+
+.admin-layout__menu-toggle:active {
+  transform: scale(0.95);
+}
+
+.admin-layout__hamburger-line {
+  width: 20px;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* ============================================
+   SIDEBAR OVERLAY (Mobile)
+   ============================================ */
+
+.admin-layout__sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 98;
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.admin-layout__sidebar-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   res1: 1440x900 (Desktop - full sidebar)
+   res2: 1024x768 (Tablet - burger menu)
+   res3: 390x844 (Mobile - burger menu)
+   ============================================ */
+
+/* Tablet and Mobile - res2 & res3 (1024px and below) */
+@media (max-width: 1024px) {
+  .admin-layout__main {
+    flex-direction: column;
+  }
+  
+  .admin-layout__content-area {
+    margin-left: 0;
+    margin-top: 75px;
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+  }
+  
+  .admin-layout__page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .admin-layout__page-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .admin-layout__page-actions .btn {
+    flex: 1;
+  }
+  
+  .admin-layout__page-title {
+    font-size: 24px;
+  }
+}
+
+/* Mobile only - res3 (390px and below) */
+@media (max-width: 480px) {
+  .admin-layout__content-area {
+    padding: 16px;
+    width: 100%;
+    margin-top: 70px;
+  }
+  
+  .admin-layout__page-title {
+    font-size: 20px;
+  }
+}
+
+/* Ultra-wide screens (4K/2K monitors) */
+@media (min-width: 1920px) {
+  .admin-layout__content-area {
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

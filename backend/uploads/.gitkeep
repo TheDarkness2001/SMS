@@ -1,0 +1,8 @@
+# Uploads Directory
+
+This directory stores uploaded files such as:
+- Teacher profile images
+- Attendance photos
+- Other document uploads
+
+Files in this directory are served statically by the Express server.

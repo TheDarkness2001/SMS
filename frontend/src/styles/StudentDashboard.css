@@ -1,0 +1,302 @@
+/* ===============================
+   Student Dashboard – Modern UI
+   Layout preserved | JSX untouched
+================================ */
+
+/* Root */
+.student-dashboard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ===============================
+   Welcome Section
+================================ */
+.dashboard-welcome {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  padding: 28px 32px;
+  border-radius: 18px;
+}
+
+.welcome-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.welcome-subtitle {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* ===============================
+   Stats Grid
+================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 22px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  gap: 18px;
+  border: 1px solid #eef0f4;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  min-height: 200px;
+  align-items: stretch;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Card accents with unique class names (sd = student dashboard) */
+.sd-attendance-card .stat-icon {
+  background: rgba(16,185,129,0.15);
+  color: #10b981;
+}
+
+.sd-exams-card .stat-icon {
+  background: rgba(59,130,246,0.15);
+  color: #3b82f6;
+}
+
+.sd-payments-card .stat-icon {
+  background: rgba(245,158,11,0.15);
+  color: #f59e0b;
+}
+
+.stat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.stat-value {
+  font-size: 34px;
+  font-weight: 700;
+  margin: 6px 0;
+  color: #111827;
+}
+
+.stat-details {
+  display: flex;
+  gap: 14px;
+  font-size: 14px;
+}
+
+.stat-detail-item.present {
+  color: #10b981;
+}
+
+.stat-detail-item.absent {
+  color: #ef4444;
+}
+
+.stat-description {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.stat-action-btn {
+  margin-top: auto;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stat-action-btn:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+/* ===============================
+   Alerts
+================================ */
+.dashboard-alerts .alert {
+  display: flex;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+}
+
+.alert-content {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ===============================
+   Student Info Section
+================================ */
+.student-info-section {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 26px;
+  border: 1px solid #eef0f4;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+}
+
+.info-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.status-badge.active {
+  background: rgba(16,185,129,0.15);
+  color: #10b981;
+}
+
+/* ===============================
+   Charts
+================================ */
+.charts-section,
+.subject-charts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.chart-card,
+.subject-chart-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 26px;
+  border: 1px solid #eef0f4;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.chart-card:hover,
+.subject-chart-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+}
+
+.chart-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.chart-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.chart-container {
+  width: 100%;
+  height: 350px;
+}
+
+/* Subject charts grid */
+.subject-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  gap: 22px;
+}
+
+.subject-chart-title {
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+
+/* ===============================
+   Responsive
+================================ */
+@media (max-width: 768px) {
+  .student-dashboard {
+    padding: 16px;
+  }
+
+  .welcome-title {
+    font-size: 24px;
+  }
+
+  .chart-container {
+    height: 300px;
+  }
+
+  .subject-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-welcome {
+    padding: 20px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  .chart-container {
+    height: 260px;
+  }
+}

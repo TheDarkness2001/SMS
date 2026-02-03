@@ -1,0 +1,250 @@
+/* Exams Page Container */
+.exams-page-container {
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Page Header */
+.exams-page-header {
+  margin-bottom: 30px;
+}
+
+.exams-page-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.exams-page-title-section {
+  flex: 1;
+  min-width: 200px;
+}
+
+.exams-page-title {
+  margin: 0 0 8px 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.exams-page-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.exams-page-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.exams-page-actions .btn svg {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* Content Section */
+.exams-content-section {
+  margin-bottom: 30px;
+}
+
+/* Loading State */
+.exams-loading-state {
+  background: var(--background-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 60px 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.exams-loading-state .students__spinner {
+  margin: 0 auto 20px;
+}
+
+.exams-loading-text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Empty State */
+.exams-empty-state {
+  background: var(--background-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 80px 40px;
+  text-align: center;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.exams-empty-state-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.exams-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.exams-empty-title {
+  margin: 0 0 12px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.exams-empty-description {
+  margin: 0 0 30px 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.exams-empty-state .btn svg {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* Table Card */
+.exams-table-card {
+  background: var(--background-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.exams-table-wrapper {
+  overflow-x: auto;
+}
+
+/* Exams Table */
+.exams-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.exams-table thead {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.exams-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.exams-table th:last-child {
+  border-right: none;
+}
+
+.exams-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.exams-table td:last-child {
+  border-right: none;
+}
+
+.exams-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.exams-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.exams-table-exam-name {
+  font-weight: 500;
+  color: var(--text-primary) !important;
+}
+
+.exams-table-marks {
+  font-weight: 500;
+}
+
+.exams-table-center {
+  text-align: center;
+}
+
+/* Table Actions */
+.exams-table-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.exams-table-actions .btn svg {
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .exams-page-header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exams-page-actions {
+    justify-content: stretch;
+  }
+
+  .exams-page-actions .btn {
+    flex: 1;
+  }
+
+  .exams-empty-state {
+    padding: 60px 20px;
+  }
+
+  .exams-table {
+    font-size: 13px;
+  }
+
+  .exams-table th,
+  .exams-table td {
+    padding: 10px 12px;
+  }
+
+  .exams-table-actions {
+    flex-direction: column;
+  }
+
+  .exams-table-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .exams-page-title {
+    font-size: 1.5rem;
+  }
+
+  .exams-table th,
+  .exams-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}

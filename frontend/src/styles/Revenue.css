@@ -1,0 +1,181 @@
+.revenue-container {
+  padding: 20px;
+}
+
+.revenue-header {
+  margin-bottom: 20px;
+}
+
+.filters-section {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.filter-select,
+.filter-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.revenue-container .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.revenue-container .stat-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 12px 15px;
+  text-align: left;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 4px solid #3b82f6;
+}
+
+.revenue-container .stat-card:nth-child(2) { border-left-color: #10b981; }
+.revenue-container .stat-card:nth-child(3) { border-left-color: #f59e0b; }
+.revenue-container .stat-card:nth-child(4) { border-left-color: #6366f1; }
+
+.revenue-container .stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  line-height: 1.2;
+  color: #1f2937;
+}
+
+.revenue-container .stat-label {
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.chart-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-export {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-export:hover {
+  background-color: #218838;
+}
+
+.revenue-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.revenue-table th,
+.revenue-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.revenue-table th {
+  background-color: #e9ecef;
+  font-weight: 600;
+}
+
+.revenue-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.action-buttons button {
+  margin-right: 5px;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+}
+
+.error-message {
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.success-message {
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+}
+
+.report-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}

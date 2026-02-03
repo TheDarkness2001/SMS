@@ -1,0 +1,225 @@
+.timetable-container {
+  padding: 20px;
+}
+
+.timetable-header {
+  margin-bottom: 30px;
+  color: #333;
+}
+
+/* Teacher Selector Card */
+.teacher-selector-card {
+  margin-bottom: 25px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  border: 1px solid #eef2f7;
+  overflow: hidden;
+}
+
+.teacher-selector-header {
+  padding: 15px 20px;
+  background-color: #f8fbff;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.teacher-selector-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.teacher-selector-body {
+  padding: 20px;
+}
+
+.timetable-filter-select {
+  max-width: 400px;
+  height: 45px;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  padding: 0 15px;
+  font-size: 14px;
+  color: #3e4b5b;
+  background-color: #fff;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.timetable-filter-select:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  outline: none;
+}
+
+.timetable-filter-select:hover {
+  border-color: #cbd5e0;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+/* Weekly Timetable Grid */
+.weekly-timetable {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow-x: auto;
+}
+
+.timetable-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  gap: 0;
+  min-width: 900px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.time-column {
+  background: #f5f5f5;
+  border-right: 2px solid #e0e0e0;
+}
+
+.time-header,
+.day-header {
+  padding: 12px;
+  font-weight: bold;
+  text-align: center;
+  background: #2196F3;
+  color: white;
+  border-bottom: 2px solid #1976D2;
+  font-size: 14px;
+}
+
+.time-slot {
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-column {
+  border-right: 1px solid #e0e0e0;
+  position: relative;
+}
+
+.day-column:last-child {
+  border-right: none;
+}
+
+.day-schedule {
+  position: relative;
+  background: white;
+}
+
+.grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid #f0f0f0;
+  pointer-events: none;
+}
+
+.grid-line:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.no-classes {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.class-block {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 4px;
+  padding: 8px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.class-block:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+.class-name {
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.class-time {
+  font-size: 11px;
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+
+.class-room {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* Alert styles */
+.alert {
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+  color: #0c5460;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .timetable-grid {
+    grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
+  }
+  
+  .time-header,
+  .day-header {
+    font-size: 12px;
+    padding: 8px;
+  }
+  
+  .class-block {
+    font-size: 10px;
+    padding: 6px;
+  }
+}
