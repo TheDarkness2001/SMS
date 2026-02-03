@@ -33,9 +33,25 @@ app.use(sanitizeInput);
 // Security middleware: Apply rate limiting to all API routes
 app.use('/api/', apiLimiter);
 
-// Enable CORS - Allow frontend from any origin (will be restricted in production)
+// Enable CORS - Allow frontend from custom domain
+const allowedOrigins = [
+  'https://techrenacademy.com',
+  'https://www.techrenacademy.com',
+  'http://localhost:3000', // Development
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*', // Allow all origins in development
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
