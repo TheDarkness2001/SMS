@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seedData.js"
+    "seed": "node seedData.js",
+    "migrate-to-atlas": "node scripts/migrateToAtlas.js"
   },
   "keywords": [
     "student",

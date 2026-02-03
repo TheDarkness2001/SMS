@@ -33,8 +33,13 @@ app.use(sanitizeInput);
 // Security middleware: Apply rate limiting to all API routes
 app.use('/api/', apiLimiter);
 
-// Enable CORS
-app.use(cors());
+// Enable CORS - Allow frontend from any origin (will be restricted in production)
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*', // Allow all origins in development
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
