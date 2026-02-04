@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use environment variable for API URL, fallback to production backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://sms-gi4d.onrender.com/api';
+// Use environment variable for API URL, fallback to Railway production backend
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://sms-production-5f19.up.railway.app/api';
 
 // Create axios instance with default config
 const api = axios.create({  baseURL: API_BASE_URL,
