@@ -12,18 +12,18 @@ const {
 } = require('../controllers/studentController');
 const { protect, checkPermission } = require('../middleware/auth');
 const { enforceBranchIsolation } = require('../middleware/branchIsolation');
-const upload = require('../middleware/upload');
+const { upload, uploadToImageKit } = require('../middleware/imagekitUpload');
 
 router.route('/')
   .get(protect, enforceBranchIsolation, getStudents)
-  .post(protect, checkPermission('canManageStudents'), enforceBranchIsolation, upload.single('profileImage'), createStudent);
+  .post(protect, checkPermission('canManageStudents'), enforceBranchIsolation, upload.single('profileImage'), uploadToImageKit, createStudent);
 
 router.route('/:id')
   .get(protect, enforceBranchIsolation, getStudent)
-  .put(protect, checkPermission('canManageStudents'), enforceBranchIsolation, upload.single('profileImage'), updateStudent)
+  .put(protect, checkPermission('canManageStudents'), enforceBranchIsolation, upload.single('profileImage'), uploadToImageKit, updateStudent)
   .delete(protect, checkPermission('canManageStudents'), enforceBranchIsolation, deleteStudent);
 
-router.put('/:id/photo', protect, enforceBranchIsolation, upload.single('profileImage'), uploadPhoto);
+router.put('/:id/photo', protect, enforceBranchIsolation, upload.single('profileImage'), uploadToImageKit, uploadPhoto);
 router.patch('/:id/notification-settings', protect, enforceBranchIsolation, updateNotificationSettings);
 router.post('/:id/push-token', protect, enforceBranchIsolation, registerPushToken);
 

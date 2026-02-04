@@ -11,7 +11,7 @@ const {
 } = require('../controllers/teacherController');
 const { protect, authorize } = require('../middleware/auth');
 const { enforceBranchIsolation } = require('../middleware/branchIsolation');
-const upload = require('../middleware/upload');
+const { upload, uploadToImageKit } = require('../middleware/imagekitUpload');
 
 router.route('/')
   .get(protect, enforceBranchIsolation, getTeachers)
@@ -22,7 +22,7 @@ router.route('/:id')
   .put(protect, authorize('admin', 'manager'), enforceBranchIsolation, updateTeacher)
   .delete(protect, authorize('admin', 'manager'), enforceBranchIsolation, deleteTeacher);
 
-router.put('/:id/photo', protect, enforceBranchIsolation, upload.single('profileImage'), uploadPhoto);
+router.put('/:id/photo', protect, enforceBranchIsolation, upload.single('profileImage'), uploadToImageKit, uploadPhoto);
 router.put('/:id/permissions', protect, authorize('admin', 'manager'), enforceBranchIsolation, updatePermissions);
 
 module.exports = router;
