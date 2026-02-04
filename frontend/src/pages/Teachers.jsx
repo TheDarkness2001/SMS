@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { teachersAPI } from '../utils/api';
+import { teachersAPI, branchesAPI } from '../utils/api';
 import axios from 'axios';
 import "../styles/Teachers.css"
 
@@ -66,11 +66,7 @@ const Teachers = () => {
       if (['founder', 'admin', 'manager'].includes(user?.role)) {
         console.log('Attempting to load branches...');
         try {
-          const branchesResponse = await axios.get('/api/branches', {
-            headers: { 
-              'Authorization': `Bearer ${sessionStorage.getItem('token')}` 
-            }
-          });
+          const branchesResponse = await branchesAPI.getAll();
           console.log('Branches API response:', branchesResponse.data);
           if (branchesResponse.data.success) {
             setBranches(branchesResponse.data.data);

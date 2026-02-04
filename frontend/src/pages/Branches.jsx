@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { branchesAPI } from '../utils/api';
 import '../styles/Branches.css';
 
 const Branches = () => {
@@ -19,18 +20,12 @@ const Branches = () => {
   const fetchBranches = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
-      const response = await fetch('/api/branches', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
+      const response = await branchesAPI.getAll();
       
-      if (data.success) {
-        setBranches(data.data);
+      if (response.data.success) {
+        setBranches(response.data.data);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
     } catch (err) {
       setError('Failed to fetch branches');
@@ -53,32 +48,19 @@ const Branches = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = sessionStorage.getItem('token');
-      const url = editingBranch 
-        ? `/api/branches/${editingBranch._id}` 
-        : '/api/branches';
-      const method = editingBranch ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      const response = editingBranch 
+        ? await branchesAPI.update(editingBranch._id, formData)
+        : await branchesAPI.create(formData);
       
-      if (data.success) {
-        setSuccess(data.message);
+      if (response.data.success) {
+        setSuccess(response.data.message);
         setShowModal(false);
         setEditingBranch(null);
         setFormData({ name: '', address: '', phone: '' });
         fetchBranches();
         setTimeout(() => setSuccess(''), 3000);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
     } catch (err) {
       setError('Failed to save branch');
@@ -97,24 +79,14 @@ const Branches = () => {
 
   const handleToggleActive = async (branch) => {
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch(`/api/branches/${branch._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ isActive: !branch.isActive })
-      });
-
-      const data = await response.json();
+      const response = await branchesAPI.update(branch._id, { isActive: !branch.isActive });
       
-      if (data.success) {
+      if (response.data.success) {
         setSuccess('Branch status updated');
         fetchBranches();
         setTimeout(() => setSuccess(''), 3000);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
     } catch (err) {
       setError('Failed to update branch status');
@@ -127,22 +99,14 @@ const Branches = () => {
     }
 
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch(`/api/branches/${branchId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
+      const response = await branchesAPI.delete(branchId);
       
-      if (data.success) {
-        setSuccess(data.message);
+      if (response.data.success) {
+        setSuccess(response.data.message);
         fetchBranches();
         setTimeout(() => setSuccess(''), 3000);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
     } catch (err) {
       setError('Failed to delete branch');
