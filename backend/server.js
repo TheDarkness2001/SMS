@@ -35,10 +35,11 @@ app.use(sanitizeInput);
 // Security middleware: Apply rate limiting to all API routes
 app.use('/api/', apiLimiter);
 
-// Enable CORS - Allow frontend from custom domain
+// Enable CORS - Allow frontend from custom domain and Railway
 const allowedOrigins = [
   'https://techrenacademy.com',
   'https://www.techrenacademy.com',
+  'https://sms-production-c400.up.railway.app', // Railway frontend
   'http://localhost:3000', // Development
   process.env.FRONTEND_URL
 ].filter(Boolean);
