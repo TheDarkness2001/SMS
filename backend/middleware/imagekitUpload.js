@@ -35,9 +35,12 @@ const uploadToImageKit = async (req, res, next) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const fileName = req.file.fieldname + '-' + uniqueSuffix + path.extname(req.file.originalname);
 
+    // Convert buffer to base64 for ImageKit
+    const fileBase64 = req.file.buffer.toString('base64');
+
     // Upload to ImageKit
     const result = await imagekit.upload({
-      file: req.file.buffer, // File buffer from multer
+      file: fileBase64, // Base64 encoded file
       fileName: fileName,
       folder: '/uploads' // Optional: organize files in folders
     });
