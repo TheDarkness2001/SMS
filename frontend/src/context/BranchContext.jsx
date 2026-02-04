@@ -52,7 +52,7 @@ export const BranchProvider = ({ children }) => {
         setBranches(fetchedBranches);
         console.log('[BranchContext] Branches set to state:', fetchedBranches.map(b => b.name));
       } else {
-        console.error('[BranchContext] API returned success: false', data.message);
+        console.error('[BranchContext] API returned success: false', response.data.message);
         setBranches([]);
       }
     } catch (error) {
