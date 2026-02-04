@@ -4,7 +4,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
 import { teachersAPI, branchesAPI } from '../utils/api';
-import axios from 'axios';
 import "../styles/Teachers.css"
 
 const Teachers = () => {
