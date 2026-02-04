@@ -102,6 +102,11 @@ const Students = () => {
                          (student.studentId || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || student.status === selectedStatus;
     return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    // Sort by student ID numerically
+    const idA = parseInt((a.studentId || '0').replace(/\D/g, ''), 10);
+    const idB = parseInt((b.studentId || '0').replace(/\D/g, ''), 10);
+    return idA - idB;
   });
 
   // Calculate stats from the raw students data
