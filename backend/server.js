@@ -8,8 +8,10 @@ const sanitizeInput = require('./middleware/sanitize');
 const { apiLimiter } = require('./middleware/rateLimit');
 require('./utils/notificationWorker');
 
-// Load env vars
-dotenv.config({ path: './.env' });
+// Load env vars (optional - Railway injects them directly)
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: './.env' });
+}
 
 // Debug: Check if JWT_SECRET is loaded
 console.log('JWT_SECRET loaded:', !!process.env.JWT_SECRET);
