@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
+import { branchesAPI } from '../utils/api';
 
 const BranchContext = createContext();
 
@@ -27,17 +28,12 @@ export const BranchProvider = ({ children }) => {
       }
 
       console.log('[BranchContext] Fetching branches with token...');
-      const response = await fetch('/api/branches', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      console.log('[BranchContext] Branches API response:', data);
+      const response = await branchesAPI.getAll();
+      console.log('[BranchContext] Branches API response:', response.data);
       
-      if (data.success) {
+      if (response.data.success) {
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-        let fetchedBranches = data.data.filter(b => b.isActive);
+        let fetchedBranches = response.data.data.filter(b => b.isActive);
         
         console.log('[BranchContext] Total active branches:', fetchedBranches.length);
         console.log('[BranchContext] User role:', user.role, 'BranchId:', user.branchId);

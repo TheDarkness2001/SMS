@@ -242,4 +242,14 @@ export const teacherAttendanceAPI = {
   getMyStats: (params) => api.get('/teacher-attendance/stats/my-stats', { params })
 };
 
+// Branches API
+export const branchesAPI = {
+  getAll: () => api.get('/branches'),
+  getOne: (id) => api.get(`/branches/${id}`),
+  create: (data) => api.post('/branches', data),
+  update: (id, data) => api.put(`/branches/${id}`, data),
+  delete: (id) => api.delete(`/branches/${id}`),
+  getStats: (id) => api.get(`/branches/${id}/stats`)
+};
+
 export default api;
