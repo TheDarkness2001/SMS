@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { studentsAPI } from '../utils/api';
+import { studentsAPI, branchesAPI } from '../utils/api';
 import '../styles/AddStudent.css';
 
 const EditStudent = () => {
@@ -98,12 +98,9 @@ const EditStudent = () => {
     const loadBranches = async () => {
       if (['founder', 'admin', 'manager'].includes(user?.role)) {
         try {
-          const branchesResponse = await fetch('/api/branches', {
-            headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
-          });
-          const branchesData = await branchesResponse.json();
-          if (branchesData.success) {
-            setBranches(branchesData.data);
+          const branchesResponse = await branchesAPI.getAll();
+          if (branchesResponse.data.success) {
+            setBranches(branchesResponse.data.data);
           }
         } catch (error) {
           console.error('Error loading branches:', error);
