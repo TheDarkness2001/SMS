@@ -7,7 +7,7 @@ import { branchesAPI } from '../utils/api';
 
 const TeacherForm = ({ teacher, onSubmit, onCancel }) => {
   const { t, language } = useLanguage();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
