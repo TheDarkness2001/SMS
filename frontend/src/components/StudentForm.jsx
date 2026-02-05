@@ -3,6 +3,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { getSubjects } from '../api/subjects';
 import { getWalletSummary } from '../api/wallet';
+import { branchesAPI } from '../utils/api';
 
 const StudentForm = ({ student, onSubmit, onCancel }) => {
   const { t, language } = useLanguage();
@@ -39,14 +40,11 @@ const StudentForm = ({ student, onSubmit, onCancel }) => {
       console.log('Current user role:', user.role);
       if (['founder', 'admin', 'manager'].includes(user.role)) {
         try {
-          const branchesResponse = await fetch('/api/branches', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const branchesData = await branchesResponse.json();
-          console.log('Branches loaded:', branchesData);
-          if (branchesData.success) {
-            setBranches(branchesData.data);
-            console.log('Branches set:', branchesData.data);
+          const branchesResponse = await branchesAPI.getAll();
+          console.log('Branches loaded:', branchesResponse.data);
+          if (branchesResponse.data.success) {
+            setBranches(branchesResponse.data.data);
+            console.log('Branches set:', branchesResponse.data.data);
           }
         } catch (error) {
           console.error('Error loading branches:', error);

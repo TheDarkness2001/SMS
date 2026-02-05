@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import { studentAttendanceAPI, examGroupsAPI, schedulerAPI } from '../utils/api';
+import { studentAttendanceAPI, examGroupsAPI, schedulerAPI, subjectsAPI } from '../utils/api';
 import '../styles/StudentAttendance.css';
 
 const StudentAttendance = () => {
@@ -209,13 +209,9 @@ const StudentAttendance = () => {
       
       // If group.subject is a string (subject name), we need to get the ObjectId
       try {
-        const token = sessionStorage.getItem('token');
-        const subjectsResponse = await fetch('/api/subjects', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const subjectsData = await subjectsResponse.json();
+        const subjectsResponse = await subjectsAPI.getAll();
         
-        if (subjectsData.success && subjectsData.data) {
+        if (subjectsResponse.data.success && subjectsResponse.data.data) {
           // Map common subject aliases
           let searchSubject = group.subject;
           const subjectAliases = {
@@ -241,14 +237,14 @@ const StudentAttendance = () => {
             searchSubject = subjectAliases[normalizedSubject];
           }
           
-          const matchingSubject = subjectsData.data.find(
+          const matchingSubject = subjectsResponse.data.data.find(
             s => s.name.toLowerCase().trim() === searchSubject.toLowerCase().trim() || s._id === group.subject
           );
           
           if (matchingSubject) {
             subjectId = matchingSubject._id;
           } else if (typeof group.subject === 'string') {
-            const availableNames = subjectsData.data.map(s => s.name).join(', ');
+            const availableNames = subjectsResponse.data.data.map(s => s.name).join(', ');
             setError(t('attendance.subjectNotFound', { subject: group.subject, available: availableNames }));
             return;
           }

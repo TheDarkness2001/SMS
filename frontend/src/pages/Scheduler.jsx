@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import { schedulerAPI, teachersAPI, examGroupsAPI } from '../utils/api';
+import { schedulerAPI, teachersAPI, examGroupsAPI, subjectsAPI } from '../utils/api';
 import '../styles/Scheduler.css';
 
 const Scheduler = () => {
@@ -54,12 +54,10 @@ const Scheduler = () => {
           : schedulerAPI.getAll(branchFilter),
         teachersAPI.getAll(branchFilter),
         examGroupsAPI.getAll(branchFilter),
-        fetch('/api/subjects', {
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
-        })
+        subjectsAPI.getAll()
       ]);
 
-      const subjectsData = await subjectsRes.json();
+      const subjectsData = subjectsRes.data;
 
       // Ensure all data is properly populated
       const schedulesData = schedulesRes.data.data || [];
