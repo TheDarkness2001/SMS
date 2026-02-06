@@ -18,7 +18,6 @@ const Payments = () => {
     // Loading states
     loading,
     error,
-    success,
     
     // Filters
     filters,
@@ -31,8 +30,7 @@ const Payments = () => {
     getExpectedAmount,
     
     // Setters for alerts
-    setError,
-    setSuccess
+    setError
   } = usePayments();
   
   // Modal state

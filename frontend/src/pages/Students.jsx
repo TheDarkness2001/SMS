@@ -15,7 +15,6 @@ const Students = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const fetchStudents = useCallback(async () => {
     try {

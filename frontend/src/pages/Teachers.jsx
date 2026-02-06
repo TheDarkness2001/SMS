@@ -33,7 +33,6 @@ const Teachers = () => {
   });
   const [profileImage, setProfileImage] = useState(null);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const fetchTeachers = useCallback(async () => {
     try {

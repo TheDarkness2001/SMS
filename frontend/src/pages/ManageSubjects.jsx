@@ -14,7 +14,6 @@ const ManageSubjects = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingSubject, setEditingSubject] = useState(null);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
