@@ -153,7 +153,7 @@ export const examsAPI = {
   getStudentExams: (studentId) => api.get(`/exams/student/${studentId}`),
   // Exam results management
   updateResult: (examId, studentId, data) => api.put(`/exams/${examId}/results/${studentId}`, data),
-  enrollStudents: (examId) => api.post(`/exams/${examId}/enroll`),
+  enrollStudents: (examId) => api.post(`/exams/${examId}/enroll-students`),
   addStudent: (examId, studentId) => api.post(`/exams/${examId}/add-student`, { studentId }),
   removeStudent: (examId, studentId) => api.delete(`/exams/${examId}/remove-student/${studentId}`),
   markAbsentFailed: (examId) => api.put(`/exams/${examId}/mark-absent-failed`)
