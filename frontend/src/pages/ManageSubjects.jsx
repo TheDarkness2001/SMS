@@ -56,7 +56,6 @@ const ManageSubjects = () => {
     e.preventDefault();
     try {
       await subjectsAPI.create(formData);
-      setSuccess(t('common.savedSuccessfully'));
       setShowAddModal(false);
       setFormData({
         name: '',
@@ -64,7 +63,7 @@ const ManageSubjects = () => {
         description: ''
       });
       fetchData();
-      setTimeout(() => setSuccess(''), 3000);
+      window.alert(t('common.savedSuccessfully'));
     } catch (err) {
       setError(err.response?.data?.message || t('common.error'));
     }
@@ -74,11 +73,10 @@ const ManageSubjects = () => {
     e.preventDefault();
     try {
       await subjectsAPI.update(editingSubject._id, formData);
-      setSuccess(t('common.updatedSuccessfully'));
       setShowEditModal(false);
       setEditingSubject(null);
       fetchData();
-      setTimeout(() => setSuccess(''), 3000);
+      window.alert(t('common.updatedSuccessfully'));
     } catch (err) {
       setError(err.response?.data?.message || t('common.error'));
     }
@@ -88,9 +86,8 @@ const ManageSubjects = () => {
     if (window.confirm(t('modals.deleteMessage'))) {
       try {
         await subjectsAPI.delete(id);
-        setSuccess(t('common.deletedSuccessfully'));
         fetchData();
-        setTimeout(() => setSuccess(''), 3000);
+        window.alert(t('common.deletedSuccessfully'));
       } catch (err) {
         setError(t('common.error'));
       }
@@ -121,7 +118,6 @@ const ManageSubjects = () => {
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
 
       <div className="card">
         <table className="table">

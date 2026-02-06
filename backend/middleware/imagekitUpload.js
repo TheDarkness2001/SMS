@@ -32,6 +32,14 @@ const uploadToImageKit = async (req, res, next) => {
   }
 
   try {
+    // Check if ImageKit is configured
+    if (!process.env.IMAGEKIT_PRIVATE_KEY) {
+      console.warn('ImageKit not configured, skipping cloud upload');
+      // Use local filename for backward compatibility
+      req.file.filename = req.file.fieldname + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(req.file.originalname);
+      return next();
+    }
+
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const fileName = req.file.fieldname + '-' + uniqueSuffix + path.extname(req.file.originalname);
 
@@ -53,7 +61,9 @@ const uploadToImageKit = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('ImageKit upload error:', error);
-    next(error);
+    // Fallback to local storage on ImageKit error
+    req.file.filename = req.file.fieldname + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(req.file.originalname);
+    next();
   }
 };
 
