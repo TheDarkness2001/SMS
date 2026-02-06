@@ -101,26 +101,33 @@ export const usePayments = (initialFilters = {}) => {
    * Filter students based on current filters
    */
   const filteredStudents = useMemo(() => {
-    return students.filter(student => {
-      // Only show active students
-      if (student.status !== 'active') return false;
+    return students
+      .filter(student => {
+        // Only show active students
+        if (student.status !== 'active') return false;
 
-      // Search filter
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        if (!student.name.toLowerCase().includes(searchTerm) && 
-            !student.studentId.toLowerCase().includes(searchTerm)) {
+        // Search filter
+        if (filters.search) {
+          const searchTerm = filters.search.toLowerCase();
+          if (!student.name.toLowerCase().includes(searchTerm) && 
+              !student.studentId.toLowerCase().includes(searchTerm)) {
+            return false;
+          }
+        }
+
+        // Class filter
+        if (filters.class !== 'All' && student.class !== filters.class) {
           return false;
         }
-      }
 
-      // Class filter
-      if (filters.class !== 'All' && student.class !== filters.class) {
-        return false;
-      }
-
-      return true;
-    });
+        return true;
+      })
+      .sort((a, b) => {
+        // Sort by studentId (natural sort for alphanumeric IDs)
+        const idA = a.studentId || '';
+        const idB = b.studentId || '';
+        return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+      });
   }, [students, filters]);
 
   /**
