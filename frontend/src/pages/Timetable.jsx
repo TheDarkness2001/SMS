@@ -127,10 +127,20 @@ const Timetable = () => {
         params: branchFilter
       });
       
-      console.log('All schedules fetched for admin:', response.data.data.length);
+      console.log('All schedules fetched for admin:', response.data);
+      
+      // Validate response structure
+      if (!response.data || !response.data.data) {
+        console.error('Invalid response structure:', response.data);
+        setSchedules([]);
+        return;
+      }
+      
+      const allSchedules = response.data.data;
+      console.log('Total schedules:', allSchedules.length);
       
       // Filter schedules for the selected teacher
-      const teacherSchedules = response.data.data.filter(schedule => {
+      const teacherSchedules = allSchedules.filter(schedule => {
         const scheduleTeacherId = schedule.teacher?._id || schedule.teacher;
         console.log('Comparing:', { scheduleTeacher: scheduleTeacherId, selectedTeacher: teacherId });
         return scheduleTeacherId === teacherId || schedule.teacher === teacherId;
@@ -142,6 +152,7 @@ const Timetable = () => {
       console.error('Error fetching timetable:', error);
       console.error('Error details:', error.response?.data);
       setError(t('timetable.failedToLoad') + ' - ' + (error.response?.data?.message || error.message));
+      setSchedules([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
@@ -169,8 +180,21 @@ const Timetable = () => {
   
   // Helper: Prepare classes for a specific day
   const getClassesForDay = (day) => {
+    // Safety check: ensure schedules is an array
+    if (!Array.isArray(schedules)) {
+      console.warn('Schedules is not an array:', schedules);
+      return [];
+    }
+    
     return schedules
-      .filter(schedule => schedule.scheduledDays?.includes(day))
+      .filter(schedule => {
+        // Safety check: ensure scheduledDays exists and is an array
+        if (!schedule.scheduledDays || !Array.isArray(schedule.scheduledDays)) {
+          console.warn('Invalid scheduledDays for schedule:', schedule);
+          return false;
+        }
+        return schedule.scheduledDays.includes(day);
+      })
       .map(schedule => ({
         ...schedule,
         top: timeToMinutes(schedule.startTime),
