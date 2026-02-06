@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import axios from 'axios';
-import { teachersAPI } from '../utils/api';
+import { teachersAPI, schedulerAPI } from '../utils/api';
 import '../styles/Timetable.css';
 
 const Timetable = () => {
@@ -68,13 +67,9 @@ const Timetable = () => {
       const userId = user._id || user.id;
       console.log('User ID:', userId);
 
-      // Fetch schedules from Scheduler
-      const token = sessionStorage.getItem('token');
+      // Fetch schedules from Scheduler using API helper
       const branchFilter = getBranchFilter();
-      const response = await axios.get('/api/scheduler', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: branchFilter
-      });
+      const response = await schedulerAPI.getAll(branchFilter);
       
       console.log('All schedules fetched:', response.data.data.length);
       console.log('Schedules data:', response.data.data);
@@ -120,12 +115,8 @@ const Timetable = () => {
       
       console.log('Fetching timetable for teacher ID:', teacherId);
       
-      const token = sessionStorage.getItem('token');
       const branchFilter = getBranchFilter();
-      const response = await axios.get('/api/scheduler', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: branchFilter
-      });
+      const response = await schedulerAPI.getAll(branchFilter);
       
       console.log('All schedules fetched for admin:', response.data);
       
