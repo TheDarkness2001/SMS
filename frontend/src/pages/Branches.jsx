@@ -53,12 +53,11 @@ const Branches = () => {
         : await branchesAPI.create(formData);
       
       if (response.data.success) {
-        setSuccess(response.data.message);
         setShowModal(false);
         setEditingBranch(null);
         setFormData({ name: '', address: '', phone: '' });
         fetchBranches();
-        setTimeout(() => setSuccess(''), 3000);
+        window.alert(response.data.message);
       } else {
         setError(response.data.message);
       }
@@ -82,9 +81,8 @@ const Branches = () => {
       const response = await branchesAPI.update(branch._id, { isActive: !branch.isActive });
       
       if (response.data.success) {
-        setSuccess('Branch status updated');
         fetchBranches();
-        setTimeout(() => setSuccess(''), 3000);
+        window.alert('Branch status updated');
       } else {
         setError(response.data.message);
       }
@@ -143,7 +141,6 @@ const Branches = () => {
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
 
       <div className="branches-grid">
         {branches.map(branch => (
