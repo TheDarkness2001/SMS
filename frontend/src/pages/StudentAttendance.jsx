@@ -282,10 +282,11 @@ const StudentAttendance = () => {
       // Check if updating existing record
       const existingRecordId = savedAttendance[studentId];
       
+      const successMsg = existingRecordId ? t('common.updatedSuccessfully') : t('common.savedSuccessfully');
+      
       if (existingRecordId) {
         // Update existing record
         await studentAttendanceAPI.update(existingRecordId, attendancePayload);
-        setSuccess(t('common.updatedSuccessfully'));
       } else {
         // Create new record
         const response = await studentAttendanceAPI.create(attendancePayload);
@@ -294,7 +295,6 @@ const StudentAttendance = () => {
           ...prev,
           [studentId]: response.data.data._id
         }));
-        setSuccess(t('common.savedSuccessfully'));
       }
       
       // Update recordedAt timestamp
@@ -306,7 +306,7 @@ const StudentAttendance = () => {
         }
       }));
       
-      setTimeout(() => setSuccess(''), 3000);
+      window.alert(successMsg);
     } catch (err) {
       console.error('Attendance save error:', err);
       console.error('Error response data:', err.response?.data);
@@ -333,7 +333,6 @@ const StudentAttendance = () => {
     <div className="container">
       <h1 style={{ marginBottom: '30px' }}>{t('attendance.studentAttendance')}</h1>
 
-      {success && <div className="alert alert-success">{success}</div>}
       {error && <div className="alert alert-error">{error}</div>}
       
       {/* Info message for teachers */}

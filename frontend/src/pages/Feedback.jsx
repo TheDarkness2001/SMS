@@ -268,20 +268,19 @@ const Feedback = () => {
       
       console.log('✅ Submitting feedback:', feedbackData);
 
+      const successMsg = formData._id ? t('feedback.updateSuccess') : t('feedback.submitSuccess');
+      
       if (formData._id) {
         // Update existing feedback
         await feedbackAPI.update(formData._id, feedbackData);
-        setSuccess(t('feedback.updateSuccess'));
       } else {
         // Create new feedback
         await feedbackAPI.create(feedbackData);
-        setSuccess(t('feedback.submitSuccess'));
       }
 
-      setTimeout(() => {
-        handleCloseModal();
-        fetchData();
-      }, 1500);
+      handleCloseModal();
+      fetchData();
+      window.alert(successMsg);
     } catch (err) {
       console.error('Error submitting feedback:', err);
       console.error('Error details:', err.response?.data);
@@ -649,7 +648,6 @@ const Feedback = () => {
 
             <div className="modal-body">
               {error && <div className="alert alert-error">{error}</div>}
-              {success && <div className="alert alert-success">{success}</div>}
 
               <div className="feedback-info">
                 <p><strong>{t('students.student')}:</strong> {selectedStudent?.name} ({selectedStudent?.studentId})</p>

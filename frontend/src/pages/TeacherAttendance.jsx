@@ -83,14 +83,15 @@ const TeacherAttendance = () => {
         notes: attendance[teacherId]?.notes || ''
       });
 
-      setSuccess(`${t('common.success')}: ${t('attendance.attendanceRecord')} ${t('common.savedSuccessfully')} (${teachers.find(t => t._id === teacherId)?.name})`);
-      setTimeout(() => setSuccess(''), 3000);
+      const teacherName = teachers.find(t => t._id === teacherId)?.name;
       
       // Reset the teacher's entry
       setAttendance(prev => ({
         ...prev,
         [teacherId]: { status: '', notes: '' }
       }));
+      
+      window.alert(`${t('common.success')}: ${t('attendance.attendanceRecord')} ${t('common.savedSuccessfully')} (${teacherName})`);
     } catch (err) {
       if (err.response?.status === 401) {
         sessionStorage.removeItem('token');
@@ -108,7 +109,6 @@ const TeacherAttendance = () => {
     <div className="container">
       <h1 style={{ marginBottom: '30px' }}>{t('attendance.teacherAttendance')}</h1>
 
-      {success && <div className="alert alert-success">{success}</div>}
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="card">
