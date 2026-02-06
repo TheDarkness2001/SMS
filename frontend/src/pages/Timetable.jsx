@@ -42,22 +42,7 @@ const Timetable = () => {
       const res = await teachersAPI.getAll(branchFilter);
       const allTeachers = res.data.data || [];
       
-      // Fetch all schedules to filter teachers with classes
-      const token = sessionStorage.getItem('token');
-      const schedulesRes = await axios.get('/api/scheduler', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: branchFilter
-      });
-      const allSchedules = schedulesRes.data.data || [];
-      
-      // Filter teachers who have at least one schedule
-      const teachersWithSchedules = allTeachers.filter(teacher => {
-        return allSchedules.some(schedule => 
-          schedule.teacher === teacher._id || schedule.teacher?._id === teacher._id
-        );
-      });
-      
-      setTeachers(teachersWithSchedules);
+      setTeachers(allTeachers);
     } catch (err) {
       console.error('Failed to fetch teachers:', err);
     }
