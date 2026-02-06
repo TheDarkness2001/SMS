@@ -174,12 +174,11 @@ const Scheduler = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const successMsg = editingSchedule ? t('common.success') : t('common.success');
       if (editingSchedule) {
         await schedulerAPI.update(editingSchedule._id, formData);
-        setSuccess(t('common.success'));
       } else {
         await schedulerAPI.create(formData);
-        setSuccess(t('common.success'));
       }
       setShowModal(false);
       setEditingSchedule(null);
@@ -199,8 +198,7 @@ const Scheduler = () => {
       });
       fetchData();
       
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(''), 3000);
+      window.alert(successMsg);
     } catch (err) {
       setError(t('common.error') + ': ' + (err.response?.data?.message || err.message));
       console.error(err);
@@ -245,11 +243,8 @@ const Scheduler = () => {
     if (window.confirm(t('scheduler.deleteConfirm'))) {
       try {
         await schedulerAPI.delete(id);
-        setSuccess(t('scheduler.deleteSuccess'));
         fetchData();
-        
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccess(''), 3000);
+        window.alert(t('scheduler.deleteSuccess'));
       } catch (err) {
         setError(t('scheduler.deleteError') + ': ' + (err.response?.data?.message || err.message));
         console.error(err);
@@ -314,7 +309,6 @@ const Scheduler = () => {
       </div>
 
       {error && <div className="alert alert-danger error-message">{error}</div>}
-      {success && <div className="alert alert-success success-message">{success}</div>}
 
       {/* Teacher Filter */}
       <div className="filter-section">

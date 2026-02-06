@@ -79,9 +79,8 @@ const Students = () => {
     if (window.confirm(t('modals.deleteMessage'))) {
       try {
         await studentsAPI.delete(id);
-        setSuccess(t('students.deleteSuccess'));
         fetchStudents();
-        setTimeout(() => setSuccess(''), 3000);
+        window.alert(t('students.deleteSuccess'));
       } catch (error) {
         // Handle 401 Unauthorized error by redirecting to login
         if (error.response && error.response.status === 401) {
@@ -173,7 +172,6 @@ const Students = () => {
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
 
       {loading ? (
         <div className="students__loading">

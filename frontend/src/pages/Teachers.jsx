@@ -92,9 +92,8 @@ const Teachers = () => {
     if (window.confirm(t('modals.deleteMessage'))) {
       try {
         await teachersAPI.delete(id);
-        setSuccess(t('common.deletedSuccessfully'));
         fetchTeachers();
-        setTimeout(() => setSuccess(''), 3000);
+        window.alert(t('common.deletedSuccessfully'));
       } catch (error) {
         // Handle 401 Unauthorized error by redirecting to login
         if (error.response && error.response.status === 401) {
@@ -156,7 +155,6 @@ const Teachers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
 
     // Validate branch selection for admin/manager/founder
     if (['founder', 'admin', 'manager'].includes(user?.role) && !formData.branchId) {
@@ -166,6 +164,7 @@ const Teachers = () => {
 
     try {
       let teacherData;
+      let successMessage;
       
       // Convert subject string to array
       const subjectsArray = formData.subject
@@ -194,7 +193,7 @@ const Teachers = () => {
           await teachersAPI.uploadPhoto(editingTeacher._id, imageFormData);
         }
         
-        setSuccess(t('teachers.updateSuccess'));
+        successMessage = t('teachers.updateSuccess');
       } else {
         // Create new teacher
         const response = await teachersAPI.create(submitData);
@@ -207,12 +206,12 @@ const Teachers = () => {
           await teachersAPI.uploadPhoto(teacherData._id, imageFormData);
         }
         
-        setSuccess(t('teachers.addSuccess'));
+        successMessage = t('teachers.addSuccess');
       }
       
       setShowModal(false);
       fetchTeachers();
-      setTimeout(() => setSuccess(''), 3000);
+      window.alert(successMessage);
     } catch (error) {
       // Handle 401 Unauthorized error by redirecting to login
       if (error.response && error.response.status === 401) {
@@ -248,7 +247,6 @@ const Teachers = () => {
     <div className="container">
         <h1 style={{ marginBottom: '30px' }}>{t('teachers.title')}</h1>
 
-        {success && <div className="alert alert-success">{success}</div>}
         {error && <div className="alert alert-error">{error}</div>}
 
         <div className="search-bar" style={{ 
