@@ -160,13 +160,14 @@ const Payments = () => {
       }
       
       if (response.data?.success) {
-        setSuccess(t('payments.saveSuccess'));
-        
         // Close modal first
         closePaymentModal();
         
         // Then refresh data to show updated payment
         await refreshData();
+        
+        // Show success alert after everything is done
+        window.alert(t('payments.saveSuccess'));
       } else {
         throw new Error(t('payments.saveError'));
       }
@@ -201,7 +202,7 @@ const Payments = () => {
       if (response.data?.success) {
         // Refresh data to update state
         refreshData();
-        setSuccess(t('payments.deleteSuccess'));
+        window.alert(t('payments.deleteSuccess'));
       } else {
         throw new Error(t('payments.deleteError'));
       }
@@ -257,7 +258,6 @@ const Payments = () => {
         </div>
       </header>
 
-      {success && !showModal && <div className="alert alert-success">{success}</div>}
       {error && !showModal && <div className="alert alert-danger">{error}</div>}
 
       <div className="payments-filter-container">
