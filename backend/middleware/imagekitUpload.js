@@ -1,9 +1,27 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const imagekit = require('../config/imagekit');
 
-// Use memory storage instead of disk storage
-const storage = multer.memoryStorage();
+// Use memory storage for ImageKit, disk storage as fallback
+const memoryStorage = multer.memoryStorage();
+const diskStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../uploads');
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// Choose storage based on ImageKit configuration
+const storage = process.env.IMAGEKIT_PRIVATE_KEY ? memoryStorage : diskStorage;
 
 // File filter
 const fileFilter = (req, file, cb) => {
@@ -31,15 +49,13 @@ const uploadToImageKit = async (req, res, next) => {
     return next();
   }
 
-  try {
-    // Check if ImageKit is configured
-    if (!process.env.IMAGEKIT_PRIVATE_KEY) {
-      console.warn('ImageKit not configured, skipping cloud upload');
-      // Use local filename for backward compatibility
-      req.file.filename = req.file.fieldname + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(req.file.originalname);
-      return next();
-    }
+  // If ImageKit is not configured, file is already saved to disk by multer
+  if (!process.env.IMAGEKIT_PRIVATE_KEY) {
+    console.log('[ImageKit] Not configured, using disk storage. File saved to:', req.file.path);
+    return next();
+  }
 
+  try {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const fileName = req.file.fieldname + '-' + uniqueSuffix + path.extname(req.file.originalname);
 
@@ -61,9 +77,7 @@ const uploadToImageKit = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('ImageKit upload error:', error);
-    // Fallback to local storage on ImageKit error
-    req.file.filename = req.file.fieldname + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(req.file.originalname);
-    next();
+    next(error);
   }
 };
 
