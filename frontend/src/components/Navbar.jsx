@@ -10,12 +10,23 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { language, changeLanguage, t } = useLanguage();
   const { selectedBranch, setSelectedBranch, branches, isAllBranches } = useBranch();
-  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+  const [user, setUser] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const branchDropdownRef = useRef(null);
   const [staffUser, setStaffUser] = useState(null);
+
+  // Listen for auth changes (including profile updates)
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const updatedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+      setUser(updatedUser);
+    };
+    
+    window.addEventListener('auth-change', handleAuthChange);
+    return () => window.removeEventListener('auth-change', handleAuthChange);
+  }, []);
 
   // Check if viewing as student
   useEffect(() => {
