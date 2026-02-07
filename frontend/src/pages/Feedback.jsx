@@ -30,7 +30,6 @@ const Feedback = () => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [currentUser] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
   
   const [formData, setFormData] = useState({

@@ -13,7 +13,6 @@ const StudentAttendance = () => {
   const [studentAttendance, setStudentAttendance] = useState({});
   const [savedAttendance, setSavedAttendance] = useState({}); // Track saved records
   const [loading, setLoading] = useState(true);
-  const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [user] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
   const isTeacher = user.role === 'teacher' && !['admin', 'manager', 'founder'].includes(user.role);

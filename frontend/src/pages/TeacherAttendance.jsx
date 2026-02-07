@@ -14,7 +14,6 @@ const TeacherAttendance = () => {
   const [attendance, setAttendance] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   // Fetch all teachers
   useEffect(() => {
