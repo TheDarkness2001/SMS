@@ -20,7 +20,9 @@ const Navbar = () => {
   // Listen for auth changes (including profile updates)
   useEffect(() => {
     const handleAuthChange = () => {
+      console.log('[Navbar] Received auth-change event');
       const updatedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+      console.log('[Navbar] Updated user from sessionStorage:', updatedUser);
       setUser(updatedUser);
     };
     

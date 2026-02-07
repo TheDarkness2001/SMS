@@ -195,10 +195,23 @@ const Teachers = () => {
         
         // If user edited their own profile, update sessionStorage
         if (user && user.id === editingTeacher._id) {
-          const updatedUser = { ...user, ...teacherData };
+          // Merge updated data while preserving important user fields
+          const updatedUser = {
+            ...user,
+            name: teacherData.name,
+            email: teacherData.email,
+            profileImage: teacherData.profileImage,
+            phone: teacherData.phone,
+            subject: teacherData.subject,
+            department: teacherData.department
+          };
           sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          console.log('[Teachers] Updated sessionStorage user:', updatedUser);
           // Dispatch event to notify other components (like Navbar)
-          window.dispatchEvent(new Event('auth-change'));
+          setTimeout(() => {
+            window.dispatchEvent(new Event('auth-change'));
+            console.log('[Teachers] Dispatched auth-change event');
+          }, 100);
         }
         
         successMessage = t('teachers.updateSuccess');
