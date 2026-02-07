@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { getImageUrl } from '../utils/api';
 import UserAvatar from './UserAvatar';
 import './Navbar.css';
 
@@ -80,19 +81,6 @@ const Navbar = () => {
 
   const displayInfo = getUserDisplayInfo();
 
-  // Helper to get the correct image URL
-  const getImageUrl = () => {
-    if (!user.profileImage) return null;
-    
-    // If profileImage already starts with http or /, use as is
-    if (user.profileImage.startsWith('http') || user.profileImage.startsWith('/uploads/')) {
-      return user.profileImage;
-    }
-    
-    // Otherwise, prepend /uploads/
-    return `/uploads/${user.profileImage}`;
-  };
-
   return (
     <nav className="navbar">
       <div className="navbar-content">
@@ -154,7 +142,7 @@ const Navbar = () => {
           <div className="user-dropdown" ref={dropdownRef}>
             <div className="user-info-dropdown" onClick={toggleDropdown}>
               <UserAvatar 
-                src={getImageUrl()}
+                src={getImageUrl(user.profileImage)}
                 alt={displayInfo.name}
                 size="small"
                 className="navbar-user-avatar"
@@ -211,7 +199,7 @@ const Navbar = () => {
                 )}
                 <div className="dropdown-user-info">
                   <UserAvatar 
-                    src={getImageUrl()}
+                    src={getImageUrl(user.profileImage)}
                     alt={displayInfo.name}
                     size="large"
                   />
