@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { teachersAPI, branchesAPI } from '../utils/api';
+import { teachersAPI, branchesAPI, getImageUrl } from '../utils/api';
 import "../styles/Teachers.css"
 
 const Teachers = () => {
@@ -415,7 +415,7 @@ const Teachers = () => {
                     <td>
                       {teacher.profileImage ? (
                         <img 
-                          src={`/uploads/${teacher.profileImage}`} 
+                          src={getImageUrl(teacher.profileImage)} 
                           alt={teacher.name}
                           style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
                         />

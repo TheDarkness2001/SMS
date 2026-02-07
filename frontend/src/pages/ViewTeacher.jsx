@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { teachersAPI, timetableAPI, attendanceAPI } from '../utils/api';
+import { teachersAPI, timetableAPI, attendanceAPI, getImageUrl } from '../utils/api';
 import '../styles/ViewTeacher.css';
 
 const ViewTeacher = () => {
@@ -69,7 +69,7 @@ const ViewTeacher = () => {
         <div className="teacher-profile-header">
           {teacher.profileImage ? (
             <img 
-              src={`/uploads/${teacher.profileImage}`} 
+              src={getImageUrl(teacher.profileImage)} 
               alt={teacher.name}
               className="teacher-avatar"
             />

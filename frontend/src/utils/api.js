@@ -252,4 +252,11 @@ export const branchesAPI = {
   getStats: (id) => api.get(`/branches/${id}/stats`)
 };
 
+// Helper function to get image URL from backend
+export const getImageUrl = (filename) => {
+  if (!filename) return null;
+  const baseUrl = API_BASE_URL.replace('/api', '');
+  return `${baseUrl}/uploads/${filename}`;
+};
+
 export default api;
