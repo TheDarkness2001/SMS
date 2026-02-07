@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import { studentsAPI } from '../utils/api';
+import { studentsAPI, getImageUrl } from '../utils/api';
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDollar, AiOutlineDelete } from 'react-icons/ai';
 import '../styles/Students.css';
 
@@ -224,7 +224,7 @@ const Students = () => {
                     <td>
                       {student.profileImage ? (
                         <img 
-                          src={`/uploads/${student.profileImage}`} 
+                          src={getImageUrl(student.profileImage)}
                           alt={student.name}
                           className="student-table-photo"
                         />

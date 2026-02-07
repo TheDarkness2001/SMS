@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { studentsAPI, feedbackAPI, paymentsAPI } from '../utils/api';
+import { studentsAPI, feedbackAPI, paymentsAPI, getImageUrl } from '../utils/api';
 import { useLanguage } from '../context/LanguageContext';
 import { AiOutlineEye } from 'react-icons/ai';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -157,7 +157,7 @@ const ViewStudent = () => {
         <div className="student-basic-info">
           {student.profileImage ? (
             <img 
-              src={`/uploads/${student.profileImage}`} 
+              src={getImageUrl(student.profileImage)}
               alt={student.name} 
               className="student-photo"
             />
