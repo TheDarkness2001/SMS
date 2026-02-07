@@ -67,7 +67,6 @@ const TeacherAttendance = () => {
   const handleSaveTeacher = async (teacherId) => {
     try {
       setError('');
-      setSuccess('');
       
       const status = attendance[teacherId]?.status;
       if (!status) {

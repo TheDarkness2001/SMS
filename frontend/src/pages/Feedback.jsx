@@ -180,7 +180,6 @@ const Feedback = () => {
     
     setShowModal(true);
     setError('');
-    setSuccess('');
   };
 
   const handleCloseModal = () => {
@@ -197,7 +196,6 @@ const Feedback = () => {
       examPercentage: 0
     });
     setError('');
-    setSuccess('');
   };
 
   const handleInputChange = (e) => {
@@ -210,7 +208,6 @@ const Feedback = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
 
     try {
       console.log('Selected class object:', selectedClass);

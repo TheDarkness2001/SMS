@@ -99,9 +99,8 @@ const Branches = () => {
       const response = await branchesAPI.delete(branchId);
       
       if (response.data.success) {
-        setSuccess(response.data.message);
+        window.alert(response.data.message);
         fetchBranches();
-        setTimeout(() => setSuccess(''), 3000);
       } else {
         setError(response.data.message);
       }

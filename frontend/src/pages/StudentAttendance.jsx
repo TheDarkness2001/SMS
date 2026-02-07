@@ -188,7 +188,6 @@ const StudentAttendance = () => {
   const handleSaveStudent = async (studentId) => {
     try {
       setError('');
-      setSuccess('');
       
       const status = studentAttendance[studentId]?.status;
       if (!status) {
