@@ -189,7 +189,16 @@ const Teachers = () => {
         if (profileImage) {
           const imageFormData = new FormData();
           imageFormData.append('profileImage', profileImage);
-          await teachersAPI.uploadPhoto(editingTeacher._id, imageFormData);
+          const photoResponse = await teachersAPI.uploadPhoto(editingTeacher._id, imageFormData);
+          teacherData = photoResponse.data.data; // Get updated teacher data with new profileImage
+        }
+        
+        // If user edited their own profile, update sessionStorage
+        if (user && user.id === editingTeacher._id) {
+          const updatedUser = { ...user, ...teacherData };
+          sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          // Dispatch event to notify other components (like Navbar)
+          window.dispatchEvent(new Event('auth-change'));
         }
         
         successMessage = t('teachers.updateSuccess');
