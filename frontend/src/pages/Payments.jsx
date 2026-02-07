@@ -105,7 +105,6 @@ const Payments = () => {
     setExpectedAmount(0);
     setInitialPayment(null);
     setError('');
-    setSuccess('');
   };
 
   // Helper function to calculate term based on month

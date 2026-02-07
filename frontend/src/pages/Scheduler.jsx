@@ -41,7 +41,6 @@ const Scheduler = () => {
     try {
       setLoading(true);
       setError('');
-      setSuccess('');
 
       const branchFilter = getBranchFilter();
       console.log('[Scheduler] Fetching data with branch filter:', branchFilter);
