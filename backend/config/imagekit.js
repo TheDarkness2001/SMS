@@ -11,6 +11,8 @@ if (process.env.IMAGEKIT_PRIVATE_KEY) {
       urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/utwr84eaa'
     });
     console.log('[ImageKit Config] ImageKit SDK initialized successfully');
+    console.log('[ImageKit Config] Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(imagekit)));
+    console.log('[ImageKit Config] Has upload method?', typeof imagekit.upload);
   } catch (error) {
     console.error('[ImageKit Config] Failed to initialize ImageKit:', error.message);
   }
