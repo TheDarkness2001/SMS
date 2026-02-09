@@ -16,33 +16,42 @@ if (process.env.IMAGEKIT_PRIVATE_KEY) {
     imagekit = {
       ...ImageKitInstance,
       upload: async function(options) {
-        // ImageKit SDK v7 doesn't have upload method, so we construct it manually
-        // Use the SDK's makeRequest method with proper parameters
+        // Bypass SDK and use direct fetch to ImageKit upload API
         try {
-          const formData = {
+          const authString = Buffer.from(`${ImageKitInstance.options.privateKey}:`).toString('base64');
+          
+          const uploadData = {
             file: options.file,
             fileName: options.fileName,
           };
           
           if (options.folder) {
-            formData.folder = options.folder;
+            uploadData.folder = options.folder;
           }
           
           if (options.useUniqueFileName !== undefined) {
-            formData.useUniqueFileName = options.useUniqueFileName;
+            uploadData.useUniqueFileName = options.useUniqueFileName;
           }
           
-          // Call the SDK's internal request method
-          const response = await ImageKitInstance.makeRequest({
+          console.log('[ImageKit Upload] Uploading to:', 'https://upload.imagekit.io/api/v1/files/upload');
+          
+          const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
             method: 'POST',
-            url: `https://upload.imagekit.io/api/v1/files/upload`,
             headers: {
+              'Authorization': `Basic ${authString}`,
               'Content-Type': 'application/json',
             },
-            data: formData
+            body: JSON.stringify(uploadData)
           });
           
-          return response;
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`ImageKit upload failed: ${response.status} ${errorText}`);
+          }
+          
+          const result = await response.json();
+          console.log('[ImageKit Upload] Success:', result.url);
+          return result;
         } catch (error) {
           console.error('[ImageKit] Upload method error:', error);
           throw error;
