@@ -50,8 +50,8 @@ const uploadToImageKit = async (req, res, next) => {
   }
 
   // If ImageKit is not configured, file is already saved to disk by multer
-  if (!process.env.IMAGEKIT_PRIVATE_KEY) {
-    console.log('[ImageKit] Not configured, using disk storage. File saved to:', req.file.path);
+  if (!process.env.IMAGEKIT_PRIVATE_KEY || !imagekit) {
+    console.log('[ImageKit] Not configured or SDK not initialized, using disk storage. File saved to:', req.file.path);
     return next();
   }
 
