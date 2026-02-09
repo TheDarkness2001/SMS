@@ -158,7 +158,7 @@ exports.createStudent = async (req, res) => {
 
     // Handle file upload
     if (req.file) {
-      studentData.profileImage = req.file.filename;
+      studentData.profileImage = req.file.path || req.file.filename;
     } else {
       // Ensure profileImage is not set to empty object
       studentData.profileImage = '';
@@ -265,7 +265,7 @@ exports.updateStudent = async (req, res) => {
 
     // Handle file upload
     if (req.file) {
-      updateData.profileImage = req.file.filename;
+      updateData.profileImage = req.file.path || req.file.filename;
     }
 
     let student = await Student.findById(req.params.id);
@@ -339,7 +339,7 @@ exports.uploadPhoto = async (req, res) => {
 
     const student = await Student.findByIdAndUpdate(
       req.params.id,
-      { profileImage: req.file.filename },
+      { profileImage: req.file.path || req.file.filename },
       { new: true }
     ).select('-parentPassword');
 
