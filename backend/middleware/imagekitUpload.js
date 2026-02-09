@@ -67,13 +67,19 @@ const uploadToImageKit = async (req, res, next) => {
     const fileBase64 = req.file.buffer.toString('base64');
     console.log('[ImageKit] File converted to base64, length:', fileBase64.length);
 
-    // Upload to ImageKit
+    // Upload to ImageKit using v7 SDK
     console.log('[ImageKit] Uploading to ImageKit...');
-    const result = await imagekit.upload({
-      file: fileBase64, // Base64 encoded file
+    
+    // ImageKit v7 uses upload method on the instance
+    const uploadOptions = {
+      file: fileBase64,
       fileName: fileName,
-      folder: '/uploads' // Optional: organize files in folders
-    });
+      folder: '/uploads',
+      useUniqueFileName: false
+    };
+    
+    console.log('[ImageKit] Calling upload with options:', { fileName, folder: '/uploads' });
+    const result = await imagekit.upload(uploadOptions);
 
     console.log('[ImageKit] Upload successful!', result.url);
     
