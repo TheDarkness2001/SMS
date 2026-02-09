@@ -1,30 +1,40 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { subjectsAPI } from '../utils/api';
+import { useBranch } from '../context/BranchContext';
+import { subjectsAPI, branchesAPI } from '../utils/api';
 import { AiOutlinePlus, AiOutlineEdit, AiOutlineDelete, AiOutlineBook } from 'react-icons/ai';
 import '../styles/ManageExamGroups.css';
 
 const ManageSubjects = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { selectedBranch, getBranchFilter } = useBranch();
   const [subjects, setSubjects] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingSubject, setEditingSubject] = useState(null);
   const [error, setError] = useState('');
+  const [user] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
 
   const [formData, setFormData] = useState({
     name: '',
     code: '',
-    description: ''
+    description: '',
+    branchId: ''
   });
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await subjectsAPI.getAll();
-      setSubjects(response.data.data || []);
+      const branchFilter = getBranchFilter();
+      const [subjectsRes, branchesRes] = await Promise.all([
+        subjectsAPI.getAll(branchFilter),
+        branchesAPI.getAll()
+      ]);
+      setSubjects(subjectsRes.data.data || []);
+      setBranches(branchesRes.data.data || []);
     } catch (err) {
       console.error('Error fetching subjects:', err);
       if (err.response?.status === 401) {
@@ -37,11 +47,16 @@ const ManageSubjects = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate, t]);
+  }, [navigate, t, getBranchFilter]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Refetch when selected branch changes
+  useEffect(() => {
+    fetchData();
+  }, [selectedBranch, fetchData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -54,12 +69,17 @@ const ManageSubjects = () => {
   const handleAddSubject = async (e) => {
     e.preventDefault();
     try {
-      await subjectsAPI.create(formData);
+      const submitData = {
+        ...formData,
+        branchId: formData.branchId || user.branchId // Use selected or user's branch
+      };
+      await subjectsAPI.create(submitData);
       setShowAddModal(false);
       setFormData({
         name: '',
         code: '',
-        description: ''
+        description: '',
+        branchId: ''
       });
       fetchData();
       window.alert(t('common.savedSuccessfully'));
@@ -240,7 +260,35 @@ const ManageSubjects = () => {
                   }}
                 />
               </div>
-
+              
+              {/* Branch Selector - Only for founders */}
+              {user.role === 'founder' && (
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label style={{ fontWeight: '500', marginBottom: '8px', display: 'block' }}>{t('common.branch')}</label>
+                  <select
+                    name="branchId"
+                    value={formData.branchId}
+                    onChange={handleInputChange}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">{t('common.selectBranch')}</option>
+                    {branches.filter(b => b.status === 'active').map(branch => (
+                      <option key={branch._id} value={branch._id}>{branch.name}</option>
+                    ))}
+                  </select>
+                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                    {t('subjects.branchNote')}
+                  </small>
+                </div>
+              )}
+              
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid #eee' }}>
                 <button
                   type="button"
