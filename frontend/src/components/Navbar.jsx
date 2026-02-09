@@ -94,6 +94,12 @@ const Navbar = () => {
 
   const displayInfo = getUserDisplayInfo();
 
+  // Debug log for image URL
+  React.useEffect(() => {
+    console.log('[Navbar] Current user.profileImage:', user.profileImage);
+    console.log('[Navbar] getImageUrl result:', getImageUrl(user.profileImage));
+  }, [user.profileImage]);
+
   return (
     <nav className="navbar">
       <div className="navbar-content">

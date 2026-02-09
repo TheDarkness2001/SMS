@@ -12,6 +12,7 @@ const UserAvatar = ({
   
   // Update image source when src prop changes
   React.useEffect(() => {
+    console.log('[UserAvatar] src changed:', src);
     setImageError(false);
     setImageSrc(src);
   }, [src]);
@@ -26,6 +27,7 @@ const UserAvatar = ({
   const avatarSize = sizeMap[size] || sizeMap.medium;
   
   const handleImageError = () => {
+    console.log('[UserAvatar] Image failed to load:', imageSrc);
     setImageError(true);
   };
   
