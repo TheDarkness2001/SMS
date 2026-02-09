@@ -26,6 +26,9 @@ const Navbar = () => {
       setUser(updatedUser);
     };
     
+    // Also check for updates on mount
+    handleAuthChange();
+    
     window.addEventListener('auth-change', handleAuthChange);
     return () => window.removeEventListener('auth-change', handleAuthChange);
   }, []);

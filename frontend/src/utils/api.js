@@ -255,6 +255,13 @@ export const branchesAPI = {
 // Helper function to get image URL from backend
 export const getImageUrl = (filename) => {
   if (!filename) return null;
+  
+  // If already a full URL (ImageKit), return as-is
+  if (filename.startsWith('http://') || filename.startsWith('https://')) {
+    return filename;
+  }
+  
+  // Otherwise, construct backend URL
   const baseUrl = API_BASE_URL.replace('/api', '');
   return `${baseUrl}/uploads/${filename}`;
 };
