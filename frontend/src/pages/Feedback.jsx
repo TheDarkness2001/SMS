@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import { feedbackAPI, schedulerAPI, teachersAPI } from '../utils/api';
+import { feedbackAPI, schedulerAPI, teachersAPI, getImageUrl } from '../utils/api';
 import { 
   AiOutlineCalendar, 
   AiOutlinePlus, 
@@ -420,7 +420,7 @@ const Feedback = () => {
                             <div className="student-info">
                               {student.profileImage ? (
                                 <img 
-                                  src={`/uploads/${student.profileImage}`} 
+                                  src={getImageUrl(student.profileImage)}
                                   alt={student.name}
                                   className="student-photo"
                                 />
