@@ -177,7 +177,7 @@ const ManageExamGroups = () => {
 
   // Filter available students: exclude those already in OTHER groups with the SAME subject
   const getAvailableStudents = () => {
-    const currentSubject = formData.groupName?.trim().toLowerCase();
+    const currentSubject = formData.subject?.trim().toLowerCase();
     if (!currentSubject) return students;
 
     // Get all student IDs already enrolled in OTHER groups with the same subject
@@ -191,7 +191,6 @@ const ManageExamGroups = () => {
       .flatMap(group => group.students.map(s => s._id || s));
 
     // Show all students not in another group for this subject
-    // (Removed strict 'isStudyingSubject' check to prevent empty lists)
     return students.filter(student => !enrolledStudentIds.includes(student._id));
   };
 
@@ -506,9 +505,9 @@ const ManageExamGroups = () => {
                 }}>
                   {getAvailableStudents().length === 0 ? (
                     <p style={{ textAlign: 'center', color: '#999' }}>
-                      {formData.groupName 
-                        ? t('subjectGroups.noStudentsFound', { subject: formData.groupName }) 
-                        : t('subjectGroups.enterGroupNameStudents')}
+                      {formData.subject 
+                        ? t('subjectGroups.noStudentsFound', { subject: formData.subject }) 
+                        : t('subjectGroups.enterSubjectFirst')}
                     </p>
                   ) : (
                     getAvailableStudents().map(student => (
