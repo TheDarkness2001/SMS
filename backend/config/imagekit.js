@@ -16,13 +16,37 @@ if (process.env.IMAGEKIT_PRIVATE_KEY) {
     imagekit = {
       ...ImageKitInstance,
       upload: async function(options) {
-        // Use the SDK's request method to upload
-        const response = await ImageKitInstance.request({
-          method: 'POST',
-          url: '/v1/files/upload',
-          data: options
-        });
-        return response;
+        // ImageKit SDK v7 doesn't have upload method, so we construct it manually
+        // Use the SDK's makeRequest method with proper parameters
+        try {
+          const formData = {
+            file: options.file,
+            fileName: options.fileName,
+          };
+          
+          if (options.folder) {
+            formData.folder = options.folder;
+          }
+          
+          if (options.useUniqueFileName !== undefined) {
+            formData.useUniqueFileName = options.useUniqueFileName;
+          }
+          
+          // Call the SDK's internal request method
+          const response = await ImageKitInstance.makeRequest({
+            method: 'POST',
+            url: `https://upload.imagekit.io/api/v1/files/upload`,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            data: formData
+          });
+          
+          return response;
+        } catch (error) {
+          console.error('[ImageKit] Upload method error:', error);
+          throw error;
+        }
       }
     };
     
