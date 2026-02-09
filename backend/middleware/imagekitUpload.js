@@ -77,10 +77,11 @@ const uploadToImageKit = async (req, res, next) => {
 
     console.log('[ImageKit] Upload successful!', result.url);
     
-    // Replace file path with ImageKit URL
-    req.file.path = result.url;
-    req.file.filename = result.name;
+    // Replace file info with ImageKit URL
+    req.file.path = result.url;  // Full ImageKit URL
+    req.file.filename = result.url;  // Also set filename to full URL for consistency
     req.file.imagekitFileId = result.fileId; // Store for potential deletion
+    req.file.isImageKit = true;  // Flag to indicate ImageKit upload
 
     next();
   } catch (error) {
