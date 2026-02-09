@@ -56,19 +56,27 @@ const uploadToImageKit = async (req, res, next) => {
   }
 
   try {
+    console.log('[ImageKit] Starting upload...');
+    console.log('[ImageKit] IMAGEKIT_PRIVATE_KEY exists:', !!process.env.IMAGEKIT_PRIVATE_KEY);
+    console.log('[ImageKit] File buffer size:', req.file.buffer.length);
+    
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const fileName = req.file.fieldname + '-' + uniqueSuffix + path.extname(req.file.originalname);
 
     // Convert buffer to base64 for ImageKit
     const fileBase64 = req.file.buffer.toString('base64');
+    console.log('[ImageKit] File converted to base64, length:', fileBase64.length);
 
     // Upload to ImageKit
+    console.log('[ImageKit] Uploading to ImageKit...');
     const result = await imagekit.upload({
       file: fileBase64, // Base64 encoded file
       fileName: fileName,
       folder: '/uploads' // Optional: organize files in folders
     });
 
+    console.log('[ImageKit] Upload successful!', result.url);
+    
     // Replace file path with ImageKit URL
     req.file.path = result.url;
     req.file.filename = result.name;
@@ -76,8 +84,26 @@ const uploadToImageKit = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('ImageKit upload error:', error);
-    next(error);
+    console.error('[ImageKit] Upload error details:', error.message);
+    console.error('[ImageKit] Full error:', error);
+    
+    // Fallback to disk storage if ImageKit fails
+    console.log('[ImageKit] Falling back to disk storage...');
+    const uploadDir = path.join(__dirname, '../uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const fileName = req.file.fieldname + '-' + uniqueSuffix + path.extname(req.file.originalname);
+    const filePath = path.join(uploadDir, fileName);
+    
+    fs.writeFileSync(filePath, req.file.buffer);
+    req.file.path = filePath;
+    req.file.filename = fileName;
+    console.log('[ImageKit] Fallback successful, file saved to:', filePath);
+    
+    next();
   }
 };
 
