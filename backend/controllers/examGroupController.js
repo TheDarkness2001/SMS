@@ -37,7 +37,26 @@ exports.getGroups = async (req, res) => {
         .populate('teachers', 'name teacherId')
         .populate('createdBy', 'name');
 
+      // Clean duplicates in students array for each group
+      let cleaned = false;
+      for (let group of groups) {
+        const originalLength = group.students.length;
+        const uniqueStudentIds = [...new Set(group.students.map(s => s._id.toString()))];
+        
+        if (originalLength !== uniqueStudentIds.length) {
+          console.log(`[ExamGroupController] Cleaning duplicates in group ${group.groupName}: ${originalLength} -> ${uniqueStudentIds.length}`);
+          group.students = uniqueStudentIds;
+          await group.save();
+          // Re-populate after save
+          await group.populate('students', 'name studentId profileImage class');
+          cleaned = true;
+        }
+      }
+
       console.log('[ExamGroupController] Groups found for teacher:', groups.length);
+      if (cleaned) {
+        console.log('[ExamGroupController] Auto-cleaned duplicate students');
+      }
       if (groups.length > 0) {
         console.log('[ExamGroupController] First group:', {
           name: groups[0].groupName,
@@ -59,6 +78,26 @@ exports.getGroups = async (req, res) => {
       .populate('students', 'name studentId profileImage class')
       .populate('teachers', 'name teacherId')
       .populate('createdBy', 'name');
+
+    // Clean duplicates in students array for each group
+    let cleaned = false;
+    for (let group of groups) {
+      const originalLength = group.students.length;
+      const uniqueStudentIds = [...new Set(group.students.map(s => s._id.toString()))];
+      
+      if (originalLength !== uniqueStudentIds.length) {
+        console.log(`[ExamGroupController] Auto-cleaning duplicates in group ${group.groupName}: ${originalLength} -> ${uniqueStudentIds.length}`);
+        group.students = uniqueStudentIds;
+        await group.save();
+        // Re-populate after save
+        await group.populate('students', 'name studentId profileImage class');
+        cleaned = true;
+      }
+    }
+    
+    if (cleaned) {
+      console.log('[ExamGroupController] Auto-cleaned duplicate students in admin view');
+    }
 
     res.status(200).json({
       success: true,
