@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { api } from '../utils/api';
 import { formatUZS } from '../utils/formatters';
 import '../styles/StaffEarnings.css';
 
@@ -33,24 +33,27 @@ const StaffEarnings = () => {
       console.log('[StaffEarnings] Fetching with branch filter:', branchFilter);
       
       // Fetch account summary
-      const accountRes = await axios.get('/api/staff-earnings/account', {
-        headers: { Authorization: `Bearer ${token}` },
+      const accountRes = await api.get('/staff-earnings/account', {
         params: branchFilter
       });
-      setAccount(accountRes.data.data);
+      console.log('[StaffEarnings] Account response:', accountRes.data);
+      setAccount(accountRes.data.data || null);
       
       // Fetch earnings with filters
-      const params = new URLSearchParams();
-      if (filter !== 'all') params.append('status', filter);
-      if (dateRange.startDate) params.append('startDate', dateRange.startDate);
-      if (dateRange.endDate) params.append('endDate', dateRange.endDate);
-      if (branchFilter.branchId) params.append('branchId', branchFilter.branchId);
+      const params = {
+        ...branchFilter
+      };
+      if (filter !== 'all') params.status = filter;
+      if (dateRange.startDate) params.startDate = dateRange.startDate;
+      if (dateRange.endDate) params.endDate = dateRange.endDate;
       
-      const earningsRes = await axios.get(`/api/staff-earnings?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setEarnings(earningsRes.data.data);
-      console.log('[StaffEarnings] Loaded earnings:', earningsRes.data.data?.length);
+      console.log('[StaffEarnings] Fetching earnings with params:', params);
+      const earningsRes = await api.get('/staff-earnings', { params });
+      console.log('[StaffEarnings] Earnings response:', earningsRes.data);
+      
+      const earningsData = earningsRes.data.data || [];
+      setEarnings(earningsData);
+      console.log('[StaffEarnings] Loaded earnings:', earningsData.length);
     } catch (error) {
       console.error('Error fetching earnings:', error);
       alert(error.response?.data?.message || 'Failed to fetch earnings');

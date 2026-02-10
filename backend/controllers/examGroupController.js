@@ -12,6 +12,10 @@ exports.getGroups = async (req, res) => {
     const userId = req.user._id;
     const { branchId } = req.query;
     
+    console.log('[ExamGroupController] getGroups called');
+    console.log('[ExamGroupController] User:', { role: userRole, id: userId, branchId: req.user.branchId });
+    console.log('[ExamGroupController] Query params:', req.query);
+    
     let query = {};
 
     // Branch isolation: Non-founders can only see their branch
@@ -26,10 +30,21 @@ exports.getGroups = async (req, res) => {
     if (userRole === 'teacher') {
       query.teachers = userId;
       
+      console.log('[ExamGroupController] Teacher query:', query);
+      
       const groups = await ExamGroup.find(query)
         .populate('students', 'name studentId profileImage class')
         .populate('teachers', 'name teacherId')
         .populate('createdBy', 'name');
+
+      console.log('[ExamGroupController] Groups found for teacher:', groups.length);
+      if (groups.length > 0) {
+        console.log('[ExamGroupController] First group:', {
+          name: groups[0].groupName,
+          teachers: groups[0].teachers,
+          students: groups[0].students?.length
+        });
+      }
 
       return res.status(200).json({
         success: true,

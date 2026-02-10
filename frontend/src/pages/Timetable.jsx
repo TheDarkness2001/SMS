@@ -71,11 +71,12 @@ const Timetable = () => {
       const branchFilter = getBranchFilter();
       const response = await schedulerAPI.getAll(branchFilter);
       
-      console.log('All schedules fetched:', response.data.data.length);
-      console.log('Schedules data:', response.data.data);
+      const allSchedules = response.data.data || [];
+      console.log('All schedules fetched:', allSchedules.length);
+      console.log('Schedules data:', allSchedules);
       
       // Filter schedules for this teacher
-      const teacherSchedules = response.data.data.filter(schedule => {
+      const teacherSchedules = allSchedules.filter(schedule => {
         const teacherId = schedule.teacher?._id || schedule.teacher;
         console.log('Comparing:', { scheduleTeacher: teacherId, currentUser: userId });
         return teacherId === userId || schedule.teacher === userId;
