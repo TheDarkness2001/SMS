@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import axios from 'axios';
+import { teachersAPI, salaryPayoutsAPI } from '../utils/api';
 import { formatUZS } from '../utils/formatters';
 import '../styles/AdminPayoutPanel.css';
 
@@ -45,38 +45,32 @@ const AdminPayoutPanel = () => {
 
   const fetchTeachers = async () => {
     try {
-      const token = sessionStorage.getItem('token');
       const branchFilter = getBranchFilter();
       
       console.log('[AdminPayoutPanel] Fetching teachers with branch filter:', branchFilter);
       
-      const response = await axios.get('/api/teachers', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: branchFilter
-      });
+      const response = await teachersAPI.getAll(branchFilter);
       setTeachers(response.data.data || []);
       console.log('[AdminPayoutPanel] Teachers loaded:', response.data.data?.length);
     } catch (error) {
       console.error('Error fetching teachers:', error);
+      alert(t('common.error'));
     }
   };
 
   const fetchPayoutHistory = async () => {
     setLoading(true);
     try {
-      const token = sessionStorage.getItem('token');
       const branchFilter = getBranchFilter();
       
       console.log('[AdminPayoutPanel] Fetching payout history with branch filter:', branchFilter);
       
-      const response = await axios.get('/api/salary-payouts', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: branchFilter
-      });
+      const response = await salaryPayoutsAPI.getAll(branchFilter);
       setPayoutHistory(response.data.data || []);
       console.log('[AdminPayoutPanel] Payout history loaded:', response.data.data?.length);
     } catch (error) {
       console.error('Error fetching payout history:', error);
+      alert(t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -106,16 +100,13 @@ const AdminPayoutPanel = () => {
     }
 
     try {
-      const token = sessionStorage.getItem('token');
-      await axios.post('/api/salary-payouts', {
+      await salaryPayoutsAPI.create({
         staffId: formData.teacherId,
         amount: parseFloat(formData.amount) * 100, // Convert to tyiyn
         method: formData.method,
         paymentDate: formData.paymentDate,
         bankDetails: formData.method === 'bank-transfer' ? formData.bankDetails : undefined,
         notes: formData.notes
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       alert(`✅ ${t('payouts.recordSuccess')}`);
@@ -133,7 +124,7 @@ const AdminPayoutPanel = () => {
       fetchPayoutHistory();
       setActiveTab('history');
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to record payment');
+      alert(error.response?.data?.message || t('common.error'));
     }
   };
 
@@ -143,10 +134,7 @@ const AdminPayoutPanel = () => {
     }
 
     try {
-      const token = sessionStorage.getItem('token');
-      await axios.patch(`/api/salary-payouts/${payoutId}/complete`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await salaryPayoutsAPI.complete(payoutId);
       alert(`✅ ${t('payouts.completeSuccess')}`);
       fetchPayoutHistory();
     } catch (error) {
@@ -162,12 +150,7 @@ const AdminPayoutPanel = () => {
     }
 
     try {
-      const token = sessionStorage.getItem('token');
-      await axios.patch(`/api/salary-payouts/${payoutId}/cancel`, {
-        reason
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await salaryPayoutsAPI.cancel(payoutId, { reason });
       alert(`✅ ${t('payouts.cancelSuccess')}`);
       fetchPayoutHistory();
     } catch (error) {

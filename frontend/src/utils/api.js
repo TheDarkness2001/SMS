@@ -252,6 +252,15 @@ export const branchesAPI = {
   getStats: (id) => api.get(`/branches/${id}/stats`)
 };
 
+// Salary Payouts API
+export const salaryPayoutsAPI = {
+  getAll: (params) => api.get('/salary-payouts', { params }),
+  getOne: (id) => api.get(`/salary-payouts/${id}`),
+  create: (data) => api.post('/salary-payouts', data),
+  complete: (id) => api.patch(`/salary-payouts/${id}/complete`),
+  cancel: (id, data) => api.patch(`/salary-payouts/${id}/cancel`, data)
+};
+
 // Helper function to get image URL from backend
 export const getImageUrl = (filename) => {
   if (!filename) return null;
