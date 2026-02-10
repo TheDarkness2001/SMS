@@ -34,6 +34,22 @@
   z-index: 20;
 }
 
+/* Logo Section */
+.auth-layout__logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.auth-layout__logo-img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .auth-layout__header {
   text-align: center;
   margin-bottom: 32px;

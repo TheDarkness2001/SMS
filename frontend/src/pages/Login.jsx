@@ -70,6 +70,11 @@ const Login = () => {
       <AnimatedGridBackground cellSize={25} trailLength={1} fadeSpeed={0.02} />
       <div className="auth-layout__main">
         <div className="auth-layout__content">
+          {/* Logo */}
+          <div className="auth-layout__logo">
+            <img src="/hero.jpg" alt="TechRen Academy Logo" className="auth-layout__logo-img" />
+          </div>
+          
           <div className="auth-layout__header">
             <h2 className="auth-layout__title">
               {t('login.title')}
