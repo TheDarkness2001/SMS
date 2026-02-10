@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import { settingsAPI, teachersAPI } from '../utils/api';
+import { settingsAPI, teachersAPI, getImageUrl } from '../utils/api';
 import '../styles/Settings.css';
 
 const Settings = () => {
@@ -260,7 +260,7 @@ const Settings = () => {
                     <td>
                       {member.profileImage ? (
                         <img 
-                          src={`/uploads/${member.profileImage}`} 
+                          src={getImageUrl(member.profileImage)} 
                           alt={member.name}
                           style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
                         />
