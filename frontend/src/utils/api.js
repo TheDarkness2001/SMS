@@ -4,11 +4,15 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://sms-production-5f19.up.railway.app/api';
 
 // Create axios instance with default config
-const api = axios.create({  baseURL: API_BASE_URL,
+const api = axios.create({
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
 });
+
+// Export api instance for direct use
+export { api };
 
 // Add token to requests
 api.interceptors.request.use(
