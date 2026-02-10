@@ -131,7 +131,7 @@ const StudentAttendance = () => {
     };
     
     fetchGroups();
-  }, [isTeacher, t, user.id, user._id, selectedBranch, getBranchFilter]);
+  }, [isTeacher, t, user, selectedBranch, getBranchFilter]);
 
   // Fetch existing attendance records
   const fetchExistingAttendance = useCallback(async (group, date) => {

@@ -27,7 +27,6 @@ const StaffEarnings = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = sessionStorage.getItem('token');
       const branchFilter = getBranchFilter();
       
       console.log('[StaffEarnings] Fetching with branch filter:', branchFilter);
