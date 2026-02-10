@@ -48,18 +48,23 @@ const Dashboard = () => {
       const isTeacherRole = user.role === 'teacher' && !['admin', 'manager', 'founder'].includes(user.role);
       const branchFilter = getBranchFilter();
       console.log('[Dashboard] Fetching stats with filter:', branchFilter);
+      console.log('[Dashboard] User role:', user.role, 'isTeacherRole:', isTeacherRole);
       
       if (isTeacherRole) {
         // Teachers see their own groups and students
+        console.log('[Dashboard] Fetching teacher-specific stats');
         
         // Fetch exam groups (filtered by backend to show only teacher's groups)
         const groupsRes = await examGroupsAPI.getAll(branchFilter);
+        console.log('[Dashboard] Exam groups response:', groupsRes.data);
         
         const teacherGroups = groupsRes.data.data || [];
+        console.log('[Dashboard] Teacher groups count:', teacherGroups.length);
         
         // Count unique students across all teacher's groups
         const uniqueStudentIds = new Set();
         teacherGroups.forEach(group => {
+          console.log('[Dashboard] Processing group:', group.name, 'Students:', group.students?.length);
           if (group.students && Array.isArray(group.students)) {
             group.students.forEach(student => {
               const studentId = student._id || student;
@@ -67,6 +72,8 @@ const Dashboard = () => {
             });
           }
         });
+        
+        console.log('[Dashboard] Unique students found:', uniqueStudentIds.size);
         
         setStats({
           students: uniqueStudentIds.size,
@@ -144,7 +151,9 @@ const Dashboard = () => {
         setStats(newStats);
       }
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error('[Dashboard] Error fetching dashboard stats:', error);
+      console.error('[Dashboard] Error details:', error.response?.data);
+      console.error('[Dashboard] Error status:', error.response?.status);
       if (error.response && error.response.status === 401) {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');
