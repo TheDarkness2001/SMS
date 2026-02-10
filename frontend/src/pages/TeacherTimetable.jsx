@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import { teachersAPI } from '../utils/api';
-import axios from 'axios';
+import { teachersAPI, schedulerAPI } from '../utils/api';
 import '../styles/TeacherTimetable.css';
 
 const TeacherTimetable = () => {
@@ -27,15 +26,13 @@ const TeacherTimetable = () => {
       setLoading(true);
       setError('');
       
-      const token = sessionStorage.getItem('token');
       const branchFilter = getBranchFilter();
-      const res = await axios.get('/api/scheduler', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: branchFilter
-      });
+      const res = await schedulerAPI.getAll(branchFilter);
+      
+      const allSchedules = res.data.data || [];
       
       // Filter schedules for this teacher
-      const teacherSchedules = res.data.data.filter(schedule => 
+      const teacherSchedules = allSchedules.filter(schedule => 
         schedule.teacher === teacherId || schedule.teacher?._id === teacherId
       );
       
