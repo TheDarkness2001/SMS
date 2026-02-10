@@ -10,37 +10,6 @@
   position: relative;
 }
 
-/* Brand Header - Logo at Top */
-.auth-layout__brand-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30px 20px 20px;
-  position: relative;
-  z-index: 10;
-}
-
-.auth-layout__brand-logo {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  background: white;
-  padding: 8px;
-}
-
-.auth-layout__brand-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: white;
-  margin: 0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  letter-spacing: -0.5px;
-}
-
 .auth-layout__main {
   display: flex;
   flex: 1;
@@ -265,19 +234,6 @@
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
-  .auth-layout__brand-header {
-    padding: 20px 20px 15px;
-  }
-  
-  .auth-layout__brand-logo {
-    width: 70px;
-    height: 70px;
-  }
-  
-  .auth-layout__brand-title {
-    font-size: 28px;
-  }
-  
   .auth-layout__content {
     padding: 32px;
     margin: 20px;
@@ -289,19 +245,6 @@
 }
 
 @media (max-width: 480px) {
-  .auth-layout__brand-header {
-    padding: 15px 15px 10px;
-  }
-  
-  .auth-layout__brand-logo {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .auth-layout__brand-title {
-    font-size: 24px;
-  }
-  
   .auth-layout__content {
     padding: 24px;
     margin: 16px;

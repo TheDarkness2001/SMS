@@ -68,13 +68,6 @@ const Login = () => {
   return (
     <div className="auth-layout">
       <AnimatedGridBackground cellSize={25} trailLength={1} fadeSpeed={0.02} />
-      
-      {/* Platform Logo Header */}
-      <div className="auth-layout__brand-header">
-        <img src="/hero.jpg" alt="TechRen Academy" className="auth-layout__brand-logo" />
-        <h1 className="auth-layout__brand-title">TechRen Academy</h1>
-      </div>
-      
       <div className="auth-layout__main">
         <div className="auth-layout__content">
           <div className="auth-layout__header">
