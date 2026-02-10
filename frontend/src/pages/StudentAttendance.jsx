@@ -25,14 +25,24 @@ const StudentAttendance = () => {
         setLoading(true);
         const branchFilter = getBranchFilter();
         
+        console.log('[StudentAttendance] Fetching groups for user:', user);
+        console.log('[StudentAttendance] Branch filter:', branchFilter);
+        console.log('[StudentAttendance] Is teacher:', isTeacher);
+        
         // Fetch both Exam Groups and Class Schedules
         const [groupsRes, schedulesRes] = await Promise.all([
           examGroupsAPI.getAll(branchFilter),
           schedulerAPI.getAll(branchFilter)
         ]);
         
+        console.log('[StudentAttendance] Exam groups response:', groupsRes.data);
+        console.log('[StudentAttendance] Schedules response:', schedulesRes.data);
+        
         const groupsData = groupsRes.data.data || [];
         const schedulesData = schedulesRes.data.data || [];
+        
+        console.log('[StudentAttendance] Groups data count:', groupsData.length);
+        console.log('[StudentAttendance] Schedules data count:', schedulesData.length);
         
         // Get IDs of exam groups that have linked schedules to avoid duplication
         const linkedExamGroupIds = schedulesData
@@ -77,11 +87,20 @@ const StudentAttendance = () => {
         
         // Filter groups based on user role
         if (isTeacher) {
-          processedGroups = processedGroups.filter(group => 
-            group.teachers && group.teachers.some(t => 
-              (t._id === user.id || t._id === user._id || t === user.id || t === user._id)
-            )
-          );
+          console.log('[StudentAttendance] Filtering for teacher ID:', user.id, user._id);
+          processedGroups = processedGroups.filter(group => {
+            const hasTeacher = group.teachers && group.teachers.some(t => {
+              const teacherId = t._id || t;
+              const userId = user.id || user._id;
+              const match = (teacherId === userId);
+              if (match) {
+                console.log('[StudentAttendance] Match found for group:', group.displayName);
+              }
+              return match;
+            });
+            return hasTeacher;
+          });
+          console.log('[StudentAttendance] Groups after teacher filter:', processedGroups.length);
         }
         
         // Filter out empty groups (must have students to take attendance)
