@@ -116,8 +116,17 @@ exports.createGroup = async (req, res) => {
       });
     }
 
+    // Remove duplicate students
+    const uniqueStudents = req.body.students ? [...new Set(req.body.students)] : [];
+    
+    console.log('[ExamGroupController] Creating group');
+    console.log('[ExamGroupController] Original students:', req.body.students?.length);
+    console.log('[ExamGroupController] Unique students:', uniqueStudents.length);
+    console.log('[ExamGroupController] Teachers:', req.body.teachers);
+
     const group = await ExamGroup.create({
       ...req.body,
+      students: uniqueStudents,
       createdBy: req.user._id,
       branchId: req.user.role !== 'founder' ? req.user.branchId : req.body.branchId
     });
@@ -150,6 +159,16 @@ exports.updateGroup = async (req, res) => {
         success: false,
         message: 'Exam group not found'
       });
+    }
+
+    // Remove duplicate students
+    if (req.body.students) {
+      req.body.students = [...new Set(req.body.students)];
+      console.log('[ExamGroupController] Updating group - unique students:', req.body.students.length);
+    }
+    
+    if (req.body.teachers) {
+      console.log('[ExamGroupController] Updating group - teachers:', req.body.teachers);
     }
 
     // Update fields
