@@ -34,10 +34,14 @@ const StudentDashboard = () => {
     try {
       setLoading(true);
       
+      console.log('[StudentDashboard] Fetching data for user:', user.id);
+      
       // Fetch student details and update sessionStorage with fresh data
       const studentRes = await studentsAPI.getOne(user.id);
       const freshStudentData = studentRes.data.data;
       setStudentData(freshStudentData);
+      
+      console.log('[StudentDashboard] Student data:', freshStudentData);
       
       // Update sessionStorage with fresh profileImage
       if (freshStudentData.profileImage) {
@@ -50,15 +54,20 @@ const StudentDashboard = () => {
       const attRecs = attendanceRes.data.data || [];
       setAttendanceRecords(attRecs);
       
+      console.log('[StudentDashboard] Attendance records:', attRecs.length);
+      
       const present = attRecs.filter(r => r.status === 'present').length;
       const total = attRecs.length;
       const percentage = total > 0 ? ((present / total) * 100).toFixed(1) : 0;
 
       // Fetch exams
       const examsRes = await examsAPI.getStudentExams(user.id);
-      const upcomingExams = (examsRes.data.data || []).filter(exam => 
+      const allExams = examsRes.data.data || [];
+      const upcomingExams = allExams.filter(exam => 
         exam.status === 'scheduled' && new Date(exam.examDate) > new Date()
       ).length;
+      
+      console.log('[StudentDashboard] Total exams:', allExams.length, 'Upcoming:', upcomingExams);
 
       // Fetch payments with refresh
       const paymentsRes = await paymentsAPI.getByStudent(user.id);
@@ -66,6 +75,8 @@ const StudentDashboard = () => {
       const pendingPayments = allPayments.filter(p => 
         p.status === 'pending' || p.status === 'overdue'
       ).length;
+      
+      console.log('[StudentDashboard] Total payments:', allPayments.length, 'Pending:', pendingPayments);
 
       setStats({
         attendancePercentage: percentage,
@@ -77,10 +88,21 @@ const StudentDashboard = () => {
       
       // Fetch feedback data
       const feedbackRes = await feedbackAPI.getByStudent(user.id || user._id);
-      setFeedbackRecords(feedbackRes.data.data || []);
+      const feedbacks = feedbackRes.data.data || [];
+      setFeedbackRecords(feedbacks);
+      
+      console.log('[StudentDashboard] Feedback records:', feedbacks.length);
+      console.log('[StudentDashboard] Final stats:', {
+        attendancePercentage: percentage,
+        totalPresent: present,
+        totalAbsent: total - present,
+        upcomingExams,
+        pendingPayments
+      });
       
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('[StudentDashboard] Error fetching dashboard data:', error);
+      console.error('[StudentDashboard] Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }

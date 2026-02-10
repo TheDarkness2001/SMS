@@ -352,11 +352,20 @@
 @media (max-width: 768px) {
   .navbar {
     height: 65px;
-    padding: 0 16px;
+    padding: 0;
+  }
+  
+  .navbar-content {
+    padding: 0 12px;
   }
   
   .navbar-brand {
     font-size: 1.3rem;
+    padding-left: 12px;
+  }
+  
+  .navbar-right {
+    padding-right: 12px;
   }
   
   .user-name {
@@ -382,12 +391,22 @@
 }
 
 @media (max-width: 480px) {
+  .navbar {
+    padding: 0;
+  }
+  
   .navbar-content {
-    padding: 0 16px;
+    padding: 0 8px;
+  }
+  
+  .navbar-brand {
+    font-size: 1.1rem;
+    padding-left: 8px;
   }
   
   .navbar-right {
-    gap: 16px;
+    gap: 12px;
+    padding-right: 8px;
   }
   
   .user-info-dropdown {

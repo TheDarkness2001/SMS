@@ -14,8 +14,13 @@ const StudentPaymentsPage = () => {
 
   const fetchPayments = useCallback(async () => {
     try {
+      console.log('[StudentPaymentsPage] Fetching payments for student:', user.id);
+      
       const res = await paymentsAPI.getByStudent(user.id);
       const paymentData = res.data.data || [];
+      
+      console.log('[StudentPaymentsPage] Total payments fetched:', paymentData.length);
+      console.log('[StudentPaymentsPage] Payment data:', paymentData);
 
       // Get current month and year
       const now = new Date();
@@ -28,6 +33,8 @@ const StudentPaymentsPage = () => {
         return paymentDate.getMonth() === currentMonth && 
                paymentDate.getFullYear() === currentYear;
       });
+      
+      console.log('[StudentPaymentsPage] Current month payments:', currentMonthData.length);
 
       setCurrentMonthPayments(currentMonthData);
 
@@ -36,8 +43,11 @@ const StudentPaymentsPage = () => {
       const pending = currentMonthData.filter(p => p.status === 'pending' || p.status === 'overdue').length;
 
       setStats({ paid, pending });
+      
+      console.log('[StudentPaymentsPage] Stats:', { paid, pending });
     } catch (error) {
-      console.error('Error fetching payments:', error);
+      console.error('[StudentPaymentsPage] Error fetching payments:', error);
+      console.error('[StudentPaymentsPage] Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
