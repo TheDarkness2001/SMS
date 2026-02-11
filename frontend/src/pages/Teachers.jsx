@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
+import { useToast } from '../context/ToastContext';
 import { teachersAPI, branchesAPI, getImageUrl } from '../utils/api';
 import "../styles/Teachers.css"
 
@@ -11,6 +12,7 @@ const Teachers = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { selectedBranch, getBranchFilter } = useBranch();
+  const toast = useToast();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,7 +94,7 @@ const Teachers = () => {
       try {
         await teachersAPI.delete(id);
         fetchTeachers();
-        window.alert(t('common.deletedSuccessfully'));
+        toast.success(t('common.deletedSuccessfully'));
       } catch (error) {
         // Handle 401 Unauthorized error by redirecting to login
         if (error.response && error.response.status === 401) {
@@ -232,7 +234,7 @@ const Teachers = () => {
       
       setShowModal(false);
       fetchTeachers();
-      window.alert(successMessage);
+      toast.success(successMessage);
     } catch (error) {
       // Handle 401 Unauthorized error by redirecting to login
       if (error.response && error.response.status === 401) {

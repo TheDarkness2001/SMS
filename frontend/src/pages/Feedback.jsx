@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { useToast } from '../context/ToastContext';
 import { feedbackAPI, schedulerAPI, teachersAPI, getImageUrl } from '../utils/api';
 import { 
   AiOutlineCalendar, 
@@ -19,6 +20,7 @@ const Feedback = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
+  const toast = useToast();
   const [todayClasses, setTodayClasses] = useState([]);
   const [allClasses, setAllClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -276,7 +278,7 @@ const Feedback = () => {
 
       handleCloseModal();
       fetchData();
-      window.alert(successMsg);
+      toast.success(successMsg);
     } catch (err) {
       console.error('Error submitting feedback:', err);
       console.error('Error details:', err.response?.data);

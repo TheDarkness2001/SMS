@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { useToast } from '../context/ToastContext';
 import { teachersAPI, teacherAttendanceAPI } from '../utils/api';
 import '../styles/TeacherAttendance.css';
 
@@ -9,6 +10,7 @@ const TeacherAttendance = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
+  const toast = useToast();
   const [teachers, setTeachers] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState({});
@@ -89,7 +91,7 @@ const TeacherAttendance = () => {
         [teacherId]: { status: '', notes: '' }
       }));
       
-      window.alert(`${t('common.success')}: ${t('attendance.attendanceRecord')} ${t('common.savedSuccessfully')} (${teacherName})`);
+      toast.success(`${t('attendance.attendanceRecord')} ${t('common.savedSuccessfully')} (${teacherName})`);
     } catch (err) {
       if (err.response?.status === 401) {
         sessionStorage.removeItem('token');

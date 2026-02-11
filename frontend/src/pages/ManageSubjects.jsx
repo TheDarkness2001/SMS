@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { useToast } from '../context/ToastContext';
 import { subjectsAPI, branchesAPI } from '../utils/api';
 import { AiOutlinePlus, AiOutlineEdit, AiOutlineDelete, AiOutlineBook } from 'react-icons/ai';
 import '../styles/ManageExamGroups.css';
@@ -10,6 +11,7 @@ const ManageSubjects = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
+  const toast = useToast();
   const [subjects, setSubjects] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +84,7 @@ const ManageSubjects = () => {
         branchId: ''
       });
       fetchData();
-      window.alert(t('common.savedSuccessfully'));
+      toast.success(t('common.savedSuccessfully'));
     } catch (err) {
       setError(err.response?.data?.message || t('common.error'));
     }
@@ -95,7 +97,7 @@ const ManageSubjects = () => {
       setShowEditModal(false);
       setEditingSubject(null);
       fetchData();
-      window.alert(t('common.updatedSuccessfully'));
+      toast.success(t('common.updatedSuccessfully'));
     } catch (err) {
       setError(err.response?.data?.message || t('common.error'));
     }
@@ -106,7 +108,7 @@ const ManageSubjects = () => {
       try {
         await subjectsAPI.delete(id);
         fetchData();
-        window.alert(t('common.deletedSuccessfully'));
+        toast.success(t('common.deletedSuccessfully'));
       } catch (err) {
         setError(t('common.error'));
       }

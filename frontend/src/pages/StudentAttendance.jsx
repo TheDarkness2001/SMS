@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { useToast } from '../context/ToastContext';
 import { studentAttendanceAPI, examGroupsAPI, schedulerAPI, subjectsAPI } from '../utils/api';
 import '../styles/StudentAttendance.css';
 
 const StudentAttendance = () => {
   const { t } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
+  const toast = useToast();
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -323,7 +325,7 @@ const StudentAttendance = () => {
         }
       }));
       
-      window.alert(successMsg);
+      toast.success(successMsg);
     } catch (err) {
       console.error('Attendance save error:', err);
       console.error('Error response data:', err.response?.data);

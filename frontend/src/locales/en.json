@@ -181,7 +181,10 @@
     "fetchError": "Failed to fetch students",
     "deleteSuccess": "Student deleted successfully!",
     "deleteError": "Error deleting student",
-    "idLabel": "ID"
+    "idLabel": "ID",
+    "noFeedback": "No feedback available",
+    "noPayments": "No payment records found",
+    "paymentHistory": "Payment History"
   },
   "payments": {
     "title": "Payments",
@@ -1093,7 +1096,9 @@
     "updateSchedule": "Update Schedule",
     "deleteConfirm": "Are you sure you want to delete this schedule?",
     "deleteSuccess": "Schedule deleted successfully",
-    "deleteError": "Failed to delete schedule"
+    "deleteError": "Failed to delete schedule",
+    "createSuccess": "Schedule created successfully",
+    "updateSuccess": "Schedule updated successfully"
   },
   "examResults": {
     "results": "Results",

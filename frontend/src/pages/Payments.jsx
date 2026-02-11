@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 import { usePayments } from '../hooks/usePayments';
 import { paymentsAPI } from '../utils/api';
 import PaymentModal from '../components/PaymentModal';
@@ -10,6 +11,7 @@ const Payments = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const toast = useToast();
   const {
     // Data
     students,
@@ -164,7 +166,7 @@ const Payments = () => {
         await refreshData();
         
         // Show success alert after everything is done
-        window.alert(t('payments.saveSuccess'));
+        toast.success(t('payments.saveSuccess'));
       } else {
         throw new Error(t('payments.saveError'));
       }
@@ -199,7 +201,7 @@ const Payments = () => {
       if (response.data?.success) {
         // Refresh data to update state
         refreshData();
-        window.alert(t('payments.deleteSuccess'));
+        toast.success(t('payments.deleteSuccess'));
       } else {
         throw new Error(t('payments.deleteError'));
       }

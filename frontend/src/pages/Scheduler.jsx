@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { useToast } from '../context/ToastContext';
 import { schedulerAPI, teachersAPI, examGroupsAPI, subjectsAPI } from '../utils/api';
 import '../styles/Scheduler.css';
 
 const Scheduler = () => {
   const { t } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
+  const toast = useToast();
   // Helper function to abbreviate day names
   const abbreviateDays = (days) => {
     if (!days || days.length === 0) return t('common.noData');
@@ -196,7 +198,7 @@ const Scheduler = () => {
       });
       fetchData();
       
-      window.alert(successMsg);
+      toast.success(editingSchedule ? t('scheduler.updateSuccess') : t('scheduler.createSuccess'));
     } catch (err) {
       setError(t('common.error') + ': ' + (err.response?.data?.message || err.message));
       console.error(err);
@@ -242,7 +244,7 @@ const Scheduler = () => {
       try {
         await schedulerAPI.delete(id);
         fetchData();
-        window.alert(t('scheduler.deleteSuccess'));
+        toast.success(t('scheduler.deleteSuccess'));
       } catch (err) {
         setError(t('scheduler.deleteError') + ': ' + (err.response?.data?.message || err.message));
         console.error(err);

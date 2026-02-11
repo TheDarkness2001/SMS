@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { useToast } from '../context/ToastContext';
 import { studentsAPI, getImageUrl } from '../utils/api';
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDollar, AiOutlineDelete } from 'react-icons/ai';
 import '../styles/Students.css';
@@ -10,6 +11,7 @@ const Students = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
+  const toast = useToast();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,7 +81,7 @@ const Students = () => {
       try {
         await studentsAPI.delete(id);
         fetchStudents();
-        window.alert(t('students.deleteSuccess'));
+        toast.success(t('students.deleteSuccess'));
       } catch (error) {
         // Handle 401 Unauthorized error by redirecting to login
         if (error.response && error.response.status === 401) {

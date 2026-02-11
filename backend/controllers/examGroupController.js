@@ -30,7 +30,17 @@ exports.getGroups = async (req, res) => {
     if (userRole === 'teacher') {
       query.teachers = userId;
       
-      console.log('[ExamGroupController] Teacher query:', query);
+      console.log('[ExamGroupController] Teacher query:', JSON.stringify(query));
+      console.log('[ExamGroupController] Teacher userId type:', typeof userId, userId);
+      
+      // First, let's see ALL groups in the database
+      const allGroups = await ExamGroup.find({ branchId: query.branchId });
+      console.log('[ExamGroupController] Total groups in branch:', allGroups.length);
+      
+      if (allGroups.length > 0) {
+        console.log('[ExamGroupController] Sample group teachers field:', allGroups[0].teachers);
+        console.log('[ExamGroupController] Sample group teachers types:', allGroups[0].teachers?.map(t => typeof t));
+      }
       
       const groups = await ExamGroup.find(query)
         .populate('students', 'name studentId profileImage class')
@@ -207,7 +217,9 @@ exports.updateGroup = async (req, res) => {
     }
     
     if (req.body.teachers) {
-      console.log('[ExamGroupController] Updating group - teachers:', req.body.teachers);
+      console.log('[ExamGroupController] Updating group - teachers being saved:', req.body.teachers);
+      console.log('[ExamGroupController] Teachers count:', req.body.teachers.length);
+      console.log('[ExamGroupController] Teachers types:', req.body.teachers.map(t => typeof t));
     }
 
     // Update fields

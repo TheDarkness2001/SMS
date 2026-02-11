@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 import { branchesAPI } from '../utils/api';
 import '../styles/Branches.css';
 
 const Branches = () => {
   const { t } = useLanguage();
+  const toast = useToast();
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -56,7 +58,7 @@ const Branches = () => {
         setEditingBranch(null);
         setFormData({ name: '', address: '', phone: '' });
         fetchBranches();
-        window.alert(response.data.message);
+        toast.success(response.data.message);
       } else {
         setError(response.data.message);
       }
@@ -81,7 +83,7 @@ const Branches = () => {
       
       if (response.data.success) {
         fetchBranches();
-        window.alert('Branch status updated');
+        toast.success('Branch status updated');
       } else {
         setError(response.data.message);
       }
@@ -99,7 +101,7 @@ const Branches = () => {
       const response = await branchesAPI.delete(branchId);
       
       if (response.data.success) {
-        window.alert(response.data.message);
+        toast.success(response.data.message);
         fetchBranches();
       } else {
         setError(response.data.message);

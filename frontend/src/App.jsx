@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { BranchProvider } from './context/BranchContext';
+import { ToastProvider } from './context/ToastContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Students from './pages/Students';
@@ -55,7 +56,8 @@ function App() {
     <LanguageProvider>
       <AuthProvider>
         <BranchProvider>
-          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <ToastProvider>
+            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -102,6 +104,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
+          </ToastProvider>
         </BranchProvider>
       </AuthProvider>
     </LanguageProvider>
