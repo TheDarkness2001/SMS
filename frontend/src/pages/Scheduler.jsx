@@ -174,7 +174,6 @@ const Scheduler = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const successMsg = editingSchedule ? t('common.success') : t('common.success');
       if (editingSchedule) {
         await schedulerAPI.update(editingSchedule._id, formData);
       } else {
