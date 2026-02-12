@@ -89,14 +89,16 @@ const StudentAttendance = () => {
         
         // Filter groups based on user role
         if (isTeacher) {
-          console.log('[StudentAttendance] Filtering for teacher ID:', user.id, user._id);
+          const userId = user.id || user._id;
+          console.log('[StudentAttendance] Filtering for teacher ID:', userId);
           processedGroups = processedGroups.filter(group => {
             const hasTeacher = group.teachers && group.teachers.some(t => {
-              const teacherId = t._id || t;
-              const userId = user.id || user._id;
-              const match = (teacherId === userId);
+              // Handle both ObjectId objects and strings
+              const teacherId = t._id ? t._id.toString() : t.toString();
+              const currentUserId = userId.toString();
+              const match = (teacherId === currentUserId);
               if (match) {
-                console.log('[StudentAttendance] Match found for group:', group.displayName);
+                console.log('[StudentAttendance] Match found for group:', group.displayName, 'Teacher ID:', teacherId);
               }
               return match;
             });

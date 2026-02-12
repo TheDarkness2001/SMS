@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import { studentsAPI, teachersAPI, paymentsAPI, examGroupsAPI } from '../utils/api';
+import { studentsAPI, teachersAPI, paymentsAPI, examGroupsAPI, schedulerAPI } from '../utils/api';
 import { 
   AiOutlineUser, 
   AiOutlineTeam, 
@@ -54,20 +54,63 @@ const Dashboard = () => {
         // Teachers see their own groups and students
         console.log('[Dashboard] Fetching teacher-specific stats');
         
-        // Fetch exam groups (filtered by backend to show only teacher's groups)
-        const groupsRes = await examGroupsAPI.getAll(branchFilter);
+        // Fetch BOTH exam groups AND schedules (like StudentAttendance does)
+        const [groupsRes, schedulesRes] = await Promise.all([
+          examGroupsAPI.getAll(branchFilter),
+          schedulerAPI.getAll(branchFilter)
+        ]);
+        
         console.log('[Dashboard] Exam groups response:', groupsRes.data);
+        console.log('[Dashboard] Schedules response:', schedulesRes.data);
         
-        const teacherGroups = groupsRes.data.data || [];
-        console.log('[Dashboard] Teacher groups count:', teacherGroups.length);
+        const examGroups = groupsRes.data.data || [];
+        const schedules = schedulesRes.data.data || [];
         
-        // Count unique students across all teacher's groups
+        // Get schedules that are NOT linked to exam groups (to avoid duplicates)
+        const linkedExamGroupIds = schedules
+          .filter(s => s.subjectGroup && s.subjectGroup._id)
+          .map(s => s.subjectGroup._id.toString());
+        
+        // Filter exam groups to only those assigned to this teacher
+        const teacherExamGroups = examGroups.filter(g => 
+          g.teachers && g.teachers.some(t => {
+            const teacherId = t._id ? t._id.toString() : t.toString();
+            return teacherId === user._id.toString();
+          })
+        );
+        
+        // Filter schedules to only those assigned to this teacher (not linked to exam groups)
+        const teacherSchedules = schedules.filter(s => {
+          // Skip if already linked to an exam group (those students are counted in exam group)
+          if (s.subjectGroup && s.subjectGroup._id) return false;
+          
+          const scheduleTeacherId = s.teacher?._id ? s.teacher._id.toString() : s.teacher?.toString();
+          return scheduleTeacherId === user._id.toString();
+        });
+        
+        console.log('[Dashboard] Teacher exam groups:', teacherExamGroups.length);
+        console.log('[Dashboard] Teacher schedules:', teacherSchedules.length);
+        
+        // Count unique students across all teacher's groups AND schedules
         const uniqueStudentIds = new Set();
-        teacherGroups.forEach(group => {
-          console.log('[Dashboard] Processing group:', group.name, 'Students:', group.students?.length);
+        
+        // Add students from exam groups
+        teacherExamGroups.forEach(group => {
+          console.log('[Dashboard] Processing exam group:', group.groupName, 'Students:', group.students?.length);
           if (group.students && Array.isArray(group.students)) {
             group.students.forEach(student => {
-              const studentId = student._id || student;
+              const studentId = student._id ? student._id.toString() : student.toString();
+              uniqueStudentIds.add(studentId);
+            });
+          }
+        });
+        
+        // Add students from schedules
+        teacherSchedules.forEach(schedule => {
+          console.log('[Dashboard] Processing schedule:', schedule.className, 'Students:', schedule.enrolledStudents?.length);
+          if (schedule.enrolledStudents && Array.isArray(schedule.enrolledStudents)) {
+            schedule.enrolledStudents.forEach(student => {
+              const studentId = student._id ? student._id.toString() : student.toString();
               uniqueStudentIds.add(studentId);
             });
           }
@@ -78,7 +121,7 @@ const Dashboard = () => {
         setStats({
           students: uniqueStudentIds.size,
           teachers: 0,
-          groups: teacherGroups.length,
+          groups: teacherExamGroups.length + teacherSchedules.length,
           unpaidStudents: 0,
           paidStudents: 0
         });
