@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
+import { useToast } from '../context/ToastContext';
 import { api } from '../utils/api';
 import { formatUZS } from '../utils/formatters';
 import '../styles/StaffEarnings.css';
@@ -13,6 +14,7 @@ import '../styles/StaffEarnings.css';
 const StaffEarnings = () => {
   const { t, language } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
+  const toast = useToast();
   const [account, setAccount] = useState(null);
   const [earnings, setEarnings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ const StaffEarnings = () => {
       console.log('[StaffEarnings] Loaded earnings:', earningsData.length);
     } catch (error) {
       console.error('Error fetching earnings:', error);
-      alert(error.response?.data?.message || 'Failed to fetch earnings');
+      toast.error(error.response?.data?.message || 'Failed to fetch earnings');
     } finally {
       setLoading(false);
     }
