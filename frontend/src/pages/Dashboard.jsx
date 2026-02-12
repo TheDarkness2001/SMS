@@ -185,7 +185,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.role, user._id, navigate, getBranchFilter]);
+  }, [user.role, navigate, getBranchFilter]);
 
   useEffect(() => {
     setLoading(true);
