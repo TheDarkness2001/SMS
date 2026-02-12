@@ -55,14 +55,14 @@ const StudentAttendance = () => {
         
         // Merge them into a unified format for attendance
         const unifiedGroups = [
-          // Include ALL exam groups
+          // Include ALL exam groups (backend now filters for teacher's groups including via schedules)
           ...groupsData.map(g => ({
             ...g,
             _type: 'exam-group',
             displayId: g.groupId || 'G',
             displayName: g.groupName || g.subject
           })),
-          // Only include schedules that are NOT linked to an exam group
+          // Include schedules that are NOT linked to an exam group (standalone schedules)
           ...schedulesData
             .filter(s => !s.subjectGroup || !s.subjectGroup._id)
             .map(s => ({

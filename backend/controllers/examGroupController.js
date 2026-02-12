@@ -28,12 +28,33 @@ exports.getGroups = async (req, res) => {
 
     // For teachers, show only groups they are assigned to
     if (userRole === 'teacher') {
-      // Use $in operator to find groups where teachers array contains this teacher
-      // Convert userId to string for comparison since teachers array may contain strings
-      query.teachers = { $in: [userId, userId.toString()] };
-      
-      console.log('[ExamGroupController] Teacher query:', JSON.stringify(query));
       console.log('[ExamGroupController] Teacher userId type:', typeof userId, userId);
+      
+      // First, find schedules assigned to this teacher
+      const teacherSchedules = await ClassSchedule.find({
+        teacher: userId,
+        branchId: query.branchId
+      }).select('subjectGroup');
+      
+      // Get exam group IDs from those schedules
+      const examGroupIdsFromSchedules = teacherSchedules
+        .filter(s => s.subjectGroup)
+        .map(s => s.subjectGroup.toString());
+      
+      console.log('[ExamGroupController] Exam group IDs from schedules:', examGroupIdsFromSchedules);
+      
+      // Build query to find:
+      // 1. Groups where teacher is directly in teachers array
+      // 2. Groups that have schedules assigned to this teacher
+      const teacherQuery = {
+        ...query,
+        $or: [
+          { teachers: { $in: [userId, userId.toString()] } },
+          ...(examGroupIdsFromSchedules.length > 0 ? [{ _id: { $in: examGroupIdsFromSchedules } }] : [])
+        ]
+      };
+      
+      console.log('[ExamGroupController] Teacher query:', JSON.stringify(teacherQuery));
       
       // First, let's see ALL groups in the database
       const allGroups = await ExamGroup.find({ branchId: query.branchId });
@@ -44,7 +65,7 @@ exports.getGroups = async (req, res) => {
         console.log('[ExamGroupController] Sample group teachers types:', allGroups[0].teachers?.map(t => typeof t));
       }
       
-      const groups = await ExamGroup.find(query)
+      const groups = await ExamGroup.find(teacherQuery)
         .populate('students', 'name studentId profileImage class')
         .populate('teachers', 'name teacherId')
         .populate('createdBy', 'name');
