@@ -54,7 +54,8 @@ const Dashboard = () => {
         // Teachers see their own groups and students
         console.log('[Dashboard] Fetching teacher-specific stats');
         
-        // Fetch BOTH exam groups AND schedules (like StudentAttendance does)
+        // Fetch BOTH exam groups AND schedules
+        // Backend middleware already filters these for the logged-in teacher
         const [groupsRes, schedulesRes] = await Promise.all([
           examGroupsAPI.getAll(branchFilter),
           schedulerAPI.getAll(branchFilter)
@@ -63,25 +64,9 @@ const Dashboard = () => {
         console.log('[Dashboard] Exam groups response:', groupsRes.data);
         console.log('[Dashboard] Schedules response:', schedulesRes.data);
         
-        const examGroups = groupsRes.data.data || [];
-        const schedules = schedulesRes.data.data || [];
-        
-        // Filter exam groups to only those assigned to this teacher
-        const teacherExamGroups = examGroups.filter(g => 
-          g.teachers && g.teachers.some(t => {
-            const teacherId = t._id ? t._id.toString() : t.toString();
-            return teacherId === user._id.toString();
-          })
-        );
-        
-        // Filter schedules to only those assigned to this teacher (not linked to exam groups)
-        const teacherSchedules = schedules.filter(s => {
-          // Skip if already linked to an exam group (those students are counted in exam group)
-          if (s.subjectGroup && s.subjectGroup._id) return false;
-          
-          const scheduleTeacherId = s.teacher?._id ? s.teacher._id.toString() : s.teacher?.toString();
-          return scheduleTeacherId === user._id.toString();
-        });
+        // Backend already filters for teacher, so use data directly
+        const teacherExamGroups = groupsRes.data.data || [];
+        const teacherSchedules = schedulesRes.data.data || [];
         
         console.log('[Dashboard] Teacher exam groups:', teacherExamGroups.length);
         console.log('[Dashboard] Teacher schedules:', teacherSchedules.length);
