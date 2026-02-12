@@ -66,11 +66,6 @@ const Dashboard = () => {
         const examGroups = groupsRes.data.data || [];
         const schedules = schedulesRes.data.data || [];
         
-        // Get schedules that are NOT linked to exam groups (to avoid duplicates)
-        const linkedExamGroupIds = schedules
-          .filter(s => s.subjectGroup && s.subjectGroup._id)
-          .map(s => s.subjectGroup._id.toString());
-        
         // Filter exam groups to only those assigned to this teacher
         const teacherExamGroups = examGroups.filter(g => 
           g.teachers && g.teachers.some(t => {
@@ -205,7 +200,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.role, navigate, getBranchFilter]);
+  }, [user.role, user._id, navigate, getBranchFilter]);
 
   useEffect(() => {
     setLoading(true);
