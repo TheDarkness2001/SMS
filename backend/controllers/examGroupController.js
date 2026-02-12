@@ -28,7 +28,9 @@ exports.getGroups = async (req, res) => {
 
     // For teachers, show only groups they are assigned to
     if (userRole === 'teacher') {
-      query.teachers = userId;
+      // Use $in operator to find groups where teachers array contains this teacher
+      // Convert userId to string for comparison since teachers array may contain strings
+      query.teachers = { $in: [userId, userId.toString()] };
       
       console.log('[ExamGroupController] Teacher query:', JSON.stringify(query));
       console.log('[ExamGroupController] Teacher userId type:', typeof userId, userId);

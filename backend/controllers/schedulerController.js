@@ -18,8 +18,12 @@ exports.getSchedules = async (req, res) => {
       query.branchId = branchId;
     }
     
-    // Filter by teacher if provided in query params
-    if (teacher) {
+    // Use teacherFilter from middleware if set (for teacher restrictions)
+    if (req.teacherFilter && req.teacherFilter.teacher) {
+      query.teacher = req.teacherFilter.teacher;
+    }
+    // Filter by teacher if provided in query params (for admin filtering)
+    else if (teacher) {
       query.teacher = teacher;
     }
     // If user is a student, only show schedules they're enrolled in
