@@ -60,7 +60,8 @@
     "checkTodaysAttendance": "Check today's attendance, upcoming exams, and pending payments.",
     "reports": "Reports",
     "generateReports": "Generate detailed reports on student performance, payments, and attendance.",
-    "configureSystem": "Configure system preferences and manage user permissions."
+    "configureSystem": "Configure system preferences and manage user permissions.",
+    "grade": "Grade"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -543,7 +544,9 @@
     "isExamDay": "Is this an Exam Day?",
     "examDay": "Exam Day",
     "examScore": "Exam Score",
-    "examPercentage": "Exam Percentage"
+    "examPercentage": "Exam Percentage",
+    "feedbackBySubject": "Feedback by Subject",
+    "count": "Count"
   },
   "settings": {
     "title": "Settings",

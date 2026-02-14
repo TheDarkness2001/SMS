@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { feedbackAPI } from '../utils/api';
 import { AiOutlineMessage } from 'react-icons/ai';
 import { useLanguage } from '../context/LanguageContext';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import '../styles/StudentPages.css';
 
 const StudentFeedbackPage = () => {
@@ -71,6 +72,23 @@ const StudentFeedbackPage = () => {
     setFilteredFeedbacks(filtered);
   }, [selectedSubject, selectedMonth, selectedYear, selectedClassLevel, feedbacks]);
 
+  // Calculate chart data - feedback count by subject
+  const chartData = useMemo(() => {
+    const data = [];
+    const subjectCounts = {};
+    
+    filteredFeedbacks.forEach(f => {
+      const subjectName = f.subject?.name || f.subject || 'Unknown';
+      subjectCounts[subjectName] = (subjectCounts[subjectName] || 0) + 1;
+    });
+    
+    Object.entries(subjectCounts).forEach(([subject, count]) => {
+      data.push({ subject, count });
+    });
+    
+    return data.sort((a, b) => b.count - a.count).slice(0, 10); // Top 10 subjects
+  }, [filteredFeedbacks]);
+
   useEffect(() => {
     fetchFeedback();
   }, [fetchFeedback]);
@@ -84,10 +102,10 @@ const StudentFeedbackPage = () => {
         <p className="student-page-subtitle">{t('feedback.viewFeedbackSubtitle')}</p>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Row Layout */}
       <div className="feedback-filters" style={{ background: '#f8f9fa', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '15px' }}>
-          <div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'flex-end' }}>
+          <div style={{ flex: '1', minWidth: '150px', maxWidth: '200px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>{t('feedback.subject')}</label>
             <select 
               value={selectedSubject} 
@@ -100,7 +118,7 @@ const StudentFeedbackPage = () => {
               ))}
             </select>
           </div>
-          <div>
+          <div style={{ flex: '1', minWidth: '150px', maxWidth: '200px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>{t('feedback.classLevel')}</label>
             <select 
               value={selectedClassLevel} 
@@ -113,7 +131,7 @@ const StudentFeedbackPage = () => {
               ))}
             </select>
           </div>
-          <div>
+          <div style={{ flex: '1', minWidth: '150px', maxWidth: '200px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>{t('feedback.month')}</label>
             <select 
               value={selectedMonth} 
@@ -128,7 +146,7 @@ const StudentFeedbackPage = () => {
               ))}
             </select>
           </div>
-          <div>
+          <div style={{ flex: '1', minWidth: '150px', maxWidth: '200px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>{t('feedback.year')}</label>
             <select 
               value={selectedYear} 
@@ -141,19 +159,35 @@ const StudentFeedbackPage = () => {
               ))}
             </select>
           </div>
+          <button 
+            onClick={() => { 
+              setSelectedSubject('all'); 
+              setSelectedClassLevel('all'); 
+              setSelectedMonth('all'); 
+              setSelectedYear('all'); 
+            }}
+            style={{ padding: '10px 20px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', marginBottom: '0' }}
+          >
+            {t('feedback.clearFilters')}
+          </button>
         </div>
-        <button 
-          onClick={() => { 
-            setSelectedSubject('all'); 
-            setSelectedClassLevel('all'); 
-            setSelectedMonth('all'); 
-            setSelectedYear('all'); 
-          }}
-          style={{ padding: '10px 20px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}
-        >
-          {t('feedback.clearFilters')}
-        </button>
       </div>
+
+      {/* Chart */}
+      {chartData.length > 0 && (
+        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('feedback.feedbackBySubject') || 'Feedback by Subject'}</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="subject" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="count" fill="#3b82f6" name={t('feedback.count') || 'Count'} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       <div className="feedback-list">
         <h2 style={{ marginBottom: '20px', fontSize: '20px', fontWeight: '600' }}>{t('feedback.feedbackRecords')} ({filteredFeedbacks.length})</h2>
