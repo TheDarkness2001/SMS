@@ -85,30 +85,9 @@ const StudentAttendance = () => {
           setFilterMode(groupsRes.data.filter);
         }
         
-        let processedGroups = unifiedGroups;
-        
-        // Filter groups based on user role
-        if (isTeacher) {
-          const userId = user.id || user._id;
-          console.log('[StudentAttendance] Filtering for teacher ID:', userId);
-          processedGroups = processedGroups.filter(group => {
-            const hasTeacher = group.teachers && group.teachers.some(t => {
-              // Handle both ObjectId objects and strings
-              const teacherId = t._id ? t._id.toString() : t.toString();
-              const currentUserId = userId.toString();
-              const match = (teacherId === currentUserId);
-              if (match) {
-                console.log('[StudentAttendance] Match found for group:', group.displayName, 'Teacher ID:', teacherId);
-              }
-              return match;
-            });
-            return hasTeacher;
-          });
-          console.log('[StudentAttendance] Groups after teacher filter:', processedGroups.length);
-        }
-        
-        // Filter out empty groups (must have students to take attendance)
-        const filteredGroups = processedGroups.filter(group => group.students && group.students.length > 0);
+        // Backend already filters exam groups for teachers (including via schedules)
+        // Only need to filter out empty groups (must have students to take attendance)
+        const filteredGroups = unifiedGroups.filter(group => group.students && group.students.length > 0);
         
         console.log('Attendance Groups Loaded:', {
           examGroups: groupsData.length,
