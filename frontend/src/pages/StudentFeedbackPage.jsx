@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { feedbackAPI } from '../utils/api';
 import { AiOutlineMessage } from 'react-icons/ai';
 import { useLanguage } from '../context/LanguageContext';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import '../styles/StudentPages.css';
 
 const StudentFeedbackPage = () => {
@@ -72,33 +72,37 @@ const StudentFeedbackPage = () => {
     setFilteredFeedbacks(filtered);
   }, [selectedSubject, selectedMonth, selectedYear, selectedClassLevel, feedbacks]);
 
-  // Calculate chart data - average scores by subject
+  // Calculate chart data - scores over time (by date)
   const chartData = useMemo(() => {
     const data = [];
-    const subjectScores = {};
+    const dateScores = {};
     
     filteredFeedbacks.forEach(f => {
-      const subjectName = f.subject?.name || f.subject || 'Unknown';
-      if (!subjectScores[subjectName]) {
-        subjectScores[subjectName] = { homework: [], participation: [], behavior: [] };
+      const date = new Date(f.feedbackDate || f.createdAt);
+      const dateKey = date.toLocaleDateString(t('common.locale') || 'en-US', { month: 'short', day: 'numeric' });
+      
+      if (!dateScores[dateKey]) {
+        dateScores[dateKey] = { homework: [], participation: [], behavior: [] };
       }
-      if (f.homework) subjectScores[subjectName].homework.push(Number(f.homework));
-      if (f.participation) subjectScores[subjectName].participation.push(Number(f.participation));
-      if (f.behavior) subjectScores[subjectName].behavior.push(Number(f.behavior));
+      if (f.homework) dateScores[dateKey].homework.push(Number(f.homework));
+      if (f.participation) dateScores[dateKey].participation.push(Number(f.participation));
+      if (f.behavior) dateScores[dateKey].behavior.push(Number(f.behavior));
     });
     
-    Object.entries(subjectScores).forEach(([subject, scores]) => {
-      const avg = (arr) => arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : 0;
-      data.push({
-        subject,
-        homework: avg(scores.homework),
-        participation: avg(scores.participation),
-        behavior: avg(scores.behavior)
+    Object.entries(dateScores)
+      .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+      .forEach(([date, scores]) => {
+        const avg = (arr) => arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : 0;
+        data.push({
+          date,
+          homework: avg(scores.homework) * 10, // Scale to 0-100
+          participation: avg(scores.participation) * 10,
+          behavior: avg(scores.behavior) * 10
+        });
       });
-    });
     
-    return data.sort((a, b) => b.homework - a.homework).slice(0, 10); // Top 10 subjects
-  }, [filteredFeedbacks]);
+    return data;
+  }, [filteredFeedbacks, t]);
 
   useEffect(() => {
     fetchFeedback();
@@ -187,17 +191,18 @@ const StudentFeedbackPage = () => {
       {/* Chart */}
       {chartData.length > 0 && (
         <div style={{ background: 'white', padding: '24px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('feedback.performanceBySubject') || 'Performance by Subject'}</h2>
+          <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('feedback.overallCourseFeedback') || 'Overall Course Feedback'}</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
+            <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="subject" />
-              <YAxis domain={[0, 10]} />
+              <XAxis dataKey="date" />
+              <YAxis domain={[0, 100]} />
               <Tooltip />
-              <Bar dataKey="homework" fill="#3b82f6" name={t('feedback.homework') || 'Homework'} />
-              <Bar dataKey="participation" fill="#10b981" name={t('feedback.participation') || 'Participation'} />
-              <Bar dataKey="behavior" fill="#f59e0b" name={t('feedback.behavior') || 'Behavior'} />
-            </BarChart>
+              <Legend />
+              <Line type="monotone" dataKey="homework" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} name={t('feedback.homework') || 'Homework'} />
+              <Line type="monotone" dataKey="participation" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} name={t('feedback.participation') || 'Participation'} />
+              <Line type="monotone" dataKey="behavior" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} name={t('feedback.behavior') || 'Behavior'} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       )}

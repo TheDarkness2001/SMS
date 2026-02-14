@@ -547,7 +547,8 @@
     "examPercentage": "Exam Percentage",
     "feedbackBySubject": "Feedback by Subject",
     "count": "Count",
-    "performanceBySubject": "Performance by Subject"
+    "performanceBySubject": "Performance by Subject",
+    "overallCourseFeedback": "Overall Course Feedback"
   },
   "settings": {
     "title": "Settings",
