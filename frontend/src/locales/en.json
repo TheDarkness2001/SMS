@@ -242,7 +242,19 @@
     "deleteSuccess": "Payment deleted successfully!",
     "deleteError": "Failed to delete payment",
     "retry": "Retry",
-    "refreshData": "Refresh Data"
+    "refreshData": "Refresh Data",
+    "myPayments": "My Payments",
+    "viewAllPayments": "View all your payment history",
+    "totalPaid": "Total Paid",
+    "totalPending": "Total Pending",
+    "totalPayments": "Total Payments",
+    "filterByMonth": "Filter by Month",
+    "filterByYear": "Filter by Year",
+    "allMonths": "All Months",
+    "allYears": "All Years",
+    "reset": "Reset",
+    "noPaymentsFound": "No payments found for selected filters",
+    "type": "Type"
   },
   "revenue": {
     "title": "Revenue",
