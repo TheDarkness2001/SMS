@@ -45,13 +45,16 @@ const StudentAttendance = () => {
         
         console.log('[StudentAttendance] Groups data count:', groupsData.length);
         console.log('[StudentAttendance] Schedules data count:', schedulesData.length);
-        
-        // Get IDs of exam groups that have linked schedules to avoid duplication
-        const linkedExamGroupIds = schedulesData
-          .filter(s => s.subjectGroup && s.subjectGroup._id)
-          .map(s => s.subjectGroup._id);
-        
-        console.log('Linked Exam Group IDs:', linkedExamGroupIds);
+        console.log('[StudentAttendance] Schedules details:', schedulesData.map(s => ({
+          _id: s._id,
+          className: s.className,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          enrolledStudentsCount: s.enrolledStudents?.length || 0,
+          enrolledStudents: s.enrolledStudents,
+          teacher: s.teacher?._id || s.teacher,
+          subjectGroup: s.subjectGroup?._id || s.subjectGroup
+        })));
         
         // Merge them into a unified format for attendance
         // For teachers: show BOTH exam groups AND schedules (including linked ones)
