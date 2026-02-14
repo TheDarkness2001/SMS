@@ -36,9 +36,19 @@ exports.getSchedules = async (req, res) => {
     }
     // Admin, Manager, Founder see all schedules (no filter)
     
-    console.log('Scheduler query:', query);
-    console.log('User type:', req.userType);
-    console.log('User role:', req.user.role);
+    console.log('[Scheduler] User ID:', req.user._id, 'type:', typeof req.user._id);
+    console.log('[Scheduler] Query:', JSON.stringify(query));
+    console.log('[Scheduler] User role:', req.user.role);
+    
+    // Debug: Check all schedules for this branch to see what's available
+    const allSchedules = await ClassSchedule.find({ branchId: query.branchId }).select('className teacher startTime endTime');
+    console.log('[Scheduler] All schedules in branch:', allSchedules.length);
+    console.log('[Scheduler] All schedules details:', allSchedules.map(s => ({
+      className: s.className,
+      teacher: s.teacher?.toString() || s.teacher,
+      startTime: s.startTime,
+      endTime: s.endTime
+    })));
     
     const schedules = await ClassSchedule.find(query)
       .populate('teacher', 'name email')
@@ -47,7 +57,7 @@ exports.getSchedules = async (req, res) => {
       .populate('subjectGroup', 'groupId groupName class subject level')
       .sort('-createdAt');
 
-    console.log('Schedules found:', schedules.length);
+    console.log('[Scheduler] Schedules found for teacher:', schedules.length);
 
     res.status(200).json({
       success: true,
