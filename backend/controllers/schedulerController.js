@@ -20,11 +20,11 @@ exports.getSchedules = async (req, res) => {
     
     // Use teacherFilter from middleware if set (for teacher restrictions)
     if (req.teacherFilter && req.teacherFilter.teacher) {
-      query.teacher = req.teacherFilter.teacher;
+      query.teacher = { $in: [req.teacherFilter.teacher, req.teacherFilter.teacher.toString()] };
     }
     // Filter by teacher if provided in query params (for admin filtering)
     else if (teacher) {
-      query.teacher = teacher;
+      query.teacher = { $in: [teacher, teacher.toString()] };
     }
     // If user is a student, only show schedules they're enrolled in
     else if (req.userType === 'student') {
@@ -32,7 +32,7 @@ exports.getSchedules = async (req, res) => {
     }
     // If user is a teacher (not admin), only show their schedules
     else if (req.user.role === 'teacher') {
-      query.teacher = req.user._id;
+      query.teacher = { $in: [req.user._id, req.user._id.toString()] };
     }
     // Admin, Manager, Founder see all schedules (no filter)
     
