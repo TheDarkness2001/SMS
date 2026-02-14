@@ -88,15 +88,15 @@
 }
 
 .btn-text {
-  background: none;
-  border: none;
-  color: #6b7280;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
   cursor: pointer;
 }
 
 .btn-text:hover {
-  color: #374151;
-  text-decoration: underline;
+  background: #e5e7eb;
+  color: #1f2937;
 }
 
 .notification-modal-error {

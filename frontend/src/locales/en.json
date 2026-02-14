@@ -405,7 +405,12 @@
     "timestampPhotos": "Timestamp Photos",
     "timestampPhotosDesc": "Visual proof of attendance times",
     "deviceFingerprinting": "Device Fingerprinting",
-    "deviceFingerprintingDesc": "Browser/IP tracking for authenticity"
+    "deviceFingerprintingDesc": "Browser/IP tracking for authenticity",
+    "filterByYear": "Filter by Year",
+    "allYears": "All Years",
+    "attendanceTrend": "Attendance Trend",
+    "historyWithCount": "Attendance History ({{count}} records)",
+    "reset": "Reset"
   },
   "exams": {
     "title": "Exams",

@@ -176,7 +176,7 @@ const StudentAttendancePage = () => {
           onClick={() => { setSelectedMonth('all'); setSelectedYear(new Date().getFullYear().toString()); }}
           style={{ padding: '10px 20px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', marginTop: 'auto' }}
         >
-          {t('attendance.resetFilters')}
+          {t('attendance.reset')}
         </button>
       </div>
 
@@ -200,7 +200,7 @@ const StudentAttendancePage = () => {
           <AiOutlineClockCircle size={24} />
           <div className="stat-info">
             <div className="stat-number">{stats.late}</div>
-            <div className="stat-label">{t('attendance.leave')}</div>
+            <div className="stat-label">{t('attendance.late')}</div>
           </div>
         </div>
         <div className="stat-box percentage-box">
