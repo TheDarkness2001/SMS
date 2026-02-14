@@ -54,30 +54,31 @@ const StudentAttendance = () => {
         console.log('Linked Exam Group IDs:', linkedExamGroupIds);
         
         // Merge them into a unified format for attendance
+        // For teachers: show BOTH exam groups AND schedules (including linked ones)
+        // A teacher should be able to take attendance for any class they're assigned to
         const unifiedGroups = [
-          // Include ALL exam groups (backend now filters for teacher's groups including via schedules)
+          // Include exam groups
           ...groupsData.map(g => ({
             ...g,
             _type: 'exam-group',
             displayId: g.groupId || 'G',
             displayName: g.groupName || g.subject
           })),
-          // Include schedules that are NOT linked to an exam group (standalone schedules)
-          ...schedulesData
-            .filter(s => !s.subjectGroup || !s.subjectGroup._id)
-            .map(s => ({
-              ...s,
-              _id: s._id,
-              groupId: 'SCH-' + s._id.substring(0, 6),
-              groupName: s.className,
-              subject: s.subject?.name || s.subject || 'N/A',
-              class: s.className,
-              students: s.enrolledStudents || [],
-              teachers: [s.teacher],
-              _type: 'schedule',
-              displayId: 'SCH',
-              displayName: s.className
-            }))
+          // Include ALL schedules assigned to this teacher (including linked ones)
+          // Each schedule becomes its own attendance group
+          ...schedulesData.map(s => ({
+            ...s,
+            _id: s._id,
+            groupId: 'SCH-' + s._id.substring(0, 6),
+            groupName: s.className,
+            subject: s.subject?.name || s.subject || 'N/A',
+            class: s.className,
+            students: s.enrolledStudents || [],
+            teachers: [s.teacher],
+            _type: 'schedule',
+            displayId: 'SCH',
+            displayName: s.className
+          }))
         ];
         
         // Set filter mode from backend response (prefer exam groups' filter mode)
