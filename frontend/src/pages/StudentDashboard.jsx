@@ -106,7 +106,8 @@ const StudentDashboard = () => {
         totalPresent: present,
         totalAbsent: total - present,
         upcomingExams,
-        pendingPayments
+        totalPaidAmount,
+        totalPendingAmount
       });
       
     } catch (error) {
