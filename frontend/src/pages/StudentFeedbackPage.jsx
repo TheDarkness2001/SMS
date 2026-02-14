@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { feedbackAPI } from '../utils/api';
 import { AiOutlineMessage } from 'react-icons/ai';
 import { useLanguage } from '../context/LanguageContext';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import '../styles/StudentPages.css';
 
 const StudentFeedbackPage = () => {
