@@ -28,13 +28,31 @@ exports.getGroups = async (req, res) => {
 
     // For teachers, show only groups they are assigned to
     if (userRole === 'teacher') {
-      console.log('[ExamGroupController] Teacher userId type:', typeof userId, userId);
+      console.log('[ExamGroupController] Teacher userId:', userId, 'type:', typeof userId);
+      console.log('[ExamGroupController] Query branchId:', query.branchId);
       
       // First, find schedules assigned to this teacher
-      const teacherSchedules = await ClassSchedule.find({
-        teacher: userId,
-        branchId: query.branchId
-      }).select('subjectGroup');
+      // Use both ObjectId and string forms for matching
+      const scheduleQuery = {
+        $or: [
+          { teacher: userId },
+          { teacher: userId.toString() }
+        ]
+      };
+      if (query.branchId) {
+        scheduleQuery.branchId = query.branchId;
+      }
+      
+      console.log('[ExamGroupController] Schedule query:', JSON.stringify(scheduleQuery));
+      
+      const teacherSchedules = await ClassSchedule.find(scheduleQuery).select('subjectGroup');
+      
+      console.log('[ExamGroupController] Found schedules:', teacherSchedules.length);
+      console.log('[ExamGroupController] Schedule details:', teacherSchedules.map(s => ({ 
+        _id: s._id, 
+        subjectGroup: s.subjectGroup,
+        subjectGroupType: typeof s.subjectGroup 
+      })));
       
       // Get exam group IDs from those schedules
       const examGroupIdsFromSchedules = teacherSchedules
