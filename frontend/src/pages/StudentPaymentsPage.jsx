@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { paymentsAPI } from '../utils/api';
-import { AiOutlineDollar, AiOutlineCheckCircle, AiOutlineClockCircle, AiOutlineCalendar } from 'react-icons/ai';
+import { AiOutlineDollar, AiOutlineCheckCircle, AiOutlineClockCircle } from 'react-icons/ai';
 import { useLanguage } from '../context/LanguageContext';
 import { formatUZS } from '../utils/formatters';
 import '../styles/StudentPages.css';
