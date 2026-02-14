@@ -72,21 +72,32 @@ const StudentFeedbackPage = () => {
     setFilteredFeedbacks(filtered);
   }, [selectedSubject, selectedMonth, selectedYear, selectedClassLevel, feedbacks]);
 
-  // Calculate chart data - feedback count by subject
+  // Calculate chart data - average scores by subject
   const chartData = useMemo(() => {
     const data = [];
-    const subjectCounts = {};
+    const subjectScores = {};
     
     filteredFeedbacks.forEach(f => {
       const subjectName = f.subject?.name || f.subject || 'Unknown';
-      subjectCounts[subjectName] = (subjectCounts[subjectName] || 0) + 1;
+      if (!subjectScores[subjectName]) {
+        subjectScores[subjectName] = { homework: [], participation: [], behavior: [] };
+      }
+      if (f.homework) subjectScores[subjectName].homework.push(Number(f.homework));
+      if (f.participation) subjectScores[subjectName].participation.push(Number(f.participation));
+      if (f.behavior) subjectScores[subjectName].behavior.push(Number(f.behavior));
     });
     
-    Object.entries(subjectCounts).forEach(([subject, count]) => {
-      data.push({ subject, count });
+    Object.entries(subjectScores).forEach(([subject, scores]) => {
+      const avg = (arr) => arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : 0;
+      data.push({
+        subject,
+        homework: avg(scores.homework),
+        participation: avg(scores.participation),
+        behavior: avg(scores.behavior)
+      });
     });
     
-    return data.sort((a, b) => b.count - a.count).slice(0, 10); // Top 10 subjects
+    return data.sort((a, b) => b.homework - a.homework).slice(0, 10); // Top 10 subjects
   }, [filteredFeedbacks]);
 
   useEffect(() => {
@@ -176,14 +187,16 @@ const StudentFeedbackPage = () => {
       {/* Chart */}
       {chartData.length > 0 && (
         <div style={{ background: 'white', padding: '24px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('feedback.feedbackBySubject') || 'Feedback by Subject'}</h2>
-          <ResponsiveContainer width="100%" height={250}>
+          <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('feedback.performanceBySubject') || 'Performance by Subject'}</h2>
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="subject" />
-              <YAxis />
+              <YAxis domain={[0, 10]} />
               <Tooltip />
-              <Bar dataKey="count" fill="#3b82f6" name={t('feedback.count') || 'Count'} />
+              <Bar dataKey="homework" fill="#3b82f6" name={t('feedback.homework') || 'Homework'} />
+              <Bar dataKey="participation" fill="#10b981" name={t('feedback.participation') || 'Participation'} />
+              <Bar dataKey="behavior" fill="#f59e0b" name={t('feedback.behavior') || 'Behavior'} />
             </BarChart>
           </ResponsiveContainer>
         </div>
