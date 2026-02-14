@@ -355,6 +355,115 @@ exports.deleteSchedule = async (req, res) => {
   }
 };
 
+// @desc    Debug endpoint to check all schedules (admin only)
+// @route   GET /api/scheduler/debug/all
+// @access  Private (Admin only)
+exports.getAllSchedulesDebug = async (req, res) => {
+  try {
+    // Only allow admins/founders
+    if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+    
+    const schedules = await ClassSchedule.find()
+      .select('className teacher teacherName startTime endTime scheduledDays branchId subjectGroup enrolledStudents')
+      .sort('-createdAt');
+    
+    // Format the response to show teacher ID details
+    const formattedSchedules = schedules.map(s => ({
+      _id: s._id,
+      className: s.className,
+      teacher: s.teacher,
+      teacherType: typeof s.teacher,
+      teacherName: s.teacherName,
+      teacherString: s.teacher?.toString(),
+      startTime: s.startTime,
+      endTime: s.endTime,
+      scheduledDays: s.scheduledDays,
+      branchId: s.branchId,
+      subjectGroup: s.subjectGroup,
+      enrolledStudentsCount: s.enrolledStudents?.length || 0
+    }));
+    
+    res.status(200).json({
+      success: true,
+      count: schedules.length,
+      currentUser: {
+        id: req.user._id,
+        idType: typeof req.user._id,
+        idString: req.user._id.toString(),
+        role: req.user.role,
+        branchId: req.user.branchId
+      },
+      data: formattedSchedules
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Fix schedules with missing branchId (admin only)
+// @route   POST /api/scheduler/debug/fix-branch
+// @access  Private (Admin only)
+exports.fixMissingBranchIds = async (req, res) => {
+  try {
+    // Only allow admins/founders
+    if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+    
+    // Find all schedules with null or missing branchId
+    const schedulesToFix = await ClassSchedule.find({
+      $or: [
+        { branchId: null },
+        { branchId: { $exists: false } }
+      ]
+    });
+    
+    console.log(`[Scheduler Debug] Found ${schedulesToFix.length} schedules with missing branchId`);
+    
+    // Update them with the admin's branchId (or a default)
+    const defaultBranchId = req.user.branchId || '697a2126d4b852066eed6add';
+    
+    const updatePromises = schedulesToFix.map(schedule => {
+      return ClassSchedule.findByIdAndUpdate(
+        schedule._id,
+        { branchId: defaultBranchId },
+        { new: true }
+      );
+    });
+    
+    await Promise.all(updatePromises);
+    
+    res.status(200).json({
+      success: true,
+      message: `Fixed ${schedulesToFix.length} schedules`,
+      fixedCount: schedulesToFix.length,
+      fixedSchedules: schedulesToFix.map(s => ({
+        _id: s._id,
+        className: s.className,
+        teacherName: s.teacherName,
+        startTime: s.startTime,
+        endTime: s.endTime
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Get schedules by teacher
 // @route   GET /api/scheduler/teacher/:teacherId
 // @access  Private

@@ -6,7 +6,9 @@ const {
   createSchedule,
   updateSchedule,
   deleteSchedule,
-  getSchedulesByTeacher
+  getSchedulesByTeacher,
+  getAllSchedulesDebug,
+  fixMissingBranchIds
 } = require('../controllers/schedulerController');
 const { protect, authorize, checkPermission } = require('../middleware/auth');
 const { 
@@ -18,6 +20,13 @@ const {
 
 // All routes require authentication
 router.use(protect);
+
+// Debug routes (admin only)
+router.route('/debug/all')
+  .get(authorize('admin', 'manager', 'founder'), getAllSchedulesDebug);
+
+router.route('/debug/fix-branch')
+  .post(authorize('admin', 'manager', 'founder'), fixMissingBranchIds);
 
 // GET schedules - teachers see only THEIR schedules, students see only enrolled schedules
 // Admin, Manager, Founder see ALL schedules
