@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
 import { useToast } from '../context/ToastContext';
-import { schedulerAPI, teachersAPI, examGroupsAPI, subjectsAPI } from '../utils/api';
+import { schedulerAPI, teachersAPI, examGroupsAPI, subjectsAPI, branchesAPI } from '../utils/api';
 import '../styles/Scheduler.css';
 
 const Scheduler = () => {
