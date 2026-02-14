@@ -72,21 +72,27 @@ const StudentDashboard = () => {
       // Fetch payments with refresh
       const paymentsRes = await paymentsAPI.getByStudent(user.id);
       const allPayments = paymentsRes.data.data || [];
+      
+      const paidPaymentsList = allPayments.filter(p => p.status === 'paid');
       const pendingPaymentsList = allPayments.filter(p => 
         p.status === 'pending' || p.status === 'overdue'
       );
-      const pendingPayments = pendingPaymentsList.length;
-      const pendingAmount = pendingPaymentsList.reduce((sum, p) => sum + (p.amount || 0), 0);
       
-      console.log('[StudentDashboard] Total payments:', allPayments.length, 'Pending:', pendingPayments, 'Amount:', pendingAmount);
+      const totalPaidAmount = paidPaymentsList.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const totalPendingAmount = pendingPaymentsList.reduce((sum, p) => sum + (p.amount || 0), 0);
+      
+      console.log('[StudentDashboard] Total payments:', allPayments.length, 'Paid:', paidPaymentsList.length, 'Pending:', pendingPaymentsList.length);
+      console.log('[StudentDashboard] Total paid amount:', totalPaidAmount, 'Pending amount:', totalPendingAmount);
 
       setStats({
         attendancePercentage: percentage,
         totalPresent: present,
         totalAbsent: total - present,
         upcomingExams,
-        pendingPayments,
-        pendingAmount
+        totalPaidAmount,
+        totalPendingAmount,
+        paidCount: paidPaymentsList.length,
+        pendingCount: pendingPaymentsList.length
       });
       
       // Fetch feedback data
@@ -315,15 +321,17 @@ const StudentDashboard = () => {
           </div>
           <div className="stat-content">
             <h3 className="stat-title">{t('dashboard.payments')}</h3>
-            <div className="stat-value">{stats.pendingPayments}</div>
-            {stats.pendingAmount > 0 && (
+            <div className="stat-value" style={{ fontSize: '20px' }}>
+              {stats.totalPaidAmount > 0 ? `${stats.totalPaidAmount.toLocaleString()} UZS` : '0 UZS'}
+            </div>
+            {stats.totalPendingAmount > 0 && (
               <div className="stat-subvalue" style={{ fontSize: '14px', color: '#ef4444', fontWeight: '600', marginTop: '4px' }}>
-                {stats.pendingAmount.toLocaleString()} UZS
+                {stats.totalPendingAmount.toLocaleString()} UZS {t('dashboard.pending')}
               </div>
             )}
             <p className="stat-description">
-              {stats.pendingPayments > 0 
-                ? t('dashboard.pendingPaymentsAttention')
+              {stats.totalPendingAmount > 0 
+                ? `${stats.pendingCount} ${t('dashboard.pendingPayments')}`
                 : t('dashboard.allPaymentsUpToDate')}
             </p>
             <button 

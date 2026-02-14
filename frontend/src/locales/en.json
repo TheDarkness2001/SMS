@@ -61,7 +61,9 @@
     "reports": "Reports",
     "generateReports": "Generate detailed reports on student performance, payments, and attendance.",
     "configureSystem": "Configure system preferences and manage user permissions.",
-    "grade": "Grade"
+    "grade": "Grade",
+    "pending": "pending",
+    "pendingPayments": "pending payments"
   },
   "sidebar": {
     "dashboard": "Dashboard",
