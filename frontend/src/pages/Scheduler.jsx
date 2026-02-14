@@ -251,7 +251,8 @@ const Scheduler = () => {
       scheduledDays: schedule.scheduledDays || [],
       frequency: schedule.frequency,
       startTime: schedule.startTime,
-      endTime: schedule.endTime
+      endTime: schedule.endTime,
+      branchId: schedule.branchId || ''
     });
     setShowModal(true);
     console.log('Modal should open now');
@@ -283,7 +284,8 @@ const Scheduler = () => {
       scheduledDays: [],
       frequency: 'weekly',
       startTime: '',
-      endTime: ''
+      endTime: '',
+      branchId: isFounder ? '' : (currentUser.branchId || '')
     });
     setShowModal(true);
   };

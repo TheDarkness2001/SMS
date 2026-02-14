@@ -1098,7 +1098,10 @@
     "deleteSuccess": "Schedule deleted successfully",
     "deleteError": "Failed to delete schedule",
     "createSuccess": "Schedule created successfully",
-    "updateSuccess": "Schedule updated successfully"
+    "updateSuccess": "Schedule updated successfully",
+    "branch": "Branch",
+    "selectBranch": "Select Branch",
+    "branchHint": "Select the branch for this class schedule"
   },
   "examResults": {
     "results": "Results",
