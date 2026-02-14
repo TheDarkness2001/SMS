@@ -9,6 +9,9 @@ const Scheduler = () => {
   const { t } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
   const toast = useToast();
+  const [currentUser] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
+  const isFounder = currentUser.role === 'founder';
+  
   // Helper function to abbreviate day names
   const abbreviateDays = (days) => {
     if (!days || days.length === 0) return t('common.noData');
@@ -19,6 +22,7 @@ const Scheduler = () => {
   const [teachers, setTeachers] = useState([]);
   const [groups, setGroups] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [branches, setBranches] = useState([]); // For founder branch selection
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState('');
@@ -35,7 +39,8 @@ const Scheduler = () => {
     scheduledDays: [],
     frequency: 'weekly',
     startTime: '',
-    endTime: ''
+    endTime: '',
+    branchId: isFounder ? '' : (currentUser.branchId || '') // Founder selects branch, others use their branch
   });
   const [customSubjectInput, setCustomSubjectInput] = useState('');
 
@@ -47,15 +52,24 @@ const Scheduler = () => {
       const branchFilter = getBranchFilter();
       console.log('[Scheduler] Fetching data with branch filter:', branchFilter);
 
-      // Fetch schedules, teachers, and groups in parallel
-      const [schedulesRes, teachersRes, groupsRes, subjectsRes] = await Promise.all([
+      // Fetch schedules, teachers, groups, and subjects in parallel
+      const requests = [
         selectedTeacher 
           ? schedulerAPI.getAll({ teacher: selectedTeacher, ...branchFilter }) 
           : schedulerAPI.getAll(branchFilter),
         teachersAPI.getAll(branchFilter),
         examGroupsAPI.getAll(branchFilter),
         subjectsAPI.getAll()
-      ]);
+      ];
+      
+      // Also fetch branches for founder
+      if (isFounder) {
+        requests.push(branchesAPI.getAll());
+      }
+
+      const responses = await Promise.all(requests);
+      
+      const [schedulesRes, teachersRes, groupsRes, subjectsRes, branchesRes] = responses;
 
       const subjectsData = subjectsRes.data;
 
@@ -69,6 +83,11 @@ const Scheduler = () => {
       setGroups(groupsData);
       setSubjects(subjectsData.data || []);
       
+      if (isFounder && branchesRes) {
+        setBranches(branchesRes.data.data || []);
+        console.log('[Scheduler] Branches loaded:', branchesRes.data.data?.length || 0);
+      }
+      
       console.log('[Scheduler] Schedules loaded:', schedulesData.length);
       console.log('[Scheduler] Groups loaded:', groupsData.length);
       console.log('[Scheduler] Teachers loaded:', teachersData.length);
@@ -79,7 +98,7 @@ const Scheduler = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedTeacher, t, getBranchFilter]);
+  }, [selectedTeacher, t, getBranchFilter, isFounder]);
 
   useEffect(() => {
     fetchData();
@@ -560,6 +579,30 @@ const Scheduler = () => {
                     </small>
                   )}
                 </div>
+                
+                {/* Branch selection - only for founder */}
+                {isFounder && (
+                  <div className="mb-3">
+                    <label className="form-label">{t('scheduler.branch') || 'Branch'}</label>
+                    <select
+                      className="form-control"
+                      name="branchId"
+                      value={formData.branchId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">{t('scheduler.selectBranch') || 'Select Branch'}</option>
+                      {branches.map(branch => (
+                        <option key={branch._id} value={branch._id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                    <small className="form-text text-muted">
+                      {t('scheduler.branchHint') || 'Select the branch for this class schedule'}
+                    </small>
+                  </div>
+                )}
                 
                 <div className="mb-3">
                   <label className="form-label">{t('scheduler.teacher')}</label>

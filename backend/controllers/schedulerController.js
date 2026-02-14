@@ -167,6 +167,22 @@ exports.createSchedule = async (req, res) => {
       });
     }
 
+    // Determine branchId
+    let scheduleBranchId;
+    if (req.user.role !== 'founder') {
+      // Non-founders use their assigned branch
+      scheduleBranchId = req.user.branchId;
+    } else {
+      // Founders must provide branchId
+      scheduleBranchId = req.body.branchId;
+      if (!scheduleBranchId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Branch ID is required for founders'
+        });
+      }
+    }
+
     const schedule = await ClassSchedule.create({
       className,
       section,
@@ -180,7 +196,7 @@ exports.createSchedule = async (req, res) => {
       frequency,
       startTime,
       endTime,
-      branchId: req.user.role !== 'founder' ? req.user.branchId : req.body.branchId
+      branchId: scheduleBranchId
     });
     
     // Populate the created schedule before returning
