@@ -48,12 +48,31 @@ const Exams = () => {
       if (isTeacher) {
         const schedulesResponse = await schedulerAPI.getAll(branchFilter);
         const allSchedules = schedulesResponse.data.data || [];
-        const teacherSchedules = allSchedules.filter(schedule => 
-          schedule.teacher && (schedule.teacher._id === user._id || schedule.teacher._id === user.id)
-        );
-        const teacherScheduleIds = teacherSchedules.map(s => s._id);
         
-        examsData = examsData.filter(exam => teacherScheduleIds.includes(exam.scheduleId));
+        console.log('[Exams] All schedules:', allSchedules.length);
+        console.log('[Exams] User ID:', user._id || user.id);
+        
+        const teacherSchedules = allSchedules.filter(schedule => {
+          const scheduleTeacherId = schedule.teacher?._id?.toString() || schedule.teacher?.toString();
+          const userId = (user._id || user.id)?.toString();
+          const match = scheduleTeacherId === userId;
+          console.log('[Exams] Schedule:', schedule._id, 'Teacher:', scheduleTeacherId, 'Match:', match);
+          return match;
+        });
+        
+        console.log('[Exams] Teacher schedules:', teacherSchedules.length);
+        
+        const teacherScheduleIds = teacherSchedules.map(s => s._id.toString());
+        console.log('[Exams] Teacher schedule IDs:', teacherScheduleIds);
+        
+        examsData = examsData.filter(exam => {
+          const examScheduleId = exam.scheduleId?.toString();
+          const match = teacherScheduleIds.includes(examScheduleId);
+          console.log('[Exams] Exam:', exam._id, 'ScheduleId:', examScheduleId, 'Match:', match);
+          return match;
+        });
+        
+        console.log('[Exams] Filtered exams for teacher:', examsData.length);
       }
       
       setExams(examsData);

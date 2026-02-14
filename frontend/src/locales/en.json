@@ -485,7 +485,8 @@
     "quiz": "Quiz",
     "assignment": "Assignment",
     "addExamBtn": "Add Exam",
-    "updateExamBtn": "Update Exam"
+    "updateExamBtn": "Update Exam",
+    "manageExams": "Manage Exams"
   },
   "feedback": {
     "title": "Feedback",
