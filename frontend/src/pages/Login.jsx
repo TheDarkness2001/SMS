@@ -24,20 +24,27 @@ const Login = () => {
 
   // Listen for install prompt
   useEffect(() => {
+    // First check if already installed (standalone mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || window.navigator.standalone === true  // iOS
+      || document.referrer.includes('android-app://');  // Android Trusted Web Activity
+    
+    if (isStandalone) {
+      console.log('[Login] App is already installed (standalone mode)');
+      setIsInstallable(false);
+      return;  // Don't listen for install prompt if already installed
+    }
+
     const handleBeforeInstallPrompt = (e) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       // Store the event for later use
       setInstallPrompt(e);
       setIsInstallable(true);
+      console.log('[Login] Install prompt available');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstallable(false);
-    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
