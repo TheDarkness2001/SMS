@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../utils/api';
 import { useLanguage } from '../context/LanguageContext';
-import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
+import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineDownload } from 'react-icons/ai';
 import AnimatedGridBackground from '../components/AnimatedGridBackground';
 import '../styles/auth-layout.css';
 
@@ -19,6 +19,54 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  // Listen for install prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Store the event for later use
+      setInstallPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstallable(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) {
+      // If no prompt available, show instructions
+      alert('To install: Tap the menu (⋮) in your browser and select "Add to Home Screen" or "Install App"');
+      return;
+    }
+    
+    // Show the install prompt
+    installPrompt.prompt();
+    
+    // Wait for user response
+    const { outcome } = await installPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      console.log('User accepted install');
+      setIsInstallable(false);
+    } else {
+      console.log('User dismissed install');
+    }
+    
+    // Clear the prompt
+    setInstallPrompt(null);
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -163,6 +211,42 @@ const Login = () => {
             </button>
           </form>
         
+          {/* Install App Button */}
+          {isInstallable && (
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginTop: '15px',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = 'none';
+              }}
+            >
+              <AiOutlineDownload size={18} />
+              {t('login.installApp') || 'Install App'}
+            </button>
+          )}
+
           {/* Language Selector - Bottom Centered */}
           <div className="auth-layout__footer">
             <div className="language-selector-bottom">

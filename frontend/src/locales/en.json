@@ -10,7 +10,8 @@
     "student": "Student",
     "teacher": "Teacher",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "installApp": "Install App"
   },
   "dashboard": {
     "title": "Dashboard",

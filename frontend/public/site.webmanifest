@@ -1,6 +1,7 @@
 {
-    "name": "",
-    "short_name": "",
+    "name": "TechRen Academy",
+    "short_name": "TechRen",
+    "description": "Professional Student and Teacher Management Platform",
     "icons": [
        {
           "src": "/android-chrome-192x192.png",
@@ -13,7 +14,10 @@
         "type": "image/png"
         }
     ],
-    "theme_color": "#FFFFFF",
-    "background_color": "#FFFFFF",
-    "display": "standalone"
+    "theme_color": "#2c3e50",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "start_url": "/",
+    "scope": "/",
+    "orientation": "portrait"
  }
