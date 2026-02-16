@@ -19,6 +19,27 @@ exports.getExams = async (req, res) => {
       query.branchId = branchId;
     }
 
+    // For teachers, show exams they created OR exams linked to their schedules
+    if (req.user.role === 'teacher') {
+      const teacherId = req.user._id.toString();
+      
+      // Find all schedules assigned to this teacher
+      const teacherSchedules = await ClassSchedule.find({
+        teacher: { $in: [req.user._id, teacherId] }
+      }).select('_id');
+      
+      const scheduleIds = teacherSchedules.map(s => s._id.toString());
+      
+      console.log('[ExamController] Teacher ID:', teacherId);
+      console.log('[ExamController] Teacher schedules:', scheduleIds.length);
+      
+      // Show exams where teacher is the creator OR exam is linked to teacher's schedule
+      query.$or = [
+        { teacher: { $in: [req.user._id, teacherId] } },
+        { scheduleId: { $in: scheduleIds } }
+      ];
+    }
+
     if (examClass) query.class = examClass;
     if (subject) query.subject = subject;
     if (status) query.status = status;
@@ -35,10 +56,14 @@ exports.getExams = async (req, res) => {
       };
     }
 
+    console.log('[ExamController] Query:', JSON.stringify(query, null, 2));
+
     const exams = await Exam.find(query)
       .populate('teacher', 'name email')
       .populate('results.student', 'name studentId class')
       .sort('-examDate');
+
+    console.log('[ExamController] Found exams:', exams.length);
 
     res.status(200).json({
       success: true,
@@ -50,6 +75,31 @@ exports.getExams = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+// @desc    Debug endpoint to check exam data
+// @route   GET /api/exams/debug/all
+// @access  Private (Founder only)
+exports.getExamsDebug = async (req, res) => {
+  try {
+    if (req.user.role !== 'founder') {
+      return res.status(403).json({ success: false, message: 'Only founders can access debug data' });
+    }
+    
+    const exams = await Exam.find({})
+      .select('examName subject class teacher scheduleId branchId')
+      .populate('teacher', 'name email _id')
+      .populate('scheduleId', 'subject className teacher')
+      .lean();
+    
+    res.status(200).json({
+      success: true,
+      count: exams.length,
+      data: exams
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

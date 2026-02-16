@@ -13,7 +13,8 @@ const {
   updateEnrollmentStatus,
   addStudent,
   removeStudent,
-  getStudentExams
+  getStudentExams,
+  getExamsDebug
 } = require('../controllers/examController');
 const { protect, checkPermission } = require('../middleware/auth');
 const { enforceBranchIsolation } = require('../middleware/branchIsolation');
@@ -21,6 +22,9 @@ const { enforceBranchIsolation } = require('../middleware/branchIsolation');
 router.route('/')
   .get(protect, enforceBranchIsolation, getExams)
   .post(protect, checkPermission('canManageExams'), enforceBranchIsolation, createExam);
+
+// Debug endpoint to check exam data
+router.get('/debug/all', protect, getExamsDebug);
 
 // Student-specific route (must come before /:id)
 router.get('/student/:studentId', protect, enforceBranchIsolation, getStudentExams);
