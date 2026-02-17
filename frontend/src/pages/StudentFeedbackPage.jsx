@@ -95,9 +95,9 @@ const StudentFeedbackPage = () => {
         const avg = (arr) => arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : 0;
         data.push({
           date,
-          homework: avg(scores.homework) * 10, // Scale to 0-100
-          participation: avg(scores.participation) * 10,
-          behavior: avg(scores.behavior) * 10
+          homework: avg(scores.homework), // Keep as 0-10 scale
+          participation: avg(scores.participation),
+          behavior: avg(scores.behavior)
         });
       });
     
@@ -190,18 +190,18 @@ const StudentFeedbackPage = () => {
 
       {/* Chart */}
       {chartData.length > 0 && (
-        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('feedback.overallCourseFeedback') || 'Overall Course Feedback'}</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
+        <div style={{ background: 'white', padding: '16px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <h2 style={{ margin: '0 0 16px 0', fontSize: 'clamp(14px, 4vw, 18px)', fontWeight: '600' }}>{t('feedback.overallCourseFeedback') || 'Overall Course Feedback'}</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={chartData} margin={{ left: -20, right: 10, top: 5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis domain={[0, 100]} />
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+              <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} ticks={[0, 2.5, 5, 7.5, 10]} />
               <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="homework" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} name={t('feedback.homework') || 'Homework'} />
-              <Line type="monotone" dataKey="participation" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} name={t('feedback.participation') || 'Participation'} />
-              <Line type="monotone" dataKey="behavior" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} name={t('feedback.behavior') || 'Behavior'} />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Line type="monotone" dataKey="homework" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name={t('feedback.homework') || 'Homework'} />
+              <Line type="monotone" dataKey="participation" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name={t('feedback.participation') || 'Participation'} />
+              <Line type="monotone" dataKey="behavior" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} name={t('feedback.behavior') || 'Behavior'} />
             </LineChart>
           </ResponsiveContainer>
         </div>
