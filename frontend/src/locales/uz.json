@@ -511,7 +511,11 @@
     "isExamDay": "Bu imtihon kunimi?",
     "examDay": "Imtihon kuni",
     "examScore": "Imtihon bali",
-    "examPercentage": "Imtihon foizi"
+    "examPercentage": "Imtihon foizi",
+    "feedbackBySubject": "Fan bo'yicha fikr-mulohaza",
+    "count": "Soni",
+    "performanceBySubject": "Fan bo'yicha natija",
+    "overallCourseFeedback": "Kurs bo'yicha umumiy fikr-mulohaza"
   },
   "settings": {
     "title": "Sozlamalar",

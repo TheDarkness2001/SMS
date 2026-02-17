@@ -511,7 +511,11 @@
     "isExamDay": "Это день экзамена?",
     "examDay": "День экзамена",
     "examScore": "Балл за экзамен",
-    "examPercentage": "Процент экзамена"
+    "examPercentage": "Процент экзамена",
+    "feedbackBySubject": "Обратная связь по предмету",
+    "count": "Количество",
+    "performanceBySubject": "Результаты по предмету",
+    "overallCourseFeedback": "Общая обратная связь по курсу"
   },
   "settings": {
     "title": "Параметры",
