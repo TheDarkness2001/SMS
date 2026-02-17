@@ -310,15 +310,19 @@ const Feedback = () => {
 
   return (
     <div className="feedback-page">
-      <div className="page-header">
-        <div>
-          <h1>{t('feedback.dailyFeedback')}</h1>
-          <p className="subtitle">{t('feedback.giveFeedbackToday')}</p>
+      <div className="page-header" style={{ flexDirection: 'row', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '150px' }}>
+          <h1 style={{ fontSize: 'clamp(1.2rem, 4vw, 1.5rem)', margin: 0 }}>{t('feedback.dailyFeedback')}</h1>
+          <p className="subtitle" style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', margin: '2px 0 0 0', opacity: 0.8 }}>{t('feedback.giveFeedbackToday')}</p>
         </div>
         <button 
           className="btn btn-primary"
           onClick={fetchData}
-          style={{ marginLeft: 'auto' }}
+          style={{ 
+            fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)',
+            padding: '6px 12px',
+            whiteSpace: 'nowrap'
+          }}
         >
           🔄 {t('feedback.refreshClasses')}
         </button>
