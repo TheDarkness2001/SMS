@@ -122,17 +122,17 @@ const StudentResultsPage = () => {
 
       {/* Charts Section */}
       {completedExams.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
           {/* Performance Trend */}
-          <div style={{ background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('exams.examResults')}</h2>
-            <ResponsiveContainer width="100%" height={300}>
+          <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>
+            <h2 style={{ margin: '0 0 16px 0', fontSize: 'clamp(14px, 4vw, 18px)', fontWeight: '600' }}>{t('exams.examResults')}</h2>
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={performanceData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} stroke="#666" style={{ fontSize: '12px' }} />
-                <YAxis domain={[0, 100]} stroke="#666" style={{ fontSize: '12px' }} />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} stroke="#666" style={{ fontSize: '11px' }} />
+                <YAxis domain={[0, 100]} stroke="#666" style={{ fontSize: '11px' }} />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
                 <Line type="monotone" dataKey={t('exams.percentage')} stroke="#3b82f6" strokeWidth={2} name={t('exams.percentage')} />
                 <Line type="monotone" dataKey={t('exams.passMarks')} stroke="#f59e0b" strokeDasharray="5 5" name={t('exams.passMarks')} />
               </LineChart>
@@ -140,9 +140,9 @@ const StudentResultsPage = () => {
           </div>
 
           {/* Pass/Fail Distribution */}
-          <div style={{ background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('exams.passed')}/{t('exams.failed')}</h2>
-            <ResponsiveContainer width="100%" height={300}>
+          <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>
+            <h2 style={{ margin: '0 0 16px 0', fontSize: 'clamp(14px, 4vw, 18px)', fontWeight: '600' }}>{t('exams.passed')}/{t('exams.failed')}</h2>
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={pieData}
@@ -150,7 +150,7 @@ const StudentResultsPage = () => {
                   cy="50%"
                   labelLine={false}
                   label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                  outerRadius={80}
+                  outerRadius={70}
                   fill="#8884d8"
                   dataKey="value"
                 >
