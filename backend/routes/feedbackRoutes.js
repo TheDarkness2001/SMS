@@ -7,7 +7,8 @@ const {
   deleteFeedback,
   getFeedbackByStudent,
   addParentComment,
-  getTodayClasses
+  getTodayClasses,
+  getFeedbackDebug
 } = require('../controllers/feedbackController');
 const { protect, checkPermission } = require('../middleware/auth');
 const { enforceBranchIsolation } = require('../middleware/branchIsolation');
@@ -21,6 +22,9 @@ const {
 router.route('/')
   .get(protect, enforceBranchIsolation, restrictToOwnData, getFeedback)
   .post(protect, enforceBranchIsolation, forceTeacherIdInBody, checkPermission('canManageFeedback'), createFeedback);
+
+// Debug endpoint to check all feedback
+router.get('/debug/all', protect, getFeedbackDebug);
 
 // Teachers see only THEIR classes
 router.get('/today-classes', protect, enforceBranchIsolation, restrictToOwnData, getTodayClasses);

@@ -3,6 +3,32 @@ const Student = require('../models/Student');
 const ClassSchedule = require('../models/ClassSchedule');
 const { emitNotificationEvent } = require('../utils/notificationEvents');
 
+// @desc    Debug endpoint to check all feedback
+// @route   GET /api/feedback/debug/all
+// @access  Private (Founder only)
+exports.getFeedbackDebug = async (req, res) => {
+  try {
+    if (req.user.role !== 'founder') {
+      return res.status(403).json({ success: false, message: 'Only founders can access debug data' });
+    }
+    
+    const feedback = await Feedback.find({})
+      .select('student teacher schedule subject feedbackDate branchId homework participation behavior')
+      .populate('student', 'name studentId')
+      .populate('teacher', 'name email')
+      .sort('-feedbackDate')
+      .limit(50);
+    
+    res.status(200).json({
+      success: true,
+      count: feedback.length,
+      data: feedback
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Helper function to check if teacher can give feedback NOW
 const canGiveFeedbackNow = async (scheduleId) => {
   try {
@@ -292,10 +318,11 @@ exports.getFeedbackByStudent = async (req, res) => {
   try {
     let query = { student: req.params.studentId };
 
-    // Branch isolation: Non-founders can only see their branch
-    if (req.user.role !== 'founder' && req.user.role) {
+    // Branch isolation: Only apply to teachers/staff, NOT students viewing their own feedback
+    // Students should see ALL their feedback regardless of branchId
+    if (req.user.role !== 'founder' && req.user.role && req.user.role !== 'student') {
       query.branchId = req.user.branchId;
-    } else if (req.query.branchId) {
+    } else if (req.query.branchId && req.user.role !== 'student') {
       query.branchId = req.query.branchId;
     }
 
@@ -305,10 +332,15 @@ exports.getFeedbackByStudent = async (req, res) => {
       console.log(`✅ Teacher ${req.user._id} restricted to own feedback for student`);
     }
 
+    console.log('[FeedbackController] Student feedback query:', JSON.stringify(query, null, 2));
+    console.log('[FeedbackController] User role:', req.user.role, 'User ID:', req.user._id);
+
     const feedback = await Feedback.find(query)
       .populate('teacher', 'name email')
       .populate('schedule', 'subject className startTime endTime')
       .sort('-feedbackDate');
+
+    console.log('[FeedbackController] Found feedback:', feedback.length);
 
     res.status(200).json({
       success: true,
