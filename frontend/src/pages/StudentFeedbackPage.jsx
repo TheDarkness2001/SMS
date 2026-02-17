@@ -18,8 +18,11 @@ const StudentFeedbackPage = () => {
 
   const fetchFeedback = useCallback(async () => {
     try {
+      console.log('[StudentFeedbackPage] Fetching feedback for student:', user.id);
       const res = await feedbackAPI.getByStudent(user.id);
       const data = res.data.data || [];
+      console.log('[StudentFeedbackPage] Received feedback:', data.length, 'items');
+      console.log('[StudentFeedbackPage] Feedback dates:', data.map(f => f.feedbackDate || f.createdAt));
       setFeedbacks(data);
       setFilteredFeedbacks(data);
     } catch (error) {
@@ -192,11 +195,11 @@ const StudentFeedbackPage = () => {
       {chartData.length > 0 && (
         <div style={{ background: 'white', padding: '16px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <h2 style={{ margin: '0 0 16px 0', fontSize: 'clamp(14px, 4vw, 18px)', fontWeight: '600' }}>{t('feedback.overallCourseFeedback') || 'Overall Course Feedback'}</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={chartData} margin={{ left: -10, right: 10, top: 5, bottom: 5 }}>
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={chartData} margin={{ left: 0, right: 20, top: 10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} width={30} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} width={35} />
               <Tooltip formatter={(value) => `${value}%`} />
               <Legend wrapperStyle={{ fontSize: '11px' }} />
               <Line type="monotone" dataKey="homework" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name={t('feedback.homework') || 'Homework'} />

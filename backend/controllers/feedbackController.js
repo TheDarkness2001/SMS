@@ -318,16 +318,25 @@ exports.getFeedbackByStudent = async (req, res) => {
   try {
     let query = { student: req.params.studentId };
 
+    console.log('[FeedbackController] getFeedbackByStudent called');
+    console.log('[FeedbackController] req.params.studentId:', req.params.studentId);
+    console.log('[FeedbackController] req.user.role:', req.user.role);
+    console.log('[FeedbackController] req.user._id:', req.user._id);
+    console.log('[FeedbackController] req.user.branchId:', req.user.branchId);
+    console.log('[FeedbackController] req.query.branchId:', req.query.branchId);
+
     // Branch isolation: Only apply to teachers/staff, NOT students viewing their own feedback
     // Students should see ALL their feedback regardless of branchId
     if (req.user.role === 'student') {
       // Students see ALL their feedback - no branch filter
-      console.log('[FeedbackController] Student viewing own feedback - no branch filter');
+      console.log('[FeedbackController] Student viewing own feedback - no branch filter applied');
     } else if (req.user.role !== 'founder' && req.user.role) {
       // Staff/teachers see only their branch feedback
       query.branchId = req.user.branchId;
+      console.log('[FeedbackController] Staff/Teacher - filtering by branchId:', req.user.branchId);
     } else if (req.query.branchId) {
       query.branchId = req.query.branchId;
+      console.log('[FeedbackController] Using query.branchId:', req.query.branchId);
     }
 
     // SECURITY: Teachers can only see feedback THEY created
@@ -336,8 +345,7 @@ exports.getFeedbackByStudent = async (req, res) => {
       console.log(`✅ Teacher ${req.user._id} restricted to own feedback for student`);
     }
 
-    console.log('[FeedbackController] Student feedback query:', JSON.stringify(query, null, 2));
-    console.log('[FeedbackController] User role:', req.user.role, 'User ID:', req.user._id);
+    console.log('[FeedbackController] Final query:', JSON.stringify(query, null, 2));
 
     const feedback = await Feedback.find(query)
       .populate('teacher', 'name email')
@@ -345,6 +353,7 @@ exports.getFeedbackByStudent = async (req, res) => {
       .sort('-feedbackDate');
 
     console.log('[FeedbackController] Found feedback:', feedback.length);
+    console.log('[FeedbackController] Feedback IDs:', feedback.map(f => f._id.toString()));
 
     res.status(200).json({
       success: true,
