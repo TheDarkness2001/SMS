@@ -9,6 +9,11 @@ const enforceBranchIsolation = (req, res, next) => {
       return next();
     }
 
+    // Students don't need branch isolation - they see their own data
+    if (req.user.role === 'student') {
+      return next();
+    }
+
     // Staff must have a branchId
     if (!req.user.branchId) {
       return res.status(403).json({

@@ -37,9 +37,11 @@ exports.protect = async (req, res, next) => {
     } else if (decoded.userType === 'parent') {
       req.user = await Student.findById(decoded.id);
       req.userType = 'parent';
+      if (req.user) req.user.role = 'parent';
     } else if (decoded.userType === 'student') {
       req.user = await Student.findById(decoded.id);
       req.userType = 'student';
+      if (req.user) req.user.role = 'student';
     }
 
     
