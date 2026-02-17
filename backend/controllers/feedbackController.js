@@ -320,9 +320,13 @@ exports.getFeedbackByStudent = async (req, res) => {
 
     // Branch isolation: Only apply to teachers/staff, NOT students viewing their own feedback
     // Students should see ALL their feedback regardless of branchId
-    if (req.user.role !== 'founder' && req.user.role && req.user.role !== 'student') {
+    if (req.user.role === 'student') {
+      // Students see ALL their feedback - no branch filter
+      console.log('[FeedbackController] Student viewing own feedback - no branch filter');
+    } else if (req.user.role !== 'founder' && req.user.role) {
+      // Staff/teachers see only their branch feedback
       query.branchId = req.user.branchId;
-    } else if (req.query.branchId && req.user.role !== 'student') {
+    } else if (req.query.branchId) {
       query.branchId = req.query.branchId;
     }
 
