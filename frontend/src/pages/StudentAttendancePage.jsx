@@ -210,15 +210,15 @@ const StudentAttendancePage = () => {
       </div>
 
       {/* Monthly Chart */}
-      <div style={{ background: 'white', padding: '24px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('attendance.attendanceRecord')} ({selectedYear !== 'all' ? selectedYear : new Date().getFullYear()})</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={monthlyChartData}>
+      <div style={{ background: 'white', padding: '16px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <h2 style={{ margin: '0 0 16px 0', fontSize: 'clamp(14px, 4vw, 18px)', fontWeight: '600' }}>{t('attendance.attendanceRecord')} ({selectedYear !== 'all' ? selectedYear : new Date().getFullYear()})</h2>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={monthlyChartData} margin={{ left: -20, right: 10, top: 5, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
+            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} width={30} />
             <Tooltip />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
             <Bar dataKey="Present" fill="#10b981" />
             <Bar dataKey="Absent" fill="#ef4444" />
             <Bar dataKey="Late" fill="#f59e0b" />
@@ -227,15 +227,15 @@ const StudentAttendancePage = () => {
       </div>
 
       {/* Yearly Overview Chart */}
-      <div style={{ background: 'white', padding: '24px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>{t('attendance.attendanceTrend')}</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={yearlyChartData}>
+      <div style={{ background: 'white', padding: '16px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <h2 style={{ margin: '0 0 16px 0', fontSize: 'clamp(14px, 4vw, 18px)', fontWeight: '600' }}>{t('attendance.attendanceTrend')}</h2>
+        <ResponsiveContainer width="100%" height={220}>
+          <LineChart data={yearlyChartData} margin={{ left: -20, right: 10, top: 5, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis domain={[0, 100]} />
+            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} width={30} />
             <Tooltip />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
             <Line type="monotone" dataKey="Attendance %" stroke="#3b82f6" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
