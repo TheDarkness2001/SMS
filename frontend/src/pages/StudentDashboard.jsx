@@ -231,9 +231,13 @@ const StudentDashboard = () => {
   useEffect(() => {
     fetchDashboardData();
 
-    // Check if we should show the notification modal (once per student/parent)
-    const alreadyAsked = sessionStorage.getItem(`push_notif_asked_${user.id || user._id}`);
-    if (!alreadyAsked && (user.userType === 'parent' || user.userType === 'student')) {
+    // Check if we should show the notification modal (once per device per student)
+    // This allows different parents (on different devices) to each get the prompt
+    const deviceId = localStorage.getItem('device_id') || 'unknown';
+    const alreadyAsked = localStorage.getItem(`push_notif_${user.id || user._id}_${deviceId}`);
+    const permission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+    
+    if (!alreadyAsked && permission !== 'granted' && (user.userType === 'parent' || user.userType === 'student')) {
       // Delay it slightly for better UX
       const timer = setTimeout(() => {
         setShowNotificationModal(true);

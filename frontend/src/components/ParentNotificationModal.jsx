@@ -1,12 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AiOutlineNotification, AiOutlineCheck } from 'react-icons/ai';
 import { requestPushPermission } from '../utils/pushNotification';
 import { studentsAPI } from '../utils/api';
 import './ParentNotificationModal.css';
 
+// Generate a simple device fingerprint
+const getDeviceId = () => {
+  let deviceId = localStorage.getItem('device_id');
+  if (!deviceId) {
+    deviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    localStorage.setItem('device_id', deviceId);
+  }
+  return deviceId;
+};
+
 const ParentNotificationModal = ({ studentId, onComplete }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [shouldShow, setShouldShow] = useState(false);
+
+  useEffect(() => {
+    // Check if we've already asked on this device
+    const deviceId = getDeviceId();
+    const storageKey = `push_notif_${studentId}_${deviceId}`;
+    const alreadyAsked = localStorage.getItem(storageKey);
+    
+    // Also check if permission is already granted (user enabled it)
+    const permission = Notification.permission;
+    
+    if (alreadyAsked || permission === 'granted') {
+      // Don't show modal - already handled on this device
+      onComplete();
+    } else {
+      setShouldShow(true);
+    }
+  }, [studentId, onComplete]);
+
+  const markAsAsked = () => {
+    const deviceId = getDeviceId();
+    const storageKey = `push_notif_${studentId}_${deviceId}`;
+    localStorage.setItem(storageKey, 'true');
+  };
 
   const handleEnable = async () => {
     setLoading(true);
@@ -21,8 +55,8 @@ const ParentNotificationModal = ({ studentId, onComplete }) => {
       // 3. Enable notifications settings
       await studentsAPI.updateNotificationSettings(studentId, { enable: true });
       
-      // 4. Mark as asked in sessionStorage
-      sessionStorage.setItem(`push_notif_asked_${studentId}`, 'true');
+      // 4. Mark as asked on this device (persistent)
+      markAsAsked();
       
       onComplete();
     } catch (err) {
@@ -50,12 +84,15 @@ const ParentNotificationModal = ({ studentId, onComplete }) => {
   };
 
   const handleLater = () => {
-    // Mark as asked so it doesn't pop up immediately again, 
-    // but maybe we want to ask again after a few days?
-    // For now, let's just close it.
-    sessionStorage.setItem(`push_notif_asked_${studentId}`, 'true');
+    // Mark as asked on this device (persistent)
+    markAsAsked();
     onComplete();
   };
+
+  // Don't render if we shouldn't show
+  if (!shouldShow) {
+    return null;
+  }
 
   return (
     <div className="notification-modal-overlay">
