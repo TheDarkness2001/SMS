@@ -27,8 +27,8 @@ const enforceBranchIsolation = (req, res, next) => {
         });
       }
 
-      // Auto-inject branchId into query params for GET requests
-      if (req.method === 'GET') {
+      // Auto-inject branchId into query params for GET requests (except for students viewing their own data)
+      if (req.method === 'GET' && req.user.role !== 'student') {
         req.query.branchId = req.user.branchId;
       }
 
