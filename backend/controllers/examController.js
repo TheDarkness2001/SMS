@@ -31,13 +31,29 @@ exports.getExams = async (req, res) => {
       const scheduleIds = teacherSchedules.map(s => s._id.toString());
       
       console.log('[ExamController] Teacher ID:', teacherId);
+      console.log('[ExamController] Teacher branchId:', req.user.branchId);
       console.log('[ExamController] Teacher schedules:', scheduleIds.length);
       
-      // Show exams where teacher is the creator OR exam is linked to teacher's schedule
-      query.$or = [
-        { teacher: { $in: [req.user._id, teacherId] } },
-        { scheduleId: { $in: scheduleIds } }
-      ];
+      // Show exams where:
+      // 1. Teacher is the creator AND branch matches, OR
+      // 2. Exam is linked to teacher's schedule (regardless of branchId, including null)
+      const teacherQuery = {
+        $or: [
+          { 
+            // Teacher created the exam in their branch
+            teacher: { $in: [req.user._id, teacherId] },
+            branchId: req.user.branchId
+          },
+          { 
+            // Exam is linked to teacher's schedule (any branchId including null)
+            scheduleId: { $in: scheduleIds }
+          }
+        ]
+      };
+      
+      // Replace the branchId query with our combined query
+      delete query.branchId;
+      Object.assign(query, teacherQuery);
     }
 
     if (examClass) query.class = examClass;
@@ -136,10 +152,20 @@ exports.getExam = async (req, res) => {
 // @access  Private
 exports.createExam = async (req, res) => {
   try {
+    let branchId = req.user.role !== 'founder' ? req.user.branchId : req.body.branchId;
+    
+    // If no branchId provided but scheduleId is set, get branchId from schedule
+    if (!branchId && req.body.scheduleId) {
+      const schedule = await ClassSchedule.findById(req.body.scheduleId).select('branchId');
+      if (schedule) {
+        branchId = schedule.branchId;
+      }
+    }
+    
     const examData = {
       ...req.body,
       teacher: req.body.teacher || req.user._id,
-      branchId: req.user.role !== 'founder' ? req.user.branchId : req.body.branchId
+      branchId: branchId
     };
 
     const exam = await Exam.create(examData);
