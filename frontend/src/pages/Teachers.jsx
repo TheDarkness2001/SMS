@@ -59,11 +59,11 @@ const Teachers = () => {
     }
   }, [searchTerm, navigate, t, getBranchFilter]);
 
-  // Load branches for admin, manager, and founder
+  // Load branches for founder only
   useEffect(() => {
     const loadBranches = async () => {
       console.log('User role:', user?.role);
-      if (['founder', 'admin', 'manager'].includes(user?.role)) {
+      if (user?.role === 'founder') {
         console.log('Attempting to load branches...');
         try {
           const branchesResponse = await branchesAPI.getAll();
@@ -157,8 +157,8 @@ const Teachers = () => {
     e.preventDefault();
     setError('');
 
-    // Validate branch selection for admin/manager/founder
-    if (['founder', 'admin', 'manager'].includes(user?.role) && !formData.branchId) {
+    // Validate branch selection for founder only
+    if (user?.role === 'founder' && !formData.branchId) {
       setError('Please select a branch');
       return;
     }
@@ -650,7 +650,7 @@ const Teachers = () => {
                   </datalist>
                 </div>
 
-                {['founder', 'admin', 'manager'].includes(user?.role) && (
+                {user?.role === 'founder' && (
                   <div className="form-group">
                     <label>Branch *</label>
                     <select
