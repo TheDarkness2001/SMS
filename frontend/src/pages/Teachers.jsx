@@ -10,7 +10,10 @@ import "../styles/Teachers.css"
 const Teachers = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  // Also check sessionStorage as fallback (like BranchContext does)
+  const sessionUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+  const user = authUser?.role ? authUser : sessionUser;
   const { selectedBranch, getBranchFilter } = useBranch();
   const toast = useToast();
   const [teachers, setTeachers] = useState([]);
