@@ -650,6 +650,7 @@ const Teachers = () => {
                   </datalist>
                 </div>
 
+                {console.log('[Teachers] Rendering branch select. User role:', user?.role, 'Is founder?', user?.role === 'founder')}
                 {user?.role === 'founder' && (
                   <div className="form-group">
                     <label>Branch *</label>
