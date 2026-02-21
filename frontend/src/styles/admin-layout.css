@@ -21,8 +21,8 @@
   margin-top: 70px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   min-height: calc(100vh - 80px);
-  width: calc(100% - 290px);
-  max-width: 1600px;
+  width: calc(100% - 320px);
+  max-width: none;
   box-sizing: border-box;
   overflow-x: hidden;
 }
@@ -210,11 +210,20 @@
   }
 }
 
-/* Ultra-wide screens (4K/2K monitors) */
+/* Large screens (1440px to 1919px) */
+@media (min-width: 1440px) and (max-width: 1919px) {
+  .admin-layout__content-area {
+    width: calc(100% - 320px);
+    max-width: none;
+  }
+}
+
+/* Ultra-wide screens (4K/2K monitors - 1920px and above) */
 @media (min-width: 1920px) {
   .admin-layout__content-area {
-    max-width: 1600px;
-    margin-left: auto;
-    margin-right: auto;
+    width: calc(100% - 320px);
+    max-width: none;
+    margin-left: 290px;
+    margin-right: 30px;
   }
 }
