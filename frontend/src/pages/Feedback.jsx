@@ -152,8 +152,8 @@ const Feedback = () => {
     setSelectedClass(classSchedule);
     setSelectedStudent(student);
     
-    // Check if feedback already exists for today
-    const existingFeedback = getFeedbackForToday(student._id, classSchedule._id);
+    // Check if feedback already exists for this student/schedule
+    const existingFeedback = findExistingFeedback(student._id, classSchedule._id);
     
     if (existingFeedback) {
       // Pre-fill with existing feedback data for editing
@@ -286,18 +286,26 @@ const Feedback = () => {
     }
   };
 
-  // Check if student already has feedback today and get it
-  const getFeedbackForToday = (studentId, scheduleId) => {
-    const today = new Date().toDateString();
+  // Check if student already has feedback for the selected date and get it
+  const getFeedbackForDate = (studentId, scheduleId, date) => {
+    const checkDate = date ? new Date(date).toDateString() : new Date().toDateString();
     return recentFeedback.find(fb => 
       fb.student?._id === studentId && 
       fb.schedule?._id === scheduleId &&
-      new Date(fb.feedbackDate).toDateString() === today
+      new Date(fb.feedbackDate).toDateString() === checkDate
+    );
+  };
+  
+  // Find any feedback for student/schedule (regardless of date) - used for edit detection
+  const findExistingFeedback = (studentId, scheduleId) => {
+    return recentFeedback.find(fb => 
+      fb.student?._id === studentId && 
+      fb.schedule?._id === scheduleId
     );
   };
 
   const hasFeedbackToday = (studentId, scheduleId) => {
-    return !!getFeedbackForToday(studentId, scheduleId);
+    return !!getFeedbackForDate(studentId, scheduleId);
   };
 
   if (loading) {
