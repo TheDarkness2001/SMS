@@ -12,7 +12,10 @@ import '../styles/AdminPayoutPanel.css';
  * NO WALLET/EARNINGS TRACKING - Just record when you pay teachers
  */
 const AdminPayoutPanel = () => {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  // Use sessionStorage as fallback for role (same pattern as Teachers.jsx)
+  const sessionUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+  const user = authUser?.role ? authUser : sessionUser;
   const { t, language } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
   const [activeTab, setActiveTab] = useState('create');

@@ -12,7 +12,10 @@ import '../styles/AdminEarningsPanel.css';
  * Admin/Manager can approve earnings, apply bonus/penalty/adjustment
  */
 const AdminEarningsPanel = () => {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  // Use sessionStorage as fallback for role (same pattern as Teachers.jsx)
+  const sessionUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+  const user = authUser?.role ? authUser : sessionUser;
   const { t, language } = useLanguage();
   const { getBranchFilter } = useBranch();
   const [activeTab, setActiveTab] = useState('pending');

@@ -6,7 +6,10 @@ import { formatUZS, getTransactionStatusColor } from '../utils/formatters';
 import '../styles/AdminWalletPanel.css';
 
 const AdminWalletPanel = () => {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  // Use sessionStorage as fallback for role (same pattern as Teachers.jsx)
+  const sessionUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+  const user = authUser?.role ? authUser : sessionUser;
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState('pending-topups');
   const [pendingTopUps, setPendingTopUps] = useState([]);
