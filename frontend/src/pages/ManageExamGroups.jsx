@@ -214,7 +214,7 @@ const ManageExamGroups = () => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+    <div className="manage-exam-groups-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1 style={{ marginBottom: '0' }}><AiOutlineBook size={28} style={{ verticalAlign: 'middle', marginRight: '10px' }} />{t('subjectGroups.title')}</h1>
         <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>

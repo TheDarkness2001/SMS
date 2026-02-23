@@ -103,10 +103,10 @@ const TeacherAttendance = () => {
     }
   };
 
-  if (loading) return <div className="container"><p>{t('common.loading')}</p></div>;
+  if (loading) return <div className="teacher-attendance-container"><p>{t('common.loading')}</p></div>;
 
   return (
-    <div className="container">
+    <div className="teacher-attendance-container">
       <h1 style={{ marginBottom: '30px' }}>{t('attendance.teacherAttendance')}</h1>
 
       {error && <div className="alert alert-error">{error}</div>}
