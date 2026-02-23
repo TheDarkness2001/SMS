@@ -332,6 +332,7 @@
     "teacherNotFound": "Teacher information not found in group",
     "failedToSave": "Failed to save attendance",
     "teacherViewInfo": "You are viewing only the groups assigned to you.",
+    "allClasses": "All Classes",
     "allClassesInfo": "You can select and manage attendance for any class at any time.",
     "noGroupsAvailable": "No Groups Available",
     "noGroupsTeacherMsg": "You haven't been assigned to any student groups yet. Please contact your administrator to be assigned to groups.",
@@ -487,7 +488,8 @@
     "assignment": "Assignment",
     "addExamBtn": "Add Exam",
     "updateExamBtn": "Update Exam",
-    "manageExams": "Manage Exams"
+    "manageExams": "Manage Exams",
+    "startByCreating": "Start by creating your first exam"
   },
   "feedback": {
     "title": "Feedback",

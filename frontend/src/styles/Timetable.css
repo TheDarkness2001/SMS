@@ -1,5 +1,7 @@
 .timetable-container {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .timetable-header {
@@ -78,7 +80,8 @@
   display: grid;
   grid-template-columns: 80px repeat(7, 1fr);
   gap: 0;
-  min-width: 900px;
+  width: 100%;
+  min-width: auto;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
