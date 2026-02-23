@@ -138,6 +138,8 @@ const StudentAttendance = () => {
         const existingRecords = {};
         const savedRecords = {};
         
+        console.log('[StudentAttendance] Fetched existing records:', data.data.length);
+        
         data.data.forEach(record => {
           if (record.student && record.student._id) {
             existingRecords[record.student._id] = {
@@ -146,8 +148,11 @@ const StudentAttendance = () => {
               recordedAt: record.createdAt
             };
             savedRecords[record.student._id] = record._id;
+            console.log('[StudentAttendance] Record found:', record.student._id, '->', record._id);
           }
         });
+        
+        console.log('[StudentAttendance] Setting savedRecords:', savedRecords);
         
         setStudentAttendance(prev => ({ ...prev, ...existingRecords }));
         setSavedAttendance(prev => ({ ...prev, ...savedRecords }));
@@ -286,13 +291,19 @@ const StudentAttendance = () => {
       // Check if updating existing record
       const existingRecordId = savedAttendance[studentId];
       
+      console.log('[StudentAttendance] Saving attendance for student:', studentId);
+      console.log('[StudentAttendance] existingRecordId:', existingRecordId);
+      console.log('[StudentAttendance] savedAttendance state:', savedAttendance);
+      
       const successMsg = existingRecordId ? t('common.updatedSuccessfully') : t('common.savedSuccessfully');
       
       if (existingRecordId) {
         // Update existing record
+        console.log('[StudentAttendance] Updating existing record:', existingRecordId);
         await studentAttendanceAPI.update(existingRecordId, attendancePayload);
       } else {
         // Create new record
+        console.log('[StudentAttendance] Creating new record');
         const response = await studentAttendanceAPI.create(attendancePayload);
         // Save the record ID
         setSavedAttendance(prev => ({
