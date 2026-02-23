@@ -12,7 +12,9 @@ const TeacherAttendance = () => {
   const { selectedBranch, getBranchFilter } = useBranch();
   const toast = useToast();
   const [teachers, setTeachers] = useState([]);
+  const [filteredTeachers, setFilteredTeachers] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedRole, setSelectedRole] = useState('all');
   const [attendance, setAttendance] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -43,14 +45,23 @@ const TeacherAttendance = () => {
     fetchTeachers();
   }, [navigate, t, selectedBranch, getBranchFilter]);
 
+  // Filter teachers by role
+  useEffect(() => {
+    if (selectedRole === 'all') {
+      setFilteredTeachers(teachers);
+    } else {
+      setFilteredTeachers(teachers.filter(teacher => teacher.role === selectedRole));
+    }
+  }, [teachers, selectedRole]);
+
   // Initialize attendance tracking for selected date
   useEffect(() => {
     const initAttendance = {};
-    teachers.forEach(teacher => {
+    filteredTeachers.forEach(teacher => {
       initAttendance[teacher._id] = { status: '', notes: '' };
     });
     setAttendance(initAttendance);
-  }, [teachers, selectedDate]);
+  }, [filteredTeachers, selectedDate]);
 
   const handleStatusChange = (teacherId, status) => {
     setAttendance(prev => ({
@@ -112,18 +123,39 @@ const TeacherAttendance = () => {
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="card">
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ marginRight: '10px' }}>{t('attendance.date')}:</label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #ddd',
-              borderRadius: '4px'
-            }}
-          />
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          <div>
+            <label style={{ marginRight: '10px' }}>{t('attendance.date')}:</label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px'
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ marginRight: '10px' }}>{t('common.role')}:</label>
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                minWidth: '150px'
+              }}
+            >
+              <option value="all">{t('common.all')}</option>
+              <option value="teacher">{t('login.teacher')}</option>
+              <option value="admin">{t('common.admin')}</option>
+              <option value="manager">{t('common.manager')}</option>
+              <option value="founder">{t('common.founder')}</option>
+            </select>
+          </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -137,7 +169,7 @@ const TeacherAttendance = () => {
               </tr>
             </thead>
             <tbody>
-              {teachers.map(teacher => (
+              {filteredTeachers.map(teacher => (
                 <tr key={teacher._id}>
                   <td>{teacher.name}</td>
                   <td>
