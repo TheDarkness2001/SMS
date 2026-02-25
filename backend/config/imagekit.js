@@ -1,4 +1,5 @@
 const ImageKit = require('@imagekit/nodejs');
+const FormData = require('form-data');
 
 // Initialize ImageKit only if private key exists
 let imagekit = null;
@@ -16,21 +17,26 @@ if (process.env.IMAGEKIT_PRIVATE_KEY) {
     imagekit = {
       ...ImageKitInstance,
       upload: async function(options) {
-        // Bypass SDK and use direct fetch to ImageKit upload API
+        // Use multipart/form-data for file upload
         try {
           const authString = Buffer.from(`${process.env.IMAGEKIT_PRIVATE_KEY}:`).toString('base64');
           
-          const uploadData = {
-            file: options.file,
-            fileName: options.fileName,
-          };
+          // Create FormData for multipart upload
+          const formData = new FormData();
+          
+          // Convert base64 to buffer
+          const base64Data = options.file;
+          const fileBuffer = Buffer.from(base64Data, 'base64');
+          
+          formData.append('file', fileBuffer, options.fileName);
+          formData.append('fileName', options.fileName);
           
           if (options.folder) {
-            uploadData.folder = options.folder;
+            formData.append('folder', options.folder);
           }
           
           if (options.useUniqueFileName !== undefined) {
-            uploadData.useUniqueFileName = options.useUniqueFileName;
+            formData.append('useUniqueFileName', options.useUniqueFileName.toString());
           }
           
           console.log('[ImageKit Upload] Uploading to:', 'https://upload.imagekit.io/api/v1/files/upload');
@@ -39,9 +45,8 @@ if (process.env.IMAGEKIT_PRIVATE_KEY) {
             method: 'POST',
             headers: {
               'Authorization': `Basic ${authString}`,
-              'Content-Type': 'application/json',
             },
-            body: JSON.stringify(uploadData)
+            body: formData
           });
           
           if (!response.ok) {
