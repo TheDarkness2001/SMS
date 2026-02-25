@@ -286,16 +286,6 @@ const Feedback = () => {
     }
   };
 
-  // Check if student already has feedback for the selected date and get it
-  const getFeedbackForDate = (studentId, scheduleId, date) => {
-    const checkDate = date ? new Date(date).toDateString() : new Date().toDateString();
-    return recentFeedback.find(fb => 
-      fb.student?._id === studentId && 
-      fb.schedule?._id === scheduleId &&
-      new Date(fb.feedbackDate).toDateString() === checkDate
-    );
-  };
-  
   // Find any feedback for student/schedule (regardless of date) - used for edit detection
   const findExistingFeedback = (studentId, scheduleId) => {
     return recentFeedback.find(fb => 
