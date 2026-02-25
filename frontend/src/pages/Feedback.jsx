@@ -428,7 +428,8 @@ const Feedback = () => {
                   {classSchedule.enrolledStudents?.length > 0 ? (
                     <div className="student-items">
                       {classSchedule.enrolledStudents.map((student) => {
-                        const alreadySubmitted = hasFeedbackToday(student._id, classSchedule._id);
+                        const existingFeedback = findExistingFeedback(student._id, classSchedule._id);
+                        const alreadySubmitted = !!existingFeedback;
                         return (
                           <div key={student._id} className="student-item">
                             <div className="student-info">
