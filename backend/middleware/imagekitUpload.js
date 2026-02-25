@@ -79,7 +79,7 @@ const uploadToImageKit = async (req, res, next) => {
     };
     
     console.log('[ImageKit] Calling upload with options:', { fileName, folder: '/uploads' });
-    const result = await imagekit.files.upload(uploadOptions);
+    const result = await imagekit.upload(uploadOptions);
 
     console.log('[ImageKit] Upload successful!', result.url);
     
