@@ -18,7 +18,7 @@ if (process.env.IMAGEKIT_PRIVATE_KEY) {
       upload: async function(options) {
         // Bypass SDK and use direct fetch to ImageKit upload API
         try {
-          const authString = Buffer.from(`${ImageKitInstance.options.privateKey}:`).toString('base64');
+          const authString = Buffer.from(`${process.env.IMAGEKIT_PRIVATE_KEY}:`).toString('base64');
           
           const uploadData = {
             file: options.file,
