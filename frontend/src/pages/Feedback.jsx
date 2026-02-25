@@ -304,10 +304,6 @@ const Feedback = () => {
     );
   };
 
-  const hasFeedbackToday = (studentId, scheduleId) => {
-    return !!getFeedbackForDate(studentId, scheduleId);
-  };
-
   if (loading) {
     return (
       <div className="feedback-page">
