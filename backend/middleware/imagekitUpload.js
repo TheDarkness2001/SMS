@@ -91,8 +91,9 @@ const uploadToImageKit = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('[ImageKit] Upload error details:', error.message);
-    console.error('[ImageKit] Full error:', error);
+    console.error('[ImageKit] ❌ Upload error details:', error.message);
+    console.error('[ImageKit] ❌ Full error:', error);
+    console.error('[ImageKit] ❌ Error stack:', error.stack);
     
     // Fallback to disk storage if ImageKit fails
     console.log('[ImageKit] Falling back to disk storage...');
