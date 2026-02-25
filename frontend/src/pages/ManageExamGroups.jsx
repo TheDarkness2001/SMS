@@ -200,13 +200,18 @@ const ManageExamGroups = () => {
     );
   };
 
-  // Filter available teachers
+  // Filter available teachers by subject
   const getAvailableTeachers = () => {
     const currentSubject = formData.groupName?.trim().toLowerCase();
     if (!currentSubject) return teachers;
 
-    // Show all teachers (removed strict subject matching to be more flexible)
-    return teachers;
+    // Filter teachers who teach this subject
+    return teachers.filter(teacher => {
+      const teacherSubjects = Array.isArray(teacher.subject)
+        ? teacher.subject.map(s => s.toLowerCase().trim())
+        : [teacher.subject?.toLowerCase().trim()].filter(Boolean);
+      return teacherSubjects.includes(currentSubject);
+    });
   };
 
   if (loading) {
