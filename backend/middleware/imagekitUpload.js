@@ -67,16 +67,12 @@ const uploadToImageKit = async (req, res, next) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const fileName = req.file.fieldname + '-' + uniqueSuffix + path.extname(req.file.originalname);
 
-    // Convert buffer to base64 for ImageKit
-    const fileBase64 = req.file.buffer.toString('base64');
-    console.log('[ImageKit] File converted to base64, length:', fileBase64.length);
-
-    // Upload to ImageKit using v7 SDK
+    // Use buffer directly for ImageKit SDK v7
     console.log('[ImageKit] Uploading to ImageKit...');
     
-    // ImageKit v7 uses upload method on the instance
+    // ImageKit v7 SDK accepts buffer directly
     const uploadOptions = {
-      file: fileBase64,
+      file: req.file.buffer,
       fileName: fileName,
       folder: '/uploads',
       useUniqueFileName: false
