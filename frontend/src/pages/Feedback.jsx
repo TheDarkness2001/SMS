@@ -152,8 +152,9 @@ const Feedback = () => {
     setSelectedClass(classSchedule);
     setSelectedStudent(student);
     
-    // Check if feedback already exists for this student/schedule
-    const existingFeedback = findExistingFeedback(student._id, classSchedule._id);
+    // Check if feedback already exists for this student/schedule TODAY
+    const today = new Date().toISOString().split('T')[0];
+    const existingFeedback = findExistingFeedback(student._id, classSchedule._id, today);
     
     if (existingFeedback) {
       // Pre-fill with existing feedback data for editing
@@ -286,11 +287,13 @@ const Feedback = () => {
     }
   };
 
-  // Find any feedback for student/schedule (regardless of date) - used for edit detection
-  const findExistingFeedback = (studentId, scheduleId) => {
+  // Find feedback for student/schedule on a specific date
+  const findExistingFeedback = (studentId, scheduleId, date) => {
+    const checkDate = date ? new Date(date).toDateString() : new Date().toDateString();
     return recentFeedback.find(fb => 
       fb.student?._id === studentId && 
-      fb.schedule?._id === scheduleId
+      fb.schedule?._id === scheduleId &&
+      new Date(fb.feedbackDate).toDateString() === checkDate
     );
   };
 
@@ -414,7 +417,8 @@ const Feedback = () => {
                   {classSchedule.enrolledStudents?.length > 0 ? (
                     <div className="student-items">
                       {classSchedule.enrolledStudents.map((student) => {
-                        const existingFeedback = findExistingFeedback(student._id, classSchedule._id);
+                        const today = new Date().toISOString().split('T')[0];
+                        const existingFeedback = findExistingFeedback(student._id, classSchedule._id, today);
                         const alreadySubmitted = !!existingFeedback;
                         return (
                           <div key={student._id} className="student-item">
