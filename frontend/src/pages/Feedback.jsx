@@ -278,7 +278,10 @@ const Feedback = () => {
       }
 
       handleCloseModal();
-      fetchData();
+      // Wait a moment for database to be consistent, then refresh
+      setTimeout(() => {
+        fetchData();
+      }, 500);
       toast.success(successMsg);
     } catch (err) {
       console.error('Error submitting feedback:', err);
