@@ -79,8 +79,13 @@ exports.getAttendance = async (req, res) => {
 
     // Restrict teachers to only see their own students
     if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
-      // Get students assigned to this teacher
-      const teacherStudents = await Student.find({ subjects: req.user.subject });
+      // Get teacher's subjects from database (req.user.subject may not be in JWT)
+      const Teacher = require('../models/Teacher');
+      const teacherData = await Teacher.findById(req.user._id);
+      const teacherSubjects = teacherData?.subject || [];
+      
+      // Get students assigned to this teacher's subjects
+      const teacherStudents = await Student.find({ subjects: { $in: teacherSubjects } });
       query.student = { $in: teacherStudents.map(s => s._id) };
     }
 
@@ -180,7 +185,18 @@ exports.getSingleAttendance = async (req, res) => {
     // Restrict teachers to only see their own students
     if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
       const student = await Student.findById(attendance.student);
-      if (!student.subjects.includes(req.user.subject)) {
+      
+      // Get teacher's subjects from database (req.user.subject may not be in JWT)
+      const Teacher = require('../models/Teacher');
+      const teacherData = await Teacher.findById(req.user._id);
+      const teacherSubjects = teacherData?.subject || [];
+      
+      // Check if any of the teacher's subjects match the student's subjects
+      const hasMatchingSubject = teacherSubjects.some(ts => 
+        student.subjects.some(ss => ss.toLowerCase() === ts.toLowerCase())
+      );
+      
+      if (!hasMatchingSubject) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to access this attendance record'
@@ -250,10 +266,24 @@ exports.createAttendance = async (req, res) => {
     // Restrict teachers to only create attendance for their own students
     if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
       const student = await Student.findById(req.body.student);
-      if (!student.subjects.includes(req.user.subject)) {
+      
+      // Get teacher's subjects from database (req.user.subject may not be in JWT)
+      const Teacher = require('../models/Teacher');
+      const teacherData = await Teacher.findById(req.user._id);
+      const teacherSubjects = teacherData?.subject || [];
+      
+      console.log('[Attendance] Teacher subjects:', teacherSubjects);
+      console.log('[Attendance] Student subjects:', student.subjects);
+      
+      // Check if any of the teacher's subjects match the student's subjects
+      const hasMatchingSubject = teacherSubjects.some(ts => 
+        student.subjects.some(ss => ss.toLowerCase() === ts.toLowerCase())
+      );
+      
+      if (!hasMatchingSubject) {
         return res.status(403).json({
           success: false,
-          message: 'Not authorized to create attendance for this student'
+          message: 'Not authorized to create attendance for this student - no matching subjects'
         });
       }
     }
@@ -404,7 +434,18 @@ exports.updateAttendance = async (req, res) => {
     // Restrict teachers to only update their own students' attendance
     if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
       const student = await Student.findById(attendance.student);
-      if (!student.subjects.includes(req.user.subject)) {
+      
+      // Get teacher's subjects from database (req.user.subject may not be in JWT)
+      const Teacher = require('../models/Teacher');
+      const teacherData = await Teacher.findById(req.user._id);
+      const teacherSubjects = teacherData?.subject || [];
+      
+      // Check if any of the teacher's subjects match the student's subjects
+      const hasMatchingSubject = teacherSubjects.some(ts => 
+        student.subjects.some(ss => ss.toLowerCase() === ts.toLowerCase())
+      );
+      
+      if (!hasMatchingSubject) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to update this attendance record'
@@ -494,7 +535,18 @@ exports.deleteAttendance = async (req, res) => {
     // Restrict teachers to only delete their own students' attendance
     if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
       const student = await Student.findById(attendance.student);
-      if (!student.subjects.includes(req.user.subject)) {
+      
+      // Get teacher's subjects from database (req.user.subject may not be in JWT)
+      const Teacher = require('../models/Teacher');
+      const teacherData = await Teacher.findById(req.user._id);
+      const teacherSubjects = teacherData?.subject || [];
+      
+      // Check if any of the teacher's subjects match the student's subjects
+      const hasMatchingSubject = teacherSubjects.some(ts => 
+        student.subjects.some(ss => ss.toLowerCase() === ts.toLowerCase())
+      );
+      
+      if (!hasMatchingSubject) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to delete this attendance record'
@@ -526,7 +578,18 @@ exports.checkConsecutiveAbsences = async (req, res) => {
     // Restrict teachers to only check their own students
     if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
       const student = await Student.findById(studentId);
-      if (!student.subjects.includes(req.user.subject)) {
+      
+      // Get teacher's subjects from database (req.user.subject may not be in JWT)
+      const Teacher = require('../models/Teacher');
+      const teacherData = await Teacher.findById(req.user._id);
+      const teacherSubjects = teacherData?.subject || [];
+      
+      // Check if any of the teacher's subjects match the student's subjects
+      const hasMatchingSubject = teacherSubjects.some(ts => 
+        student.subjects.some(ss => ss.toLowerCase() === ts.toLowerCase())
+      );
+      
+      if (!hasMatchingSubject) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to check this student\'s attendance'
@@ -589,7 +652,17 @@ exports.getEligibilityStatus = async (req, res) => {
     
     // Restrict teachers to only see their own students
     if (req.user.role !== 'admin' && req.user.role !== 'manager' && req.user.role !== 'founder') {
-      if (!student.subjects.includes(req.user.subject)) {
+      // Get teacher's subjects from database (req.user.subject may not be in JWT)
+      const Teacher = require('../models/Teacher');
+      const teacherData = await Teacher.findById(req.user._id);
+      const teacherSubjects = teacherData?.subject || [];
+      
+      // Check if any of the teacher's subjects match the student's subjects
+      const hasMatchingSubject = teacherSubjects.some(ts => 
+        student.subjects.some(ss => ss.toLowerCase() === ts.toLowerCase())
+      );
+      
+      if (!hasMatchingSubject) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to access this student\'s eligibility status'
