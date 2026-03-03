@@ -299,22 +299,40 @@ exports.createAttendance = async (req, res) => {
     console.log('[Attendance] Subject value:', attendanceData.subject);
     console.log('[Attendance] Subject type:', typeof attendanceData.subject);
     console.log('[Attendance] Subject length:', attendanceData.subject?.length);
+    console.log('[Attendance] User branchId:', req.user.branchId);
     
     if (attendanceData.subject && typeof attendanceData.subject === 'string' && attendanceData.subject.length < 24) {
       // It's likely a subject name, not an ObjectId - look it up
       const Subject = require('../models/Subject');
       
-      // Try case-insensitive search
-      const subjectDoc = await Subject.findOne({ 
+      // Build query with optional branch filter for non-founders
+      const subjectQuery = { 
         name: { $regex: new RegExp(`^${attendanceData.subject.trim()}$`, 'i') }
-      });
+      };
+      
+      // For non-founders, also filter by branch
+      if (req.user.role !== 'founder' && req.user.branchId) {
+        subjectQuery.$or = [
+          { branchId: req.user.branchId },
+          { branchId: null },
+          { branchId: { $exists: false } }
+        ];
+      }
+      
+      console.log('[Attendance] Subject query:', JSON.stringify(subjectQuery));
+      
+      // Try case-insensitive search
+      const subjectDoc = await Subject.findOne(subjectQuery);
       
       if (subjectDoc) {
+        console.log('[Attendance] Found subject:', subjectDoc.name, 'with ID:', subjectDoc._id);
         attendanceData.subject = subjectDoc._id;
       } else {
         // List available subjects for debugging
-        const allSubjects = await Subject.find({}, 'name');
-        const subjectNames = allSubjects.map(s => s.name).join(', ');
+        const allSubjects = await Subject.find({}, 'name branchId');
+        const subjectNames = allSubjects.map(s => `${s.name} (branch: ${s.branchId || 'null'})`).join(', ');
+        
+        console.log('[Attendance] Available subjects:', subjectNames);
         
         return res.status(400).json({
           success: false,
