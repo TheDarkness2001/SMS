@@ -13,8 +13,8 @@ exports.getSchedules = async (req, res) => {
     // Branch isolation: Non-founders can only see their branch
     if (req.user.role !== 'founder') {
       query.branchId = req.user.branchId;
-    } else if (branchId) {
-      // Founders can filter by branch
+    } else if (branchId && branchId !== 'undefined' && branchId !== 'null' && branchId.trim() !== '') {
+      // Founders can filter by branch - strict match only
       query.branchId = branchId;
     }
     
