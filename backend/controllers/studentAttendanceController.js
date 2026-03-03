@@ -270,16 +270,31 @@ exports.createAttendance = async (req, res) => {
       // It's likely a subject name, not an ObjectId - look it up
       const Subject = require('../models/Subject');
       
-      // Try case-insensitive search
-      const subjectDoc = await Subject.findOne({ 
+      // Build query with branch filter for non-founders
+      const subjectQuery = { 
         name: { $regex: new RegExp(`^${attendanceData.subject.trim()}$`, 'i') }
-      });
+      };
+      
+      // Add branch filter for non-founders
+      if (req.user.role !== 'founder' && req.user.branchId) {
+        subjectQuery.branchId = req.user.branchId;
+      }
+      
+      // Try case-insensitive search
+      let subjectDoc = await Subject.findOne(subjectQuery);
+      
+      // If not found with branch filter, try without (for cross-branch subjects)
+      if (!subjectDoc && req.user.role !== 'founder' && req.user.branchId) {
+        subjectDoc = await Subject.findOne({ 
+          name: { $regex: new RegExp(`^${attendanceData.subject.trim()}$`, 'i') }
+        });
+      }
       
       if (subjectDoc) {
         attendanceData.subject = subjectDoc._id;
       } else {
         // List available subjects for debugging
-        const allSubjects = await Subject.find({}, 'name');
+        const allSubjects = await Subject.find({}, 'name branchId');
         const subjectNames = allSubjects.map(s => s.name).join(', ');
         
         return res.status(400).json({
