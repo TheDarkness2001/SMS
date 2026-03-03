@@ -593,7 +593,12 @@
     "description": "Tavsif",
     "code": "Kod",
     "notSet": "O'rnatilmagan",
-    "selected": "tanlangan"
+    "selected": "tanlangan",
+    "selectSubject": "Fanni tanlang"
+  },
+  "branches": {
+    "branch": "Filial",
+    "selectBranch": "Filialni tanlang"
   },
   "subjectGroups": {
     "title": "Fan guruhlarini boshqarish",

@@ -642,7 +642,12 @@
     "description": "Description",
     "code": "Code",
     "notSet": "Not set",
-    "selected": "selected"
+    "selected": "selected",
+    "selectSubject": "Select Subject"
+  },
+  "branches": {
+    "branch": "Branch",
+    "selectBranch": "Select Branch"
   },
   "subjectGroups": {
     "title": "Manage Subject Groups",

@@ -593,7 +593,12 @@
     "description": "Описание",
     "code": "Код",
     "notSet": "Не установлено",
-    "selected": "выбрано"
+    "selected": "выбрано",
+    "selectSubject": "Выберите предмет"
+  },
+  "branches": {
+    "branch": "Филиал",
+    "selectBranch": "Выберите филиал"
   },
   "subjectGroups": {
     "title": "Управление группами предметов",
