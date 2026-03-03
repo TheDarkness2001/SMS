@@ -266,6 +266,10 @@ exports.createAttendance = async (req, res) => {
     };
 
     // Convert subject name to ObjectId if it's a string
+    console.log('[Attendance] Subject value:', attendanceData.subject);
+    console.log('[Attendance] Subject type:', typeof attendanceData.subject);
+    console.log('[Attendance] Subject length:', attendanceData.subject?.length);
+    
     if (attendanceData.subject && typeof attendanceData.subject === 'string' && attendanceData.subject.length < 24) {
       // It's likely a subject name, not an ObjectId - look it up
       const Subject = require('../models/Subject');
@@ -289,6 +293,8 @@ exports.createAttendance = async (req, res) => {
           availableSubjects: allSubjects
         });
       }
+    } else {
+      console.log('[Attendance] Skipping subject lookup - treating as ObjectId');
     }
 
     // Ensure teacher field is set (override if from req.body)
