@@ -30,8 +30,12 @@ const ManageExamGroups = () => {
     section: 'A', // Keep default for backend compatibility
     description: '',
     startTime: '',
-    endTime: ''
+    endTime: '',
+    branchId: ''
   });
+
+  const [user, setUser] = useState(null);
+  const [branches, setBranches] = useState([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -61,6 +65,24 @@ const ManageExamGroups = () => {
   useEffect(() => {
     setLoading(true);
     fetchData();
+    
+    // Load user from sessionStorage
+    const userStr = sessionStorage.getItem('user');
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+    }
+    
+    // Load branches for founder
+    const loadBranches = async () => {
+      try {
+        const { branchesAPI } = await import('../utils/api');
+        const res = await branchesAPI.getAll();
+        setBranches(res.data.data || []);
+      } catch (err) {
+        console.error('Error loading branches:', err);
+      }
+    };
+    loadBranches();
   }, [fetchData, selectedBranch]);
 
   const handleInputChange = (e) => {
@@ -96,13 +118,21 @@ const ManageExamGroups = () => {
       return;
     }
     
+    // Validate branch selection for founder
+    if (user?.role === 'founder' && !formData.branchId) {
+      setError(t('branches.selectBranch'));
+      return;
+    }
+    
     try {
-      await examGroupsAPI.create({
+      const submitData = {
         ...formData,
-        subject: formData.groupName, // Use groupName as subject
+        subject: formData.subject,
         students: selectedStudents,
-        teachers: selectedTeachers
-      });
+        teachers: selectedTeachers,
+        branchId: user?.role === 'founder' ? formData.branchId : selectedBranch?._id
+      };
+      await examGroupsAPI.create(submitData);
       setSuccess(t('common.savedSuccessfully'));
       setShowAddModal(false);
       setFormData({
@@ -113,7 +143,8 @@ const ManageExamGroups = () => {
         section: 'A',
         description: '',
         startTime: '',
-        endTime: ''
+        endTime: '',
+        branchId: ''
       });
       setSelectedStudents([]);
       setSelectedTeachers([]);
@@ -126,13 +157,22 @@ const ManageExamGroups = () => {
 
   const handleEditGroup = async (e) => {
     e.preventDefault();
+    
+    // Validate branch selection for founder
+    if (user?.role === 'founder' && !formData.branchId) {
+      setError(t('branches.selectBranch'));
+      return;
+    }
+    
     try {
-      await examGroupsAPI.update(editingGroup._id, {
+      const submitData = {
         ...formData,
-        subject: formData.groupName, // Use groupName as subject
+        subject: formData.subject,
         students: selectedStudents,
-        teachers: selectedTeachers
-      });
+        teachers: selectedTeachers,
+        branchId: user?.role === 'founder' ? formData.branchId : selectedBranch?._id
+      };
+      await examGroupsAPI.update(editingGroup._id, submitData);
       setSuccess(t('common.savedSuccessfully'));
       setShowEditModal(false);
       setEditingGroup(null);
@@ -166,7 +206,8 @@ const ManageExamGroups = () => {
       section: group.section || 'A',
       description: group.description || '',
       startTime: group.startTime || '',
-      endTime: group.endTime || ''
+      endTime: group.endTime || '',
+      branchId: group.branchId || ''
     });
     setSelectedStudents(group.students.map(s => s._id || s));
     setSelectedTeachers(group.teachers?.map(t => t._id || t) || []);
@@ -202,8 +243,8 @@ const ManageExamGroups = () => {
 
   // Filter available teachers by subject
   const getAvailableTeachers = () => {
-    const currentSubject = formData.groupName?.trim().toLowerCase();
-    if (!currentSubject) return teachers;
+    const currentSubject = formData.subject?.trim().toLowerCase();
+    if (!currentSubject) return [];
 
     // Filter teachers who teach this subject
     return teachers.filter(teacher => {
@@ -364,6 +405,58 @@ const ManageExamGroups = () => {
                   }}
                 />
               </div>
+
+              {/* Subject Dropdown */}
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label style={{ fontWeight: '500', marginBottom: '8px', display: 'block' }}>{t('attendance.subject')} *</label>
+                <select
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  <option value="">{t('forms.selectSubject')}</option>
+                  {[...new Set(teachers.flatMap(t => Array.isArray(t.subject) ? t.subject : [t.subject]).filter(Boolean))].sort().map(subject => (
+                    <option key={subject} value={subject}>{subject}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Branch Selection for Founder */}
+              {user?.role === 'founder' && (
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label style={{ fontWeight: '500', marginBottom: '8px', display: 'block' }}>{t('branches.branch')} *</label>
+                  <select
+                    name="branchId"
+                    value={formData.branchId}
+                    onChange={handleInputChange}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      boxSizing: 'border-box',
+                      backgroundColor: 'white'
+                    }}
+                  >
+                    <option value="">{t('branches.selectBranch')}</option>
+                    {branches.map(branch => (
+                      <option key={branch._id} value={branch._id}>{branch.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px', marginBottom: '20px' }}>
                 <div className="form-group">
@@ -549,6 +642,19 @@ const ManageExamGroups = () => {
                     setShowAddModal(false);
                     setShowEditModal(false);
                     setEditingGroup(null);
+                    setFormData({
+                      groupId: '',
+                      groupName: '',
+                      subject: '',
+                      class: '',
+                      section: 'A',
+                      description: '',
+                      startTime: '',
+                      endTime: '',
+                      branchId: ''
+                    });
+                    setSelectedStudents([]);
+                    setSelectedTeachers([]);
                   }}
                   style={{ padding: '10px 24px' }}
                 >
