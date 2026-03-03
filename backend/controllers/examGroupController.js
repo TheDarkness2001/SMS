@@ -23,7 +23,12 @@ exports.getGroups = async (req, res) => {
       query.branchId = req.user.branchId;
     } else if (branchId) {
       // Founders can filter by branch
-      query.branchId = branchId;
+      // Include groups with matching branchId OR null branchId (legacy data)
+      query.$or = [
+        { branchId: branchId },
+        { branchId: null },
+        { branchId: { $exists: false } }
+      ];
     }
 
     // For teachers, show only groups they are assigned to
@@ -39,8 +44,12 @@ exports.getGroups = async (req, res) => {
           { teacher: userId.toString() }
         ]
       };
+      // Handle branch filtering for schedules
       if (query.branchId) {
         scheduleQuery.branchId = query.branchId;
+      } else if (query.$or) {
+        // If query has $or for branch filtering, apply similar logic
+        scheduleQuery.$or = query.$or;
       }
       
       console.log('[ExamGroupController] Schedule query:', JSON.stringify(scheduleQuery));
@@ -75,7 +84,7 @@ exports.getGroups = async (req, res) => {
       console.log('[ExamGroupController] Teacher query:', JSON.stringify(teacherQuery));
       
       // First, let's see ALL groups in the database
-      const allGroups = await ExamGroup.find({ branchId: query.branchId });
+      const allGroups = await ExamGroup.find(query.$or ? { $or: query.$or } : { branchId: query.branchId });
       console.log('[ExamGroupController] Total groups in branch:', allGroups.length);
       
       if (allGroups.length > 0) {
