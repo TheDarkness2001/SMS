@@ -274,6 +274,7 @@
     "startDate": "Start Date",
     "endDate": "End Date",
     "allSubjects": "All Subjects",
+    "subject": "Subject",
     "paymentMethod": "Payment Method",
     "allMethods": "All Methods",
     "loading": "Loading revenue data...",

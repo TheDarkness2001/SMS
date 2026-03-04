@@ -16,9 +16,9 @@ exports.getPayments = async (req, res) => {
       query.branchId = req.user.branchId;
       console.log('[PAYMENTS] Non-founder filter applied:', query.branchId);
     } else if (branchId) {
-      // Founders can filter by branch
-      query.branchId = branchId;
-      console.log('[PAYMENTS] Founder branch filter applied:', branchId);
+      // Founders filtering by branch: include both matching branchId AND legacy null branchId payments
+      query.$or = [{ branchId: branchId }, { branchId: null }];
+      console.log('[PAYMENTS] Founder branch filter applied (including null):', branchId);
     } else {
       console.log('[PAYMENTS] No branch filter applied (Founder viewing all)');
     }
@@ -130,9 +130,13 @@ exports.createPayment = async (req, res) => {
       recordedBy: req.user._id
     };
 
-    // Auto-assign branchId if not founder
+    // Auto-assign branchId
     if (req.user.role !== 'founder') {
+      // Non-founders always use their own branchId
       paymentData.branchId = req.user.branchId;
+    } else if (req.body.branchId) {
+      // Founders can explicitly pass a branchId
+      paymentData.branchId = req.body.branchId;
     }
 
     // Generate receipt number if payment is marked as paid

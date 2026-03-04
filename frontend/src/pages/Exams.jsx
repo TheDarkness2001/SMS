@@ -42,38 +42,9 @@ const Exams = () => {
         includeArchived: showArchived,
         ...branchFilter
       });
-      let examsData = response.data.data || [];
+      const examsData = response.data.data || [];
       
-      // Teachers only see exams for their assigned schedules
-      if (isTeacher) {
-        const schedulesResponse = await schedulerAPI.getAll(branchFilter);
-        const allSchedules = schedulesResponse.data.data || [];
-        
-        console.log('[Exams] All schedules:', allSchedules.length);
-        console.log('[Exams] User ID:', user._id || user.id);
-        
-        const teacherSchedules = allSchedules.filter(schedule => {
-          const scheduleTeacherId = schedule.teacher?._id?.toString() || schedule.teacher?.toString();
-          const userId = (user._id || user.id)?.toString();
-          const match = scheduleTeacherId === userId;
-          console.log('[Exams] Schedule:', schedule._id, 'Teacher:', scheduleTeacherId, 'Match:', match);
-          return match;
-        });
-        
-        console.log('[Exams] Teacher schedules:', teacherSchedules.length);
-        
-        const teacherScheduleIds = teacherSchedules.map(s => s._id.toString());
-        console.log('[Exams] Teacher schedule IDs:', teacherScheduleIds);
-        
-        examsData = examsData.filter(exam => {
-          const examScheduleId = exam.scheduleId?.toString();
-          const match = teacherScheduleIds.includes(examScheduleId);
-          console.log('[Exams] Exam:', exam._id, 'ScheduleId:', examScheduleId, 'Match:', match);
-          return match;
-        });
-        
-        console.log('[Exams] Filtered exams for teacher:', examsData.length);
-      }
+      console.log('[Exams] Fetched exams:', examsData.length);
       
       setExams(examsData);
     } catch (error) {
@@ -86,7 +57,7 @@ const Exams = () => {
     } finally {
       setLoading(false);
     }
-  }, [isTeacher, user._id, user.id, navigate, showArchived, getBranchFilter]);
+  }, [navigate, showArchived, getBranchFilter]);
 
   const fetchSchedules = useCallback(async () => {
     try {

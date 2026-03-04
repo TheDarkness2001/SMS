@@ -90,10 +90,12 @@ const Revenue = () => {
       
       const [revenueRes, statsRes] = await Promise.all([
         revenueAPI.getRevenue(params),
-        revenueAPI.getStats(branchFilter)
+        revenueAPI.getStats(params)
       ]);
       
-      setStats({ ...revenueRes.data.data, ...statsRes.data.data });
+      // Merge stats - revenueRes has totalRevenue from date-filtered payments
+      // statsRes has totalPaid/totalPending from same filtered range
+      setStats({ ...statsRes.data.data, ...revenueRes.data.data });
       
       // Extract unique subjects for filter dropdown
       const uniqueSubjects = [...new Set(revenueRes.data.data.payments.map(p => p.subject))];
@@ -105,7 +107,7 @@ const Revenue = () => {
       
       revenueRes.data.data.payments.forEach(payment => {
         const subject = payment.subject;
-        const yearKey = new Date(payment.paymentDate).getFullYear().toString();
+        const yearKey = new Date(payment.paidDate || payment.createdAt).getFullYear().toString();
         
         // Revenue by subject (total)
         bySubject[subject] = (bySubject[subject] || 0) + payment.amount;

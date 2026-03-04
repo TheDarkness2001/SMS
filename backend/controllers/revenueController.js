@@ -12,8 +12,8 @@ exports.getRevenue = async (req, res) => {
     if (req.user.role !== 'founder') {
       query.branchId = req.user.branchId;
     } else if (branchId) {
-      // Founders can filter by branch
-      query.branchId = branchId;
+      // Founders filtering by branch: include both matching branchId AND legacy null branchId payments
+      query.$or = [{ branchId: branchId }, { branchId: null }];
     }
 
     if (academicYear) query.academicYear = academicYear;
@@ -109,6 +109,7 @@ exports.getRevenue = async (req, res) => {
 // @access  Private (with permission)
 exports.getPendingPayments = async (req, res) => {
   try {
+    const { branchId } = req.query;
     let query = { 
       status: { $in: ['pending', 'partial', 'overdue'] } 
     };
@@ -116,9 +117,9 @@ exports.getPendingPayments = async (req, res) => {
     // Branch isolation: Non-founders can only see their branch
     if (req.user.role !== 'founder') {
       query.branchId = req.user.branchId;
-    } else if (req.query.branchId) {
-      // Founders can filter by branch
-      query.branchId = req.query.branchId;
+    } else if (branchId) {
+      // Founders filtering by branch: include both matching branchId AND legacy null branchId payments
+      query.$or = [{ branchId: branchId }, { branchId: null }];
     }
 
     const pendingPayments = await Payment.find(query)
@@ -148,18 +149,26 @@ exports.getPendingPayments = async (req, res) => {
 // @access  Private (with permission)
 exports.getRevenueStats = async (req, res) => {
   try {
-    const { academicYear, branchId } = req.query;
+    const { academicYear, branchId, startDate, endDate } = req.query;
     let query = {};
 
     // Branch isolation: Non-founders can only see their branch
     if (req.user.role !== 'founder') {
       query.branchId = req.user.branchId;
     } else if (branchId) {
-      // Founders can filter by branch
-      query.branchId = branchId;
+      // Founders filtering by branch: include both matching branchId AND legacy null branchId payments
+      query.$or = [{ branchId: branchId }, { branchId: null }];
     }
     
     if (academicYear) query.academicYear = academicYear;
+
+    // Apply date filter if provided (same as getRevenue)
+    if (startDate && endDate) {
+      query.paidDate = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
 
     // Total paid
     const paidPayments = await Payment.find({ ...query, status: 'paid' });

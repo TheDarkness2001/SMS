@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
+import { useBranch } from '../context/BranchContext';
 import { usePayments } from '../hooks/usePayments';
 import { paymentsAPI } from '../utils/api';
 import PaymentModal from '../components/PaymentModal';
@@ -12,6 +13,7 @@ const Payments = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const toast = useToast();
+  const { selectedBranch } = useBranch();
   const {
     // Data
     students,
@@ -131,7 +133,8 @@ const Payments = () => {
         term: calculateTerm(filters.month), // Calculate based on month
         subject: selectedSubject, // Add subject field
         month: filters.month,
-        year: filters.year
+        year: filters.year,
+        branchId: selectedBranch?._id || null // Include branchId if selected
       };
       
       // Determine status based on amount vs expected amount
