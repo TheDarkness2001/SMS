@@ -9,10 +9,8 @@ import {
 } from '../utils/api';
 import { 
   AiOutlinePlus, AiOutlineEdit, AiOutlineDelete, 
-  AiOutlineBook, AiOutlineSchedule, AiOutlineSync,
-  AiOutlineClockCircle, AiOutlineTeam, AiOutlineAppstore,
-  AiOutlineCheckCircle, AiOutlineDisconnect,
-  AiOutlineArrowRight, AiOutlineCalendar
+  AiOutlineTeam, AiOutlineAppstore,
+  AiOutlineCheckCircle, AiOutlineDisconnect
 } from 'react-icons/ai';
 import '../styles/ManageExamGroups.css';
 
@@ -23,7 +21,6 @@ const Groups = () => {
   const toast = useToast();
   const [currentUser] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
   const isFounder = currentUser.role === 'founder';
-  const isAdmin = ['admin', 'manager', 'founder'].includes(currentUser.role);
 
   // Data
   const [groups, setGroups] = useState([]);
@@ -286,15 +283,7 @@ const Groups = () => {
     }
   };
 
-  const handleSyncStudents = async (scheduleId) => {
-    try {
-      const res = await schedulerAPI.syncStudents(scheduleId, 'from-group');
-      toast.success(`Synced! ${res.data.data.schedule.enrolledStudents.length} students enrolled.`);
-      fetchData();
-    } catch (err) {
-      toast.error('Sync failed: ' + (err.response?.data?.message || err.message));
-    }
-  };
+
 
   // ==================== HELPERS ====================
   const abbreviateDays = (days) => {

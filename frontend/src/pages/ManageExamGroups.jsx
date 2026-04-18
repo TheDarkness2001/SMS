@@ -226,7 +226,7 @@ const ManageExamGroups = () => {
         endTime: group.endTime || '10:00'
       };
       
-      const res = await examGroupsAPI.createSchedule(group._id, scheduleData);
+      await examGroupsAPI.createSchedule(group._id, scheduleData);
       toast.success(`Schedule created successfully for ${group.groupName}!`);
       fetchData(); // Refresh to show linked status
     } catch (err) {

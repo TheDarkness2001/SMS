@@ -17,7 +17,6 @@ import ManageSubjects from './pages/ManageSubjects';
 import Timetable from './pages/Timetable';
 import Exams from './pages/Exams';
 import ExamResults from './pages/ExamResults';
-import ManageExamGroups from './pages/ManageExamGroups';
 import Groups from './pages/Groups';
 import Feedback from './pages/Feedback';
 import Payments from './pages/Payments';

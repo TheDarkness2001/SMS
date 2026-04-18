@@ -13,10 +13,7 @@ const formatSubjectDisplay = (schedule) => {
   return schedule.subject?.name || schedule.subject || 'Unknown';
 };
 
-// Helper to get price per class
-const getPricePerClass = (schedule) => {
-  return schedule.subjectRef?.pricePerClass || schedule.subject?.pricePerClass || 0;
-};
+
 
 const Scheduler = () => {
   const { t } = useLanguage();
