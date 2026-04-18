@@ -10,7 +10,7 @@ import {
 import { 
   AiOutlinePlus, AiOutlineEdit, AiOutlineDelete, 
   AiOutlineTeam, AiOutlineAppstore,
-  AiOutlineCheckCircle, AiOutlineDisconnect
+  AiOutlineCheckCircle
 } from 'react-icons/ai';
 import '../styles/ManageExamGroups.css';
 
