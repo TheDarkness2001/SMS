@@ -2,6 +2,7 @@ const ExamGroup = require('../models/ExamGroup');
 const Student = require('../models/Student');
 const ClassSchedule = require('../models/ClassSchedule');
 const Teacher = require('../models/Teacher');
+const Subject = require('../models/Subject');
 
 // @desc    Get all exam groups
 // @route   GET /api/exam-groups
@@ -128,7 +129,8 @@ exports.getGroups = async (req, res) => {
     const groups = await ExamGroup.find(query)
       .populate('students', 'name studentId profileImage class')
       .populate('teachers', 'name teacherId')
-      .populate('createdBy', 'name');
+      .populate('createdBy', 'name')
+      .populate('subject', 'name code pricePerClass');
 
     // Clean duplicates in students array for each group
     let cleaned = false;
@@ -172,7 +174,8 @@ exports.getGroup = async (req, res) => {
     const group = await ExamGroup.findById(req.params.id)
       .populate('students', 'name studentId profileImage email class')
       .populate('teachers', 'name teacherId email')
-      .populate('createdBy', 'name');
+      .populate('createdBy', 'name')
+      .populate('subject', 'name code pricePerClass');
 
     if (!group) {
       return res.status(404).json({
@@ -214,9 +217,19 @@ exports.createGroup = async (req, res) => {
     console.log('[ExamGroupController] Unique students:', uniqueStudents.length);
     console.log('[ExamGroupController] Teachers:', req.body.teachers);
 
+    // Get subject details to set subjectName
+    let subjectName = '';
+    if (req.body.subject) {
+      const subjectDoc = await Subject.findById(req.body.subject);
+      if (subjectDoc) {
+        subjectName = subjectDoc.name;
+      }
+    }
+
     const group = await ExamGroup.create({
       ...req.body,
       students: uniqueStudents,
+      subjectName: subjectName,
       createdBy: req.user._id,
       branchId: req.user.role !== 'founder' ? req.user.branchId : req.body.branchId
     });
@@ -270,10 +283,19 @@ exports.updateGroup = async (req, res) => {
       }
     });
 
+    // Update subjectName if subject changed
+    if (req.body.subject && req.body.subject !== group.subject?.toString()) {
+      const subjectDoc = await Subject.findById(req.body.subject);
+      if (subjectDoc) {
+        group.subjectName = subjectDoc.name;
+      }
+    }
+
     await group.save();
     await group.populate('students', 'name studentId profileImage class');
     await group.populate('teachers', 'name teacherId');
     await group.populate('createdBy', 'name');
+    await group.populate('subject', 'name code pricePerClass');
 
     // AUTO-SYNC: Update linked schedules
     try {
@@ -296,9 +318,18 @@ exports.updateGroup = async (req, res) => {
           }
         }
         
+        // Get subject details for schedule sync
+        let subjectRef = linkedSchedule.subjectRef;
+        let subjectName = group.subjectName || group.groupName;
+        if (group.subject && group.subject._id) {
+          subjectRef = group.subject._id;
+          subjectName = group.subject.name;
+        }
+        
         // Update schedule with group data
         linkedSchedule.className = group.class || linkedSchedule.className;
-        linkedSchedule.subject = group.subject || group.groupName || linkedSchedule.subject;
+        linkedSchedule.subject = subjectName;
+        linkedSchedule.subjectRef = subjectRef;
         linkedSchedule.enrolledStudents = group.students || linkedSchedule.enrolledStudents;
         linkedSchedule.teacher = firstTeacherId;
         linkedSchedule.teacherName = teacherName;

@@ -18,6 +18,7 @@ import Timetable from './pages/Timetable';
 import Exams from './pages/Exams';
 import ExamResults from './pages/ExamResults';
 import ManageExamGroups from './pages/ManageExamGroups';
+import Groups from './pages/Groups';
 import Feedback from './pages/Feedback';
 import Payments from './pages/Payments';
 import Settings from './pages/Settings';
@@ -73,7 +74,9 @@ function App() {
             <Route path="/timetable" element={<PrivateRoute><Timetable /></PrivateRoute>} />
             <Route path="/exams" element={<PrivateRoute><Exams /></PrivateRoute>} />
             <Route path="/exams/:id/results" element={<PrivateRoute><ExamResults /></PrivateRoute>} />
-            <Route path="/exam-groups" element={<PrivateRoute><ManageExamGroups /></PrivateRoute>} />
+            <Route path="/groups" element={<PrivateRoute><Groups /></PrivateRoute>} />
+            <Route path="/exam-groups" element={<PrivateRoute><Groups /></PrivateRoute>} />
+            <Route path="/scheduler" element={<PrivateRoute><Groups /></PrivateRoute>} />
             <Route path="/feedback" element={<PrivateRoute><Feedback /></PrivateRoute>} />
             <Route path="/payments" element={<PrivateRoute><Payments /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />

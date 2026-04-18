@@ -10,11 +10,18 @@ const classScheduleSchema = new mongoose.Schema({
     type: String,
     default: 'A'
   },
+  // LINKED: Reference to Subject model
+  subjectRef: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject',
+    default: null
+  },
+  // Keep subject for backward compatibility (can be ObjectId or String for custom subjects)
   subject: {
-    type: mongoose.Schema.Types.Mixed, // Accepts both ObjectId (registered subjects) and String (custom subjects)
+    type: mongoose.Schema.Types.Mixed,
     required: [true, 'Please provide subject']
   },
-  // Link to Subject Group (optional for backward compatibility)
+  // Link to Subject Group (ExamGroup) - now the primary linking mechanism
   subjectGroup: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ExamGroup'

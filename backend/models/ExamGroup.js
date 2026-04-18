@@ -12,9 +12,16 @@ const examGroupSchema = new mongoose.Schema({
     required: [true, 'Please provide group name'],
     trim: true
   },
+  // LINKED: Reference to Subject model (replaces String subject)
   subject: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject',
     required: [true, 'Please provide subject']
+  },
+  // Keep subjectName for backward compatibility and quick access
+  subjectName: {
+    type: String,
+    trim: true
   },
   class: {
     type: String,

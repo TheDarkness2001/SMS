@@ -82,6 +82,7 @@
     "payments": "Payments",
     "revenue": "Revenue",
     "operations": "Operations",
+    "groups": "Groups",
     "subjectGroups": "Subject Groups",
     "scheduler": "Scheduler",
     "settings": "Settings",
@@ -1289,5 +1290,79 @@
     "canViewRevenue": "View Revenue",
     "canManageSettings": "Manage Settings",
     "canManageScheduler": "Manage Scheduler"
+  },
+  "groups": {
+    "title": "Groups",
+    "createCompleteGroup": "Create Complete Group",
+    "unifiedManagement": "Unified Group Management",
+    "unifiedDescription": "Create Subject + Group + Schedule in one step. Manage everything from this page.",
+    "stats": {
+      "groups": "Groups",
+      "subjects": "Subjects",
+      "schedules": "Schedules"
+    },
+    "table": {
+      "group": "Group",
+      "level": "Level",
+      "schedule": "Schedule",
+      "teacher": "Teacher",
+      "students": "Students",
+      "actions": "Actions",
+      "allGroups": "All Groups",
+      "noSchedule": "No schedule",
+      "noTeacher": "No teacher",
+      "noGroupsYet": "No groups yet. Click \"Create Complete Group\" to get started!"
+    },
+    "modal": {
+      "createTitle": "Create Complete Group",
+      "editTitle": "Edit Complete Group",
+      "subtitle": "Fill one form to create Subject + Group + Schedule together",
+      "step1": "Subject",
+      "step2": "Group Details",
+      "step3": "Schedule",
+      "subjectPlaceholder": "Subject Name (e.g., Russian, Math, English)",
+      "subjectHelp": "Type a subject name. If it exists, it will be reused. If new, it will be created automatically.",
+      "selectBranch": "Select Branch",
+      "groupName": "Group Name",
+      "groupId": "Group ID (auto-generated if empty)",
+      "level": "Level",
+      "section": "Section",
+      "assignTeachers": "Assign Teachers",
+      "showingTeachers": "Showing {subject} teachers",
+      "noTeachersFound": "No teachers found for \"{subject}\"",
+      "teacherSubjectHint": "Make sure teachers have this subject in their profile",
+      "enterSubjectFirst": "Please enter a subject first to see available teachers.",
+      "enrollStudents": "Enroll Students",
+      "available": "Available: {count}",
+      "noStudentsFound": "No available students for \"{subject}\". All students may be enrolled in other groups.",
+      "enterSubjectFirstStudents": "Please enter a subject first to see available students.",
+      "hiddenEnrolled": "{count} student(s) already enrolled in other groups are hidden",
+      "classDays": "Class Days",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "room": "Room",
+      "frequency": "Frequency",
+      "cancel": "Cancel",
+      "saveChanges": "Save Changes",
+      "createGroup": "Create Complete Group"
+    },
+    "frequency": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "biWeekly": "Bi-weekly",
+      "monthly": "Monthly"
+    },
+    "notifications": {
+      "subjectCreated": "Subject \"{name}\" created!",
+      "groupCreated": "Group created!",
+      "groupUpdated": "Group updated!",
+      "scheduleCreated": "Schedule created!",
+      "scheduleUpdated": "Schedule updated!",
+      "allSaved": "All changes saved!",
+      "completeSetup": "Complete setup done! Subject, Group, and Schedule created!",
+      "deleteConfirm": "Delete this group? Linked schedule will also be deleted.",
+      "deleted": "Group deleted",
+      "error": "Failed to save. Please try again."
+    }
   }
 }

@@ -210,3 +210,103 @@
   color: #666;
   font-size: 1.1rem;
 }
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Tablet and smaller (≤768px) */
+@media (max-width: 768px) {
+  .manage-exam-groups-container {
+    padding: 15px;
+  }
+  
+  .card-body {
+    padding: 15px;
+  }
+  
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .btn-sm {
+    padding: 5px 8px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Mobile (≤480px) */
+@media (max-width: 480px) {
+  .manage-exam-groups-container {
+    padding: 10px;
+  }
+  
+  .card-header {
+    padding: 15px;
+  }
+  
+  .card-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .card-body {
+    padding: 10px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+  
+  .badge {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+  
+  .btn {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+  
+  .btn-sm {
+    padding: 4px 6px;
+    font-size: 0.75rem;
+  }
+  
+  .form-control {
+    padding: 10px 12px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .modal {
+    padding: 15px;
+    max-width: 100% !important;
+    margin: 10px;
+  }
+}
+
+/* Small mobile (≤375px) */
+@media (max-width: 375px) {
+  .table th,
+  .table td {
+    padding: 6px;
+    font-size: 0.8rem;
+  }
+  
+  .btn-sm {
+    padding: 3px 5px;
+    font-size: 0.7rem;
+  }
+}

@@ -5,6 +5,19 @@ import { useToast } from '../context/ToastContext';
 import { schedulerAPI, teachersAPI, examGroupsAPI, subjectsAPI, branchesAPI } from '../utils/api';
 import '../styles/Scheduler.css';
 
+// Helper to format subject display with linked group info
+const formatSubjectDisplay = (schedule) => {
+  if (schedule.subjectGroup) {
+    return `${schedule.subjectGroup.subjectName || schedule.subject} (${schedule.subjectGroup.groupName})`;
+  }
+  return schedule.subject?.name || schedule.subject || 'Unknown';
+};
+
+// Helper to get price per class
+const getPricePerClass = (schedule) => {
+  return schedule.subjectRef?.pricePerClass || schedule.subject?.pricePerClass || 0;
+};
+
 const Scheduler = () => {
   const { t } = useLanguage();
   const { selectedBranch, getBranchFilter } = useBranch();
@@ -271,6 +284,21 @@ const Scheduler = () => {
     }
   };
 
+  // NEW: Sync students between schedule and group
+  const handleSyncStudents = async (scheduleId, direction) => {
+    try {
+      setLoading(true);
+      const res = await schedulerAPI.syncStudents(scheduleId, direction);
+      toast.success(`Students synced successfully! ${res.data.data.schedule.enrolledStudents.length} students now enrolled.`);
+      fetchData();
+    } catch (err) {
+      toast.error('Failed to sync students: ' + (err.response?.data?.message || err.message));
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openModal = () => {
     setEditingSchedule(null);
     setFormData({
@@ -406,19 +434,39 @@ const Scheduler = () => {
                   {schedules.map(schedule => (
                     <tr key={schedule._id}>
                       <td>
-                        <span style={{ fontWeight: '600', color: '#007bff' }}>
-                          {schedule.subjectGroup?.groupId || t('common.unknown')}
-                        </span>
+                        {schedule.subjectGroup ? (
+                          <span style={{ fontWeight: '600', color: '#007bff' }}>
+                            {schedule.subjectGroup.groupId || schedule.subjectGroup._id}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#999', fontStyle: 'italic' }}>Not linked</span>
+                        )}
                       </td>
-                      <td><strong>{schedule.subjectGroup?.subject || schedule.subject?.name || schedule.subject || t('common.unknown')}</strong></td>
+                      <td>
+                        <strong>{formatSubjectDisplay(schedule)}</strong>
+                        {schedule.subjectRef?.pricePerClass > 0 && (
+                          <div style={{ fontSize: '0.85em', color: '#28a745' }}>
+                            ${schedule.subjectRef.pricePerClass}/class
+                          </div>
+                        )}
+                      </td>
                       <td>{schedule.className}</td>
-                      <td>{schedule.teacher?.name || schedule.teacher || t('common.unknown')}</td>
+                      <td>{schedule.teacher?.name || schedule.teacherName || t('common.unknown')}</td>
                       <td>{schedule.roomNumber}</td>
                       <td>{abbreviateDays(schedule.scheduledDays)}</td>
                       <td>{schedule.startTime} - {schedule.endTime}</td>
                       <td className="action-buttons">
+                        {schedule.subjectGroup && (
+                          <button 
+                            className="btn btn-sm btn-info me-1"
+                            onClick={() => handleSyncStudents(schedule._id, 'from-group')}
+                            title="Sync students from group"
+                          >
+                            🔄
+                          </button>
+                        )}
                         <button 
-                          className="btn btn-sm btn-primary me-2"
+                          className="btn btn-sm btn-primary me-1"
                           onClick={() => handleEdit(schedule)}
                         >
                           {t('common.edit')}
@@ -467,7 +515,7 @@ const Scheduler = () => {
                         <tr key={`${schedule._id}-${student._id}`}>
                           <td>{student.studentId || t('common.unknown')}</td>
                           <td><strong>{student.name || t('common.unknown')}</strong></td>
-                          <td>{schedule.subject?.name || schedule.subjectGroup?.subject || schedule.subject || t('common.unknown')} - {schedule.className}</td>
+                          <td>{formatSubjectDisplay(schedule)} - {schedule.className}</td>
                           <td><span className="badge badge-success">{t('common.completed')}</span></td>
                         </tr>
                       ))

@@ -1,6 +1,6 @@
 {
   "login": {
-    "title": "Talaba boshqaruv tizimi",
+    "title": "TechRen Academy",
     "email": "Email",
     "password": "Parol",
     "button": "Kirish",
@@ -1242,5 +1242,79 @@
     "canViewRevenue": "Daromadni ko'rish",
     "canManageSettings": "Sozlamalarni boshqarish",
     "canManageScheduler": "Jadvalni boshqarish"
+  },
+  "groups": {
+    "title": "Guruhlar",
+    "createCompleteGroup": "To'liq guruh yaratish",
+    "unifiedManagement": "Birlashtirilgan guruh boshqaruvi",
+    "unifiedDescription": "Fan + Guruh + Jadvalni bir qadamda yarating. Barcha narsani ushbu sahifadan boshqaring.",
+    "stats": {
+      "groups": "Guruhlar",
+      "subjects": "Fanlar",
+      "schedules": "Jadvallar"
+    },
+    "table": {
+      "group": "Guruh",
+      "level": "Daraja",
+      "schedule": "Jadval",
+      "teacher": "O'qituvchi",
+      "students": "Talabalar",
+      "actions": "Harakatlar",
+      "allGroups": "Barcha guruhlar",
+      "noSchedule": "Jadval yo'q",
+      "noTeacher": "O'qituvchi yo'q",
+      "noGroupsYet": "Hali guruhlar yo'q. Boshlash uchun \"To'liq guruh yaratish\" tugmasini bosing!"
+    },
+    "modal": {
+      "createTitle": "To'liq guruh yaratish",
+      "editTitle": "Guruhni tahrirlash",
+      "subtitle": "Fan + Guruh + Jadvalni yaratish uchun bitta shaklni to'ldiring",
+      "step1": "Fan",
+      "step2": "Guruh tafsilotlari",
+      "step3": "Jadval",
+      "subjectPlaceholder": "Fan nomi (masalan, Rus tili, Matematika, Ingliz tili)",
+      "subjectHelp": "Fan nomini kiriting. Agar mavjud bo'lsa, qayta ishlatiladi. Agar yangi bo'lsa, avtomatik yaratiladi.",
+      "selectBranch": "Filialni tanlang",
+      "groupName": "Guruh nomi",
+      "groupId": "Guruh ID (bo'sh bo'lsa avtomatik)",
+      "level": "Daraja",
+      "section": "Sinf",
+      "assignTeachers": "O'qituvchilarni tayinlash",
+      "showingTeachers": "{subject} bo'yicha o'qituvchilar ko'rsatilmoqda",
+      "noTeachersFound": "\"{subject}\" bo'yicha o'qituvchilar topilmadi",
+      "teacherSubjectHint": "O'qituvchilar profilida ushbu fan borligiga ishonch hosil qiling",
+      "enterSubjectFirst": "Mavjud o'qituvchilarni ko'rish uchun avval fan nomini kiriting.",
+      "enrollStudents": "Talabalarni ro'yxatga olish",
+      "available": "Mavjud: {count}",
+      "noStudentsFound": "\"{subject}\" bo'yicha mavjud talabalar yo'q. Barcha talabalar boshqa guruhlarga ro'yxatga olingan bo'lishi mumkin.",
+      "enterSubjectFirstStudents": "Mavjud talabalarni ko'rish uchun avval fan nomini kiriting.",
+      "hiddenEnrolled": "{count} ta talaba allaqachon boshqa guruhlarga ro'yxatga olingan va yashirilgan",
+      "classDays": "Dars kunlari",
+      "startTime": "Boshlanish vaqti",
+      "endTime": "Tugash vaqti",
+      "room": "Xona",
+      "frequency": "Chastota",
+      "cancel": "Bekor qilish",
+      "saveChanges": "O'zgarishlarni saqlash",
+      "createGroup": "To'liq guruh yaratish"
+    },
+    "frequency": {
+      "daily": "Har kuni",
+      "weekly": "Har hafta",
+      "biWeekly": "Har ikki haftada",
+      "monthly": "Har oy"
+    },
+    "notifications": {
+      "subjectCreated": "\"{name}\" fani yaratildi!",
+      "groupCreated": "Guruh yaratildi!",
+      "groupUpdated": "Guruh yangilandi!",
+      "scheduleCreated": "Jadval yaratildi!",
+      "scheduleUpdated": "Jadval yangilandi!",
+      "allSaved": "Barcha o'zgarishlar saqlandi!",
+      "completeSetup": "Sozlash tugallandi! Fan, Guruh va Jadval yaratildi!",
+      "deleteConfirm": "Ushbu guruhni o'chirishmi? Bog'langan jadval ham o'chiriladi.",
+      "deleted": "Guruh o'chirildi",
+      "error": "Saqlash amalga oshmadi. Iltimos, qaytadan urinib ko'ring."
+    }
   }
 }

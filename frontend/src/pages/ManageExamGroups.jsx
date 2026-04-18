@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
-import { examGroupsAPI, studentsAPI, teachersAPI } from '../utils/api';
-import { AiOutlinePlus, AiOutlineEdit, AiOutlineDelete, AiOutlineBook } from 'react-icons/ai';
+import { useToast } from '../context/ToastContext';
+import { examGroupsAPI, studentsAPI, teachersAPI, subjectsAPI } from '../utils/api';
+import { AiOutlinePlus, AiOutlineEdit, AiOutlineDelete, AiOutlineBook, AiOutlineSchedule } from 'react-icons/ai';
 import '../styles/ManageExamGroups.css';
 
 const ManageExamGroups = () => {
@@ -36,18 +37,35 @@ const ManageExamGroups = () => {
 
   const [user, setUser] = useState(null);
   const [branches, setBranches] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [linkedSchedules, setLinkedSchedules] = useState({}); // Map groupId -> schedule
+  const toast = useToast();
 
   const fetchData = useCallback(async () => {
     try {
       const branchFilter = getBranchFilter();
-      const [groupsRes, studentsRes, teachersRes] = await Promise.all([
+      const [groupsRes, studentsRes, teachersRes, subjectsRes] = await Promise.all([
         examGroupsAPI.getAll(branchFilter),
         studentsAPI.getAll(branchFilter),
-        teachersAPI.getAll(branchFilter)
+        teachersAPI.getAll(branchFilter),
+        subjectsAPI.getAll()
       ]);
       setGroups(groupsRes.data.data || []);
       setStudents(studentsRes.data.data || []);
       setTeachers(teachersRes.data.data || []);
+      setSubjects(subjectsRes.data.data || []);
+      
+      // Check which groups have linked schedules
+      const { schedulerAPI } = await import('../utils/api');
+      const schedulesRes = await schedulerAPI.getAll(branchFilter);
+      const schedules = schedulesRes.data.data || [];
+      const linkedMap = {};
+      schedules.forEach(schedule => {
+        if (schedule.subjectGroup) {
+          linkedMap[schedule.subjectGroup._id || schedule.subjectGroup] = schedule;
+        }
+      });
+      setLinkedSchedules(linkedMap);
     } catch (err) {
       console.error('Error fetching data:', err);
       if (err.response?.status === 401) {
@@ -196,6 +214,33 @@ const ManageExamGroups = () => {
     }
   };
 
+  // NEW: Create schedule from group
+  const handleCreateSchedule = async (group) => {
+    try {
+      setLoading(true);
+      const scheduleData = {
+        scheduledDays: group.days || ['Monday', 'Wednesday', 'Friday'],
+        frequency: 'weekly',
+        roomNumber: group.roomNumber || 'TBD',
+        startTime: group.startTime || '09:00',
+        endTime: group.endTime || '10:00'
+      };
+      
+      const res = await examGroupsAPI.createSchedule(group._id, scheduleData);
+      toast.success(`Schedule created successfully for ${group.groupName}!`);
+      fetchData(); // Refresh to show linked status
+    } catch (err) {
+      if (err.response?.status === 400 && err.response?.data?.data) {
+        // Schedule already exists
+        toast.info('A schedule already exists for this group.');
+      } else {
+        toast.error('Failed to create schedule: ' + (err.response?.data?.message || err.message));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openEditModal = (group) => {
     setEditingGroup(group);
     setFormData({
@@ -321,6 +366,20 @@ const ManageExamGroups = () => {
                   </span>
                 </td>
                 <td>
+                  {linkedSchedules[group._id] ? (
+                    <span className="badge badge-success" style={{ marginRight: '5px' }}>
+                      <AiOutlineSchedule size={12} style={{ marginRight: '2px' }} /> Scheduled
+                    </span>
+                  ) : (
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() => handleCreateSchedule(group)}
+                      style={{ marginRight: '5px' }}
+                      title="Create schedule from this group"
+                    >
+                      <AiOutlineSchedule size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Create Schedule
+                    </button>
+                  )}
                   <button
                     className="btn btn-sm btn-secondary"
                     onClick={() => openEditModal(group)}
@@ -413,7 +472,7 @@ const ManageExamGroups = () => {
                 />
               </div>
 
-              {/* Subject Dropdown */}
+              {/* Subject Dropdown - Now linked to Subject model */}
               <div className="form-group" style={{ marginBottom: '20px' }}>
                 <label style={{ fontWeight: '500', marginBottom: '8px', display: 'block' }}>{t('attendance.subject')} *</label>
                 <select
@@ -432,10 +491,15 @@ const ManageExamGroups = () => {
                   }}
                 >
                   <option value="">{t('forms.selectSubject')}</option>
-                  {[...new Set(teachers.flatMap(t => Array.isArray(t.subject) ? t.subject : [t.subject]).filter(Boolean))].sort().map(subject => (
-                    <option key={subject} value={subject}>{subject}</option>
+                  {subjects.filter(s => s.status === 'active').map(subject => (
+                    <option key={subject._id} value={subject._id}>
+                      {subject.name} {subject.pricePerClass > 0 ? `($${subject.pricePerClass}/class)` : ''}
+                    </option>
                   ))}
                 </select>
+                <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                  Subjects are linked to the Subject database for pricing
+                </small>
               </div>
 
               {/* Branch Selection for Founder */}

@@ -98,10 +98,21 @@ const Dashboard = () => {
         
         console.log('[Dashboard] Unique students found:', uniqueStudentIds.size);
         
+        // Count unique groups - avoid counting a group AND its schedule as separate
+        // A schedule with subjectGroup is linked to an exam group, so only count exam groups
+        const uniqueGroupIds = new Set();
+        teacherExamGroups.forEach(g => uniqueGroupIds.add(g._id));
+        // Only count schedules that are NOT linked to exam groups (standalone schedules)
+        teacherSchedules.forEach(s => {
+          if (!s.subjectGroup) {
+            uniqueGroupIds.add(s._id);
+          }
+        });
+        
         setStats({
           students: uniqueStudentIds.size,
           teachers: 0,
-          groups: teacherExamGroups.length + teacherSchedules.length,
+          groups: uniqueGroupIds.size,
           unpaidStudents: 0,
           paidStudents: 0
         });

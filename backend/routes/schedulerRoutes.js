@@ -8,7 +8,10 @@ const {
   deleteSchedule,
   getSchedulesByTeacher,
   getAllSchedulesDebug,
-  fixMissingBranchIds
+  fixMissingBranchIds,
+  createScheduleFromGroup,
+  syncScheduleWithGroup,
+  getUnifiedView
 } = require('../controllers/schedulerController');
 const { protect, authorize, checkPermission } = require('../middleware/auth');
 const { 
@@ -36,6 +39,17 @@ router.route('/')
 
 router.route('/teacher/:teacherId')
   .get(restrictToOwnData, getSchedulesByTeacher); // Teachers can only see their own
+
+// Unified view - combines subject, group, schedule info
+router.get('/unified-view', restrictToOwnData, getUnifiedView);
+
+// Create schedule from exam group (one-click)
+router.route('/from-group/:groupId')
+  .post(blockTeacherAccess, authorize('admin', 'manager', 'founder'), createScheduleFromGroup);
+
+// Sync schedule students with group (bidirectional)
+router.route('/:id/sync-students')
+  .post(blockTeacherAccess, authorize('admin', 'manager', 'founder'), syncScheduleWithGroup);
 
 router.route('/:id')
   .get(restrictToOwnData, getSchedule) // Teachers can only view their own schedules

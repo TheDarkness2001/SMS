@@ -29,8 +29,7 @@ const Sidebar = ({ user, isOpen, onClose }) => {
   const [expandedGroups, setExpandedGroups] = useState({
     attendance: location.pathname.includes('attendance'),
     people: location.pathname === '/teachers' || location.pathname === '/students',
-    finance: ['/payments', '/revenue', '/admin/earnings', '/admin/payouts'].includes(location.pathname),
-    operations: ['/exam-groups', '/scheduler'].includes(location.pathname)
+    finance: ['/payments', '/revenue', '/admin/earnings', '/admin/payouts'].includes(location.pathname)
   });
   
   // Ensure user object exists
@@ -262,33 +261,13 @@ const Sidebar = ({ user, isOpen, onClose }) => {
           </li>
         )}
 
-        {/* 🧠 OPERATIONS (Admin/Manager/Founder) */}
+        {/* 🧠 GROUPS - Unified management (Admin/Manager/Founder) */}
         {isAdmin && (
-          <li className="group-header">
-            <button 
-              className="group-toggle"
-              onClick={() => toggleGroup('operations')}
-            >
-              <span className="icon"><AiOutlineSetting size={20} /></span>
-              <span>{t('sidebar.operations')}</span>
-              <span className={`chevron ${expandedGroups.operations ? 'open' : ''}`}>▶</span>
-            </button>
-            {expandedGroups.operations && (
-              <ul className="group-menu">
-                <li className={isActive('/exam-groups')}>
-                  <Link to="/exam-groups">
-                    <span className="icon"><AiOutlineAppstore size={18} /></span>
-                    <span>{t('sidebar.subjectGroups')}</span>
-                  </Link>
-                </li>
-                <li className={isActive('/scheduler')}>
-                  <Link to="/scheduler">
-                    <span className="icon"><AiOutlineClockCircle size={18} /></span>
-                    <span>{t('sidebar.scheduler')}</span>
-                  </Link>
-                </li>
-              </ul>
-            )}
+          <li className={isActive('/groups')}>
+            <Link to="/groups">
+              <span className="icon"><AiOutlineAppstore size={20} /></span>
+              <span>{t('sidebar.groups')}</span>
+            </Link>
           </li>
         )}
 

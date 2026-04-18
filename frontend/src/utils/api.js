@@ -208,7 +208,13 @@ export const schedulerAPI = {
   getOne: (id) => api.get(`/scheduler/${id}`),
   create: (data) => api.post('/scheduler', data),
   update: (id, data) => api.put(`/scheduler/${id}`, data),
-  delete: (id) => api.delete(`/scheduler/${id}`)
+  delete: (id) => api.delete(`/scheduler/${id}`),
+  // NEW: Unified view combining subject, group, schedule
+  getUnifiedView: (params) => api.get('/scheduler/unified-view', { params }),
+  // NEW: Create schedule from exam group
+  createFromGroup: (groupId, data) => api.post(`/scheduler/from-group/${groupId}`, data),
+  // NEW: Sync students between schedule and group
+  syncStudents: (id, direction) => api.post(`/scheduler/${id}/sync-students`, { direction })
 };
 
 // Settings API
@@ -225,7 +231,9 @@ export const examGroupsAPI = {
   update: (id, data) => api.put(`/exam-groups/${id}`, data),
   delete: (id) => api.delete(`/exam-groups/${id}`),
   addStudent: (id, studentId) => api.post(`/exam-groups/${id}/students`, { studentId }),
-  removeStudent: (id, studentId) => api.delete(`/exam-groups/${id}/students/${studentId}`)
+  removeStudent: (id, studentId) => api.delete(`/exam-groups/${id}/students/${studentId}`),
+  // NEW: Create schedule from this group
+  createSchedule: (id, data) => api.post(`/scheduler/from-group/${id}`, data)
 };
 
 // Subjects API
