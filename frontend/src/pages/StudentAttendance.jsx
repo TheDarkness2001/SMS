@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
 import { useToast } from '../context/ToastContext';
 import { studentAttendanceAPI, examGroupsAPI, schedulerAPI, subjectsAPI } from '../utils/api';
+import { AiOutlineCalendar, AiOutlineTeam, AiOutlineClockCircle, AiOutlineBook } from 'react-icons/ai';
 import '../styles/StudentAttendance.css';
 
 const StudentAttendance = () => {
@@ -13,12 +14,14 @@ const StudentAttendance = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [studentAttendance, setStudentAttendance] = useState({});
-  const [savedAttendance, setSavedAttendance] = useState({}); // Track saved records
+  const [savedAttendance, setSavedAttendance] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
   const isTeacher = user.role === 'teacher' && !['admin', 'manager', 'founder'].includes(user.role);
-  const [filterMode, setFilterMode] = useState('all'); // Track if filtering is applied
+  const isAdmin = ['admin', 'manager', 'founder'].includes(user.role);
+  const [viewMode, setViewMode] = useState('today');
+  const [filterMode, setFilterMode] = useState('all');
 
   // Fetch groups
   useEffect(() => {
@@ -340,190 +343,190 @@ const StudentAttendance = () => {
     }
   };
 
-  if (loading) return <div className="container"><p>{t('common.loading')}</p></div>;
+  // Compute today's groups
+  const todayGroups = useMemo(() => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = days[new Date().getDay()];
+    return groups.filter(group => {
+      const scheduleDays = group.days || group.scheduledDays || [];
+      return scheduleDays.includes(today) || group.frequency === 'daily';
+    });
+  }, [groups]);
+
+  const displayedGroups = viewMode === 'today' ? todayGroups : groups;
+
+  if (loading) return <div className="student-attendance-container"><p>{t('common.loading')}</p></div>;
 
   const selectedGroupData = groups.find(g => g._id === selectedGroup);
 
   return (
-    <div className="container">
-      <h1 style={{ marginBottom: '30px' }}>{t('attendance.studentAttendance')}</h1>
-
-      {error && <div className="alert alert-error">{error}</div>}
-      
-      {/* Info message for teachers */}
-      {isTeacher && (filterMode === 'current-upcoming-only' || filterMode === 'teacher-assigned') && (
-        <div className="alert alert-info" style={{ marginBottom: '20px', backgroundColor: '#e7f3ff', border: '1px solid #2196F3', padding: '12px', borderRadius: '6px' }}>
-          <strong>👨‍🏫 {t('common.teacher')} {t('common.view')}:</strong> {t('attendance.teacherViewInfo')}
+    <div className="student-attendance-container">
+      {/* Header */}
+      <div className="page-header" style={{ flexDirection: 'row', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '150px' }}>
+          <h1 style={{ fontSize: 'clamp(1.2rem, 4vw, 1.5rem)', margin: 0 }}>{t('attendance.studentAttendance')}</h1>
+          <p className="subtitle" style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', margin: '2px 0 0 0', opacity: 0.8 }}>
+            {viewMode === 'today' ? t('attendance.todaysClasses') : t('attendance.allClasses')}
+          </p>
         </div>
-      )}
-      
-      {/* Info message for staff */}
-      {!isTeacher && filterMode === 'all' && (
-        <div className="alert alert-info" style={{ marginBottom: '20px', backgroundColor: '#f0f0f0', border: '1px solid #999', padding: '12px', borderRadius: '6px' }}>
-          <strong>📊 {t('attendance.allClasses')}:</strong> {t('attendance.allClassesInfo')}
-        </div>
-      )}
+      </div>
 
-      <div className="card">
-        {groups.length === 0 ? (
-          <div className="alert alert-info" style={{ textAlign: 'center', padding: '40px' }}>
-            <h3 style={{ marginBottom: '15px' }}>📋 {t('attendance.noGroupsAvailable')}</h3>
-            <p>
-              {isTeacher 
-                ? t('attendance.noGroupsTeacherMsg')
-                : t('attendance.noGroupsStaffMsg')}
-            </p>
+      {error && !selectedGroup && <div className="alert alert-error">{error}</div>}
+
+      {/* Admin Filter Toolbar */}
+      {isAdmin && (
+        <div className="attendance-toolbar">
+          <div className="view-mode-buttons">
+            <button
+              className={`view-btn ${viewMode === 'all' ? 'active' : ''}`}
+              onClick={() => setViewMode('all')}
+            >
+              📋 {t('attendance.allClasses')}
+            </button>
+            <button
+              className={`view-btn ${viewMode === 'today' ? 'active' : ''}`}
+              onClick={() => setViewMode('today')}
+            >
+              📅 {t('attendance.todaysClasses')}
+            </button>
           </div>
-        ) : (
-          <>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ marginRight: '10px' }}>{t('attendance.selectGroup')}:</label>
-              <select
-                value={selectedGroup || ''}
-                onChange={(e) => setSelectedGroup(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  minWidth: '250px'
-                }}
-              >
-                <option value="">-- {t('attendance.selectGroup')} --</option>
-                {groups.map(group => (
-                  <option key={group._id} value={group._id}>
-                    {group.displayId} - {group.subject?.name || String(group.subject || '')} ({group.class}) {group._type === 'schedule' ? '🗓️' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <label style={{ fontWeight: 500 }}>{t('attendance.date')}:</label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: '4px' }}
+            />
+          </div>
+        </div>
+      )}
 
-        {selectedGroupData && (
-          <>
-            <div style={{
-              padding: '15px',
-              backgroundColor: '#f5f5f5',
-              borderRadius: '4px',
-              marginBottom: '20px'
-            }}>
-              <strong>{t('sidebar.dashboard')}:</strong> {selectedGroupData.groupId} | 
-              <strong style={{ marginLeft: '15px' }}>{t('exams.subject')}:</strong> {selectedGroupData.subject?.name || String(selectedGroupData.subject || '')} | 
-              <strong style={{ marginLeft: '15px' }}>{t('forms.class')}:</strong> {selectedGroupData.class} | 
-              <strong style={{ marginLeft: '15px' }}>{t('students.name')}:</strong> {selectedGroupData.students?.length || 0}
-            </div>
+      {/* Teacher Date Picker */}
+      {!isAdmin && (
+        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <label style={{ fontWeight: 500 }}>{t('attendance.date')}:</label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: '4px' }}
+          />
+        </div>
+      )}
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ marginRight: '10px' }}>{t('attendance.date')}:</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
-              />
-            </div>
+      {/* Groups Grid */}
+      {displayedGroups.length === 0 ? (
+        <div className="alert alert-info" style={{ textAlign: 'center', padding: '40px' }}>
+          <h3 style={{ marginBottom: '15px' }}>📋 {viewMode === 'today' ? t('attendance.noClassesToday') : t('attendance.noGroupsAvailable')}</h3>
+          <p>{isTeacher ? t('attendance.noGroupsTeacherMsg') : t('attendance.noGroupsStaffMsg')}</p>
+        </div>
+      ) : (
+        <div className="classes-grid">
+          {displayedGroups.map(group => {
+            const isSelected = selectedGroup === group._id;
+            return (
+              <div key={group._id} className={`class-card ${isSelected ? 'class-card--active' : ''}`}>
+                <div className="class-header">
+                  <h3>{group.groupName || group.displayName || 'Unnamed'}</h3>
+                  <span className="class-badge">{group.class || group.className || 'N/A'}</span>
+                </div>
+                <div className="class-info">
+                  <p><AiOutlineBook /> <strong>{t('exams.subject')}:</strong> {group.subject?.name || String(group.subject || '')}</p>
+                  <p><AiOutlineClockCircle /> <strong>{t('exams.time')}:</strong> {group.startTime || '--:--'} - {group.endTime || '--:--'}</p>
+                  <p><AiOutlineTeam /> <strong>{t('students.students')}:</strong> {group.students?.length || 0}</p>
+                  {group.days?.length > 0 && (
+                    <p><AiOutlineCalendar /> <strong>{t('scheduler.days')}:</strong> {group.days?.join(', ') || group.scheduledDays?.join(', ')}</p>
+                  )}
+                </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table className="attendance-table">
-                <thead>
-                  <tr>
-                    <th>{t('students.studentId')}</th>
-                    <th>{t('students.name')}</th>
-                    <th>{t('common.status')}</th>
-                    <th>{t('attendance.notes')}</th>
-                    <th>{t('attendance.recordedAt')}</th>
-                    <th>{t('common.actions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(selectedGroupData.students || []).map(student => (
-                    <tr key={student._id}>
-                      <td>{student.studentId || 'N/A'}</td>
-                      <td>{student.name || 'N/A'}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          {['present', 'absent', 'late'].map(status => (
-                            <button
-                              key={status}
-                              onClick={() => handleStatusChange(student._id, status)}
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setSelectedGroup(isSelected ? null : group._id)}
+                  style={{ width: '100%', marginBottom: '12px' }}
+                >
+                  {isSelected ? t('common.close') : t('attendance.markAttendance')}
+                </button>
+
+                {isSelected && (
+                  <div className="students-list">
+                    <h4>{t('attendance.studentsList')}</h4>
+                    {group.students?.length > 0 ? (
+                      <div className="student-items">
+                        {group.students.map(student => (
+                          <div key={student._id} className="student-item">
+                            <div className="student-info">
+                              <strong>{student.name || 'N/A'}</strong>
+                              <span className="student-id">{student.studentId || 'N/A'}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              {['present', 'absent', 'late'].map(status => (
+                                <button
+                                  key={status}
+                                  onClick={() => handleStatusChange(student._id, status)}
+                                  className={`status-btn ${studentAttendance[student._id]?.status === status ? `status-${status}` : ''}`}
+                                  style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #ddd',
+                                    fontSize: '11px',
+                                    textTransform: 'capitalize',
+                                    cursor: 'pointer',
+                                    backgroundColor: studentAttendance[student._id]?.status === status
+                                      ? (status === 'present' ? '#4caf50' : status === 'absent' ? '#f44336' : '#ff9800')
+                                      : '#f5f5f5',
+                                    color: studentAttendance[student._id]?.status === status ? '#fff' : '#333',
+                                    fontWeight: studentAttendance[student._id]?.status === status ? 'bold' : 'normal'
+                                  }}
+                                >
+                                  {t(`attendance.${status}`)}
+                                </button>
+                              ))}
+                            </div>
+                            <input
+                              type="text"
+                              placeholder={t('attendance.notes')}
+                              value={studentAttendance[student._id]?.notes || ''}
+                              onChange={(e) => handleNotesChange(student._id, e.target.value)}
                               style={{
-                                padding: '6px 12px',
+                                width: '100%',
+                                padding: '4px 8px',
                                 border: '1px solid #ddd',
                                 borderRadius: '4px',
+                                fontSize: '12px',
+                                marginTop: '6px'
+                              }}
+                            />
+                            <button
+                              onClick={() => handleSaveStudent(student._id)}
+                              style={{
+                                width: '100%',
+                                padding: '6px',
+                                marginTop: '6px',
+                                backgroundColor: savedAttendance[student._id] ? '#2196f3' : '#4caf50',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
                                 cursor: 'pointer',
-                                backgroundColor: studentAttendance[student._id]?.status === status 
-                                  ? (status === 'present' ? '#4caf50' : status === 'absent' ? '#f44336' : '#ff9800')
-                                  : '#f5f5f5',
-                                color: studentAttendance[student._id]?.status === status ? '#fff' : '#333',
-                                fontWeight: studentAttendance[student._id]?.status === status ? 'bold' : 'normal',
-                                textTransform: 'capitalize',
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                fontWeight: 'bold'
                               }}
                             >
-                              {t(`attendance.${status}`)}
+                              {savedAttendance[student._id] ? t('common.update') : t('common.save')}
                             </button>
-                          ))}
-                        </div>
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          placeholder={t('common.noData')}
-                          value={studentAttendance[student._id]?.notes || ''}
-                          onChange={(e) => handleNotesChange(student._id, e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '6px 8px',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px'
-                          }}
-                        />
-                      </td>
-                      <td>
-                        {studentAttendance[student._id]?.recordedAt ? (
-                          <span style={{ fontSize: '12px', color: '#666' }}>
-                            {new Date(studentAttendance[student._id].recordedAt).toLocaleTimeString(t('common.locale'), {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: '12px', color: '#999' }}>-</span>
-                        )}
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => handleSaveStudent(student._id)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: savedAttendance[student._id] ? '#2196f3' : '#4caf50',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          {savedAttendance[student._id] ? t('common.edit') : t('common.save')}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-
-        {!selectedGroupData && groups.length > 0 && (
-          <p style={{ textAlign: 'center', color: '#666' }}>{t('attendance.selectGroup')} {t('attendance.markAttendance')}</p>
-        )}
-          </>
-        )}
-      </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="no-students">{t('attendance.noStudents')}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

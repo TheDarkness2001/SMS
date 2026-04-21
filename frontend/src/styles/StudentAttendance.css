@@ -1,55 +1,209 @@
 .student-attendance-container {
-  padding: 20px 30px;
-  width: 100%;
-  box-sizing: border-box;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.student-attendance-header {
-  margin-bottom: 20px;
+.page-header {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
 }
 
-.student-attendance-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
 }
 
-.student-attendance-table th,
-.student-attendance-table td {
-  border: 1px solid #dee2e6;
+.subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Toolbar */
+.attendance-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--background-card);
+  padding: 16px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex-wrap: wrap;
+}
+
+.view-mode-buttons {
+  display: flex;
+  background: var(--background);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.view-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-btn.active {
+  background: var(--background-card);
+  color: var(--primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Classes Grid */
+.classes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+}
+
+.class-card {
+  background: var(--background-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.class-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.class-card--active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.class-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+}
+
+.class-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--primary);
+}
+
+.class-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.class-info {
+  margin-bottom: 16px;
+}
+
+.class-info p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.class-info p svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Students List */
+.students-list h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+}
+
+.student-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.student-item {
   padding: 12px;
-  text-align: left;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s;
 }
 
-.student-attendance-table th {
-  background-color: #e9ecef;
-  font-weight: bold;
+.student-info {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
 }
 
-.action-buttons button {
-  margin-right: 5px;
+.student-info strong {
+  font-size: 14px;
+  color: var(--text-primary);
 }
 
-.loading-message {
+.student-id {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.no-students {
   text-align: center;
+  color: #999;
   padding: 20px;
-  color: #6c757d;
 }
 
-.error-message {
-  padding: 10px;
-  margin-bottom: 15px;
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
+.status-btn {
+  transition: all 0.2s;
 }
 
-.success-message {
-  padding: 10px;
-  margin-bottom: 15px;
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-  border-radius: 4px;
+.status-btn:hover {
+  opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .student-attendance-container {
+    padding: 16px;
+  }
+  .classes-grid {
+    grid-template-columns: 1fr;
+  }
+  .attendance-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .view-mode-buttons {
+    justify-content: center;
+  }
 }
