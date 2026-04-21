@@ -142,29 +142,35 @@ exports.checkPermission = (permission) => {
 
       // Teachers: check permissions from database
       if (isTeacher) {
-        // First check individual teacher permissions
-        const individualPermission = req.user.permissions ? req.user.permissions[permission] : undefined;
+        // Get role-based settings (primary source of truth)
+        let settings = await Settings.findOne();
+        
+        // Create default settings if none exist
+        if (!settings) {
+          settings = await Settings.create({});
+        }
+        
+        const rolePermissions = settings?.rolePermissions?.[userRole] || {};
+        const rolePermission = rolePermissions[permission];
 
-        // If individual permission is explicitly set (true or false), use it
-        if (individualPermission === true) {
+        // Role settings are primary: if role allows it, allow it
+        if (rolePermission === true) {
           return next();
         }
-        if (individualPermission === false) {
+        if (rolePermission === false) {
           return res.status(403).json({
             success: false,
             message: 'You do not have permission to access this resource'
           });
         }
 
-        // If individual permission is undefined, fall back to role-based settings
-        const settings = await Settings.findOne();
-        const rolePermissions = settings?.rolePermissions?.[userRole] || {};
-        const rolePermission = rolePermissions[permission];
-
-        if (rolePermission === true) {
+        // If role permission is undefined, check individual teacher permissions as fallback
+        const individualPermission = req.user.permissions ? req.user.permissions[permission] : undefined;
+        if (individualPermission === true) {
           return next();
         }
 
+        // Default deny if nothing allows it
         return res.status(403).json({
           success: false,
           message: 'You do not have permission to access this resource'

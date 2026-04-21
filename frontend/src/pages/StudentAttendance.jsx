@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
 import { useToast } from '../context/ToastContext';
-import { studentAttendanceAPI, examGroupsAPI, schedulerAPI, subjectsAPI } from '../utils/api';
+import { studentAttendanceAPI, examGroupsAPI, schedulerAPI } from '../utils/api';
 import { AiOutlineCalendar, AiOutlineTeam, AiOutlineClockCircle, AiOutlineBook } from 'react-icons/ai';
 import '../styles/StudentAttendance.css';
 
@@ -212,55 +212,13 @@ const StudentAttendance = () => {
         return;
       }
 
-      // Find subject ID from subject name
+      // Extract subject from group - pass name or ID to backend for lookup
       let subjectId = group.subject;
-      
-      // If group.subject is a string (subject name), we need to get the ObjectId
-      try {
-        const subjectsResponse = await subjectsAPI.getAll();
-        
-        if (subjectsResponse.data.success && subjectsResponse.data.data) {
-          // Map common subject aliases
-          let searchSubject = group.subject;
-          const subjectAliases = {
-            'it': 'computer science',
-            'information technology': 'computer science',
-            'cs': 'computer science',
-            'informatics': 'computer science',
-            'ict': 'computer science',
-            'programming': 'computer science',
-            'math': 'mathematics',
-            'maths': 'mathematics',
-            'bio': 'biology',
-            'chem': 'chemistry',
-            'phy': 'physics',
-            'eng': 'english',
-            'lit': 'literature',
-            'geo': 'geography',
-            'his': 'history',
-          };
-          
-          const normalizedSubject = group.subject.toLowerCase().trim();
-          if (subjectAliases[normalizedSubject]) {
-            searchSubject = subjectAliases[normalizedSubject];
-          }
-          
-          const matchingSubject = subjectsResponse.data.data.find(
-            s => s.name.toLowerCase().trim() === searchSubject.toLowerCase().trim() || s._id === group.subject
-          );
-          
-          if (matchingSubject) {
-            subjectId = matchingSubject._id;
-          } else if (typeof group.subject === 'string') {
-            const availableNames = subjectsResponse.data.data.map(s => s.name).join(', ');
-            setError(t('attendance.subjectNotFound', { subject: group.subject, available: availableNames }));
-            return;
-          }
-        }
-      } catch (subjectErr) {
-        console.error('Error fetching subjects:', subjectErr);
-        setError(t('attendance.failedToFetchSubjects'));
-        return;
+      // If subject is populated object, use its ID or name
+      if (group.subject && typeof group.subject === 'object' && group.subject._id) {
+        subjectId = group.subject._id;
+      } else if (group.subject && typeof group.subject === 'object' && group.subject.name) {
+        subjectId = group.subject.name;
       }
 
       // Get teacher ID from group
