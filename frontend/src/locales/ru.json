@@ -151,7 +151,9 @@
     "totalAttempts": "Всего попыток",
     "reset": "Сбросить",
     "confirmReset": "Сбросить прогресс этого студента?",
-    "noStudentsYet": "Студенты не найдены."
+    "noStudentsYet": "Студенты не найдены.",
+    "level": "Уровень",
+    "filterByLevel": "Фильтр по уровню..."
   },
   "teachers": {
     "title": "Учителя",

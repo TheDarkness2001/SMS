@@ -11,6 +11,12 @@ const wordSchema = new mongoose.Schema({
     required: [true, 'Uzbek translation is required'],
     trim: true
   },
+  level: {
+    type: String,
+    required: [true, 'Level is required'],
+    trim: true,
+    default: 'General'
+  },
   createdAt: {
     type: Date,
     default: Date.now

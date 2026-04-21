@@ -12,6 +12,7 @@ router.post('/submit-result', protect, homeworkController.submitResult);
 router.get('/progress', protect, homeworkController.getProgress);
 
 // Admin word management
+router.get('/levels', protect, homeworkController.getLevels);
 router.get('/words', protect, authorize('admin', 'manager', 'founder'), homeworkController.getAllWords);
 router.post('/words', protect, authorize('admin', 'manager', 'founder'), homeworkController.addWord);
 router.put('/words/:id', protect, authorize('admin', 'manager', 'founder'), homeworkController.updateWord);

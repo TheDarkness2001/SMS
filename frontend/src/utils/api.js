@@ -276,11 +276,12 @@ export const salaryPayoutsAPI = {
 // Homework API
 export const homeworkAPI = {
   // Game
-  getRandomWord: () => api.get('/homework/words/random'),
+  getRandomWord: (level) => api.get('/homework/words/random', { params: level ? { level } : {} }),
   checkAnswer: (data) => api.post('/homework/check-answer', data),
   submitResult: (sessionStats) => api.post('/homework/submit-result', { sessionStats }),
   getProgress: () => api.get('/homework/progress'),
   // Word management (admin)
+  getLevels: () => api.get('/homework/levels'),
   getAllWords: () => api.get('/homework/words'),
   addWord: (data) => api.post('/homework/words', data),
   updateWord: (id, data) => api.put(`/homework/words/${id}`, data),

@@ -151,7 +151,9 @@
     "totalAttempts": "Jami urinishlar",
     "reset": "Qayta boshlash",
     "confirmReset": "Bu talabaning jarayonini qayta boshlash?",
-    "noStudentsYet": "Talabalar topilmadi."
+    "noStudentsYet": "Talabalar topilmadi.",
+    "level": "Daraja",
+    "filterByLevel": "Daraja bo'yicha filtrlash..."
   },
   "teachers": {
     "title": "O'qituvchilar",

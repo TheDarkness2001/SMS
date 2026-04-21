@@ -5,15 +5,20 @@ const Student = require('../models/Student');
 // Get random word
 exports.getRandomWord = async (req, res) => {
   try {
-    const count = await Word.countDocuments();
+    const { level } = req.query;
+    const filter = level ? { level } : {};
+    const count = await Word.countDocuments(filter);
     if (count === 0) {
       return res.status(404).json({
         success: false,
-        message: 'No words found in database'
+        message: level ? `No words found for level: ${level}` : 'No words found in database'
       });
     }
 
-    const [randomWord] = await Word.aggregate([{ $sample: { size: 1 } }]);
+    const [randomWord] = await Word.aggregate([
+      { $match: filter },
+      { $sample: { size: 1 } }
+    ]);
     const direction = Math.random() < 0.5 ? 'en-to-uz' : 'uz-to-en';
 
     res.json({
@@ -200,6 +205,24 @@ exports.getProgress = async (req, res) => {
 
 // ===== ADMIN WORD MANAGEMENT =====
 
+// Get all unique levels
+exports.getLevels = async (req, res) => {
+  try {
+    const levels = await Word.distinct('level');
+    res.json({
+      success: true,
+      data: { levels: levels.sort() }
+    });
+  } catch (error) {
+    console.error('Get levels error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching levels',
+      error: error.message
+    });
+  }
+};
+
 // Get all words
 exports.getAllWords = async (req, res) => {
   try {
@@ -222,17 +245,18 @@ exports.getAllWords = async (req, res) => {
 // Add new word
 exports.addWord = async (req, res) => {
   try {
-    const { english, uzbek } = req.body;
+    const { english, uzbek, level } = req.body;
 
-    if (!english || !uzbek) {
+    if (!english || !uzbek || !level) {
       return res.status(400).json({
         success: false,
-        message: 'Both English and Uzbek words are required'
+        message: 'English, Uzbek words and level are required'
       });
     }
 
     const trimmedEnglish = english.trim().toLowerCase();
     const trimmedUzbek = uzbek.trim().toLowerCase();
+    const trimmedLevel = level.trim();
 
     const existingWord = await Word.findOne({
       $or: [
@@ -250,7 +274,8 @@ exports.addWord = async (req, res) => {
 
     const word = new Word({
       english: trimmedEnglish,
-      uzbek: trimmedUzbek
+      uzbek: trimmedUzbek,
+      level: trimmedLevel
     });
 
     await word.save();
@@ -274,7 +299,7 @@ exports.addWord = async (req, res) => {
 exports.updateWord = async (req, res) => {
   try {
     const { id } = req.params;
-    const { english, uzbek } = req.body;
+    const { english, uzbek, level } = req.body;
 
     const word = await Word.findById(id);
     if (!word) {
@@ -286,6 +311,7 @@ exports.updateWord = async (req, res) => {
 
     if (english) word.english = english.trim().toLowerCase();
     if (uzbek) word.uzbek = uzbek.trim().toLowerCase();
+    if (level) word.level = level.trim();
 
     await word.save();
 

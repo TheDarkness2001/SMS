@@ -31,15 +31,39 @@ const Homework = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [overallProgress, setOverallProgress] = useState(null);
 
+  // Level state
+  const [selectedLevel, setSelectedLevel] = useState('');
+  const [levels, setLevels] = useState([]);
+
   // Admin state
   const [words, setWords] = useState([]);
+  const [wordsFilter, setWordsFilter] = useState('');
   const [studentsProgress, setStudentsProgress] = useState([]);
-  const [newWord, setNewWord] = useState({ english: '', uzbek: '' });
+  const [newWord, setNewWord] = useState({ english: '', uzbek: '', level: '' });
   const [editingWord, setEditingWord] = useState(null);
   const [adminLoading, setAdminLoading] = useState(false);
 
   const isAdmin = ['admin', 'manager', 'founder'].includes((user?.role || '').toLowerCase().trim());
   const isStudent = user?.userType === 'student';
+
+  // Fetch available levels
+  useEffect(() => {
+    const fetchLevels = async () => {
+      try {
+        const response = await homeworkAPI.getLevels();
+        if (response.data.success) {
+          setLevels(response.data.data.levels);
+          if (response.data.data.levels.length > 0 && !selectedLevel) {
+            setSelectedLevel(response.data.data.levels[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching levels:', error);
+      }
+    };
+    fetchLevels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch random word
   const fetchRandomWord = useCallback(async () => {
@@ -47,7 +71,7 @@ const Homework = () => {
     setFeedback(null);
     setUserAnswer('');
     try {
-      const response = await homeworkAPI.getRandomWord();
+      const response = await homeworkAPI.getRandomWord(selectedLevel);
       if (response.data.success) {
         setCurrentWord(response.data.data.word);
       }
@@ -56,7 +80,7 @@ const Homework = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedLevel]);
 
   // Load first word when tab changes to practice or exam
   useEffect(() => {
@@ -241,10 +265,10 @@ const Homework = () => {
 
   const handleAddWord = async (e) => {
     e.preventDefault();
-    if (!newWord.english.trim() || !newWord.uzbek.trim()) return;
+    if (!newWord.english.trim() || !newWord.uzbek.trim() || !newWord.level.trim()) return;
     try {
       await homeworkAPI.addWord(newWord);
-      setNewWord({ english: '', uzbek: '' });
+      setNewWord({ english: '', uzbek: '', level: '' });
       fetchWords();
     } catch (error) {
       console.error('Error adding word:', error);
@@ -258,7 +282,8 @@ const Homework = () => {
     try {
       await homeworkAPI.updateWord(editingWord._id, {
         english: editingWord.english,
-        uzbek: editingWord.uzbek
+        uzbek: editingWord.uzbek,
+        level: editingWord.level
       });
       setEditingWord(null);
       fetchWords();
@@ -337,6 +362,32 @@ const Homework = () => {
         {/* PRACTICE / EXAM MODES */}
         {(activeTab === 'practice' || activeTab === 'exam') && (
           <div className="game-section">
+            <div className="level-selector">
+              <label>{t('homework.level') || 'Level'}:</label>
+              <select
+                value={selectedLevel}
+                onChange={(e) => {
+                  setSelectedLevel(e.target.value);
+                  setCurrentWord(null);
+                  setFeedback(null);
+                  setSessionStats({
+                    totalAttempts: 0,
+                    correctAnswers: 0,
+                    enToUzCorrect: 0,
+                    enToUzTotal: 0,
+                    uzToEnCorrect: 0,
+                    uzToEnTotal: 0
+                  });
+                  setSessionComplete(false);
+                }}
+                className="level-select"
+              >
+                {levels.map(lvl => (
+                  <option key={lvl} value={lvl}>{lvl}</option>
+                ))}
+              </select>
+            </div>
+
             {activeTab === 'exam' && (
               <div className="exam-stats-bar">
                 <div className="progress-info">
@@ -539,6 +590,19 @@ const Homework = () => {
                   onChange={(e) => setNewWord({ ...newWord, uzbek: e.target.value })}
                   className="form-input"
                 />
+                <input
+                  type="text"
+                  placeholder={t('homework.level') || 'Level'}
+                  value={newWord.level}
+                  onChange={(e) => setNewWord({ ...newWord, level: e.target.value })}
+                  className="form-input"
+                  list="level-suggestions"
+                />
+                <datalist id="level-suggestions">
+                  {levels.map(lvl => (
+                    <option key={lvl} value={lvl} />
+                  ))}
+                </datalist>
                 <button type="submit" className="btn btn-primary">
                   {t('homework.add') || 'Add'}
                 </button>
@@ -561,6 +625,13 @@ const Homework = () => {
                     onChange={(e) => setEditingWord({ ...editingWord, uzbek: e.target.value })}
                     className="form-input"
                   />
+                  <input
+                    type="text"
+                    value={editingWord.level || ''}
+                    onChange={(e) => setEditingWord({ ...editingWord, level: e.target.value })}
+                    className="form-input"
+                    list="level-suggestions"
+                  />
                   <button type="submit" className="btn btn-primary">
                     {t('homework.save') || 'Save'}
                   </button>
@@ -571,6 +642,17 @@ const Homework = () => {
               </form>
             )}
 
+            <div className="word-filter">
+              <input
+                type="text"
+                placeholder={t('homework.filterByLevel') || 'Filter by level...'}
+                value={wordsFilter}
+                onChange={(e) => setWordsFilter(e.target.value)}
+                className="form-input"
+                list="level-suggestions"
+              />
+            </div>
+
             {adminLoading ? (
               <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
             ) : (
@@ -580,30 +662,34 @@ const Homework = () => {
                     <tr>
                       <th>{t('homework.english') || 'English'}</th>
                       <th>{t('homework.uzbek') || 'Uzbek'}</th>
+                      <th>{t('homework.level') || 'Level'}</th>
                       <th>{t('homework.actions') || 'Actions'}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {words.map(word => (
-                      <tr key={word._id}>
-                        <td>{word.english}</td>
-                        <td>{word.uzbek}</td>
-                        <td className="actions">
-                          <button
-                            onClick={() => setEditingWord(word)}
-                            className="btn btn-small btn-edit"
-                          >
-                            {t('homework.edit') || 'Edit'}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteWord(word._id)}
-                            className="btn btn-small btn-delete"
-                          >
-                            {t('homework.delete') || 'Delete'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {words
+                      .filter(word => !wordsFilter || (word.level || '').toLowerCase().includes(wordsFilter.toLowerCase()))
+                      .map(word => (
+                        <tr key={word._id}>
+                          <td>{word.english}</td>
+                          <td>{word.uzbek}</td>
+                          <td><span className="level-badge">{word.level || '-'}</span></td>
+                          <td className="actions">
+                            <button
+                              onClick={() => setEditingWord(word)}
+                              className="btn btn-small btn-edit"
+                            >
+                              {t('homework.edit') || 'Edit'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteWord(word._id)}
+                              className="btn btn-small btn-delete"
+                            >
+                              {t('homework.delete') || 'Delete'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
                 {words.length === 0 && (
