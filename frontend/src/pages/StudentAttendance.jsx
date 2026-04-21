@@ -434,7 +434,7 @@ const StudentAttendance = () => {
                 <div className="class-info">
                   <p><AiOutlineBook /> <strong>{t('exams.subject')}:</strong> {group.subject?.name || String(group.subject || '')}</p>
                   <p><AiOutlineClockCircle /> <strong>{t('exams.time')}:</strong> {group.startTime || '--:--'} - {group.endTime || '--:--'}</p>
-                  <p><AiOutlineTeam /> <strong>{t('students.students')}:</strong> {group.students?.length || 0}</p>
+                  <p><AiOutlineTeam /> <strong>{t('students.title')}:</strong> {group.students?.length || 0}</p>
                   {group.days?.length > 0 && (
                     <p><AiOutlineCalendar /> <strong>{t('scheduler.days')}:</strong> {group.days?.join(', ') || group.scheduledDays?.join(', ')}</p>
                   )}
