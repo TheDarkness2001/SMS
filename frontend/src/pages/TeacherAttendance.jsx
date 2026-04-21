@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
 import { useToast } from '../context/ToastContext';
 import { teachersAPI, teacherAttendanceAPI } from '../utils/api';
-import { AiOutlineUser, AiOutlineCalendar, AiOutlineMail, AiOutlinePhone } from 'react-icons/ai';
+import { AiOutlineUser, AiOutlineMail, AiOutlinePhone } from 'react-icons/ai';
 import '../styles/TeacherAttendance.css';
 
 const TeacherAttendance = () => {

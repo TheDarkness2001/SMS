@@ -21,7 +21,6 @@ const StudentAttendance = () => {
   const isTeacher = user.role === 'teacher' && !['admin', 'manager', 'founder'].includes(user.role);
   const isAdmin = ['admin', 'manager', 'founder'].includes(user.role);
   const [viewMode, setViewMode] = useState('today');
-  const [filterMode, setFilterMode] = useState('all');
 
   // Fetch groups
   useEffect(() => {
@@ -356,8 +355,6 @@ const StudentAttendance = () => {
   const displayedGroups = viewMode === 'today' ? todayGroups : groups;
 
   if (loading) return <div className="student-attendance-container"><p>{t('common.loading')}</p></div>;
-
-  const selectedGroupData = groups.find(g => g._id === selectedGroup);
 
   return (
     <div className="student-attendance-container">
