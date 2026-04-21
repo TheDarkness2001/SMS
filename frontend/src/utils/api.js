@@ -273,6 +273,24 @@ export const salaryPayoutsAPI = {
   cancel: (id, data) => api.patch(`/salary-payouts/${id}/cancel`, data)
 };
 
+// Homework API
+export const homeworkAPI = {
+  // Game
+  getRandomWord: () => api.get('/homework/words/random'),
+  checkAnswer: (data) => api.post('/homework/check-answer', data),
+  submitResult: (sessionStats) => api.post('/homework/submit-result', { sessionStats }),
+  getProgress: () => api.get('/homework/progress'),
+  // Word management (admin)
+  getAllWords: () => api.get('/homework/words'),
+  addWord: (data) => api.post('/homework/words', data),
+  updateWord: (id, data) => api.put(`/homework/words/${id}`, data),
+  deleteWord: (id) => api.delete(`/homework/words/${id}`),
+  // Student progress (admin)
+  getAllStudentProgress: () => api.get('/homework/students/progress'),
+  getStudentProgress: (id) => api.get(`/homework/students/${id}/progress`),
+  resetStudentProgress: (id) => api.post(`/homework/students/${id}/reset-progress`)
+};
+
 // Helper function to get image URL from backend
 export const getImageUrl = (filename) => {
   if (!filename) return null;

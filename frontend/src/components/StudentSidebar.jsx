@@ -8,7 +8,8 @@ import {
   AiOutlineMessage,
   AiOutlineFileText,
   AiOutlineDollar,
-  AiOutlineTrophy
+  AiOutlineTrophy,
+  AiOutlineBook
 } from 'react-icons/ai';
 import './StudentSidebar.css';
 
@@ -50,6 +51,12 @@ const StudentSidebar = ({ isOpen, onClose }) => {
       icon: <AiOutlineTrophy size={20} />,
       label: t('sidebar.results'),
       key: 'results'
+    },
+    {
+      path: '/homework',
+      icon: <AiOutlineBook size={20} />,
+      label: t('sidebar.homework') || 'Homework',
+      key: 'homework'
     },
     {
       path: '/student/payments',
