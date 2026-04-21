@@ -452,32 +452,21 @@ const StudentAttendance = () => {
                   <div className="students-list">
                     <h4>{t('attendance.studentsList')}</h4>
                     {group.students?.length > 0 ? (
-                      <div className="student-items">
+                      <div className="attendance-students">
                         {group.students.map(student => (
-                          <div key={student._id} className="student-item">
-                            <div className="student-info">
-                              <strong>{student.name || 'N/A'}</strong>
-                              <span className="student-id">{student.studentId || 'N/A'}</span>
+                          <div key={student._id} className="attendance-student-row">
+                            <div className="attendance-student-header">
+                              <div className="attendance-student-name">
+                                <strong>{student.name || 'N/A'}</strong>
+                                <span className="attendance-student-id">{student.studentId || 'N/A'}</span>
+                              </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            <div className="attendance-status-bar">
                               {['present', 'absent', 'late'].map(status => (
                                 <button
                                   key={status}
                                   onClick={() => handleStatusChange(student._id, status)}
-                                  className={`status-btn ${studentAttendance[student._id]?.status === status ? `status-${status}` : ''}`}
-                                  style={{
-                                    padding: '4px 10px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #ddd',
-                                    fontSize: '11px',
-                                    textTransform: 'capitalize',
-                                    cursor: 'pointer',
-                                    backgroundColor: studentAttendance[student._id]?.status === status
-                                      ? (status === 'present' ? '#4caf50' : status === 'absent' ? '#f44336' : '#ff9800')
-                                      : '#f5f5f5',
-                                    color: studentAttendance[student._id]?.status === status ? '#fff' : '#333',
-                                    fontWeight: studentAttendance[student._id]?.status === status ? 'bold' : 'normal'
-                                  }}
+                                  className={`attendance-status-btn ${studentAttendance[student._id]?.status === status ? `is-${status}` : ''}`}
                                 >
                                   {t(`attendance.${status}`)}
                                 </button>
@@ -485,32 +474,14 @@ const StudentAttendance = () => {
                             </div>
                             <input
                               type="text"
+                              className="attendance-notes-input"
                               placeholder={t('attendance.notes')}
                               value={studentAttendance[student._id]?.notes || ''}
                               onChange={(e) => handleNotesChange(student._id, e.target.value)}
-                              style={{
-                                width: '100%',
-                                padding: '4px 8px',
-                                border: '1px solid #ddd',
-                                borderRadius: '4px',
-                                fontSize: '12px',
-                                marginTop: '6px'
-                              }}
                             />
                             <button
+                              className="attendance-save-btn"
                               onClick={() => handleSaveStudent(student._id)}
-                              style={{
-                                width: '100%',
-                                padding: '6px',
-                                marginTop: '6px',
-                                backgroundColor: savedAttendance[student._id] ? '#2196f3' : '#4caf50',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                fontWeight: 'bold'
-                              }}
                             >
                               {savedAttendance[student._id] ? t('common.update') : t('common.save')}
                             </button>
