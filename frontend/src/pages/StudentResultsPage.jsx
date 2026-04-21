@@ -217,7 +217,7 @@ const StudentResultsPage = () => {
               <div className="result-body">
                 <div className="result-item">
                   <span>{t('exams.subject')}:</span>
-                  <strong>{exam.subject}</strong>
+                  <strong>{exam.subject?.name || String(exam.subject || '')}</strong>
                 </div>
                 <div className="result-item">
                   <span>{t('exams.obtainedMarks')}:</span>

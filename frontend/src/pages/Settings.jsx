@@ -277,7 +277,7 @@ const Settings = () => {
                         {t(`common.${member.role}`)}
                       </span>
                     </td>
-                    <td>{member.subject || t('common.noData')}</td>
+                    <td>{member.subject?.name || String(member.subject || '') || t('common.noData')}</td>
                     <td className="action-buttons">
                       <button 
                         className="btn btn-sm btn-warning"

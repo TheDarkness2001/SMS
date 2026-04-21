@@ -264,7 +264,7 @@ const Exams = () => {
                   {exams.map((exam) => (
                     <tr key={exam._id}>
                       <td className="exams-table-exam-name">{exam.examName}</td>
-                      <td>{exam.subject}</td>
+                      <td>{exam.subject?.name || String(exam.subject || '')}</td>
                       <td>{new Date(exam.examDate).toLocaleDateString(t('common.locale'))}</td>
                       <td>{exam.startTime}</td>
                       <td className="exams-table-marks">{exam.totalMarks}</td>
@@ -441,7 +441,7 @@ const Exams = () => {
                     <strong>{t('exams.groupId')}:</strong> {selectedSchedule.subjectGroup ? selectedSchedule.subjectGroup.groupId : t('exams.notAssigned')}
                   </p>
                   <p style={{ margin: '5px 0', fontSize: '0.85rem', color: '#666' }}>
-                    <strong>{t('attendance.subject')}:</strong> {selectedSchedule.subject}
+                    <strong>{t('attendance.subject')}:</strong> {selectedSchedule.subject?.name || String(selectedSchedule.subject || '')}
                   </p>
                   <p style={{ margin: '5px 0', fontSize: '0.85rem', color: '#666' }}>
                     <strong>{t('exams.level')}:</strong> {selectedSchedule.className}

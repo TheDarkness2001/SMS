@@ -8,9 +8,9 @@ import '../styles/Scheduler.css';
 // Helper to format subject display with linked group info
 const formatSubjectDisplay = (schedule) => {
   if (schedule.subjectGroup) {
-    return `${schedule.subjectGroup.subjectName || schedule.subject} (${schedule.subjectGroup.groupName})`;
+    return `${schedule.subjectGroup.subjectName || schedule.subject?.name || String(schedule.subject || '')} (${schedule.subjectGroup.groupName})`;
   }
-  return schedule.subject?.name || schedule.subject || 'Unknown';
+  return schedule.subject?.name || String(schedule.subject || '') || 'Unknown';
 };
 
 

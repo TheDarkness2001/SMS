@@ -412,7 +412,7 @@ const StudentDashboard = () => {
           <div className="subject-charts-grid">
             {subjectCharts.map((subjectData, index) => (
               <div key={index} className="subject-chart-card">
-                <h3 className="subject-chart-title">{subjectData.subject}</h3>
+                <h3 className="subject-chart-title">{subjectData.subject?.name || String(subjectData.subject || '')}</h3>
                 <div className="subject-chart-container">
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={subjectData.data} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>

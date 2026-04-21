@@ -391,7 +391,7 @@ const StudentAttendance = () => {
                 <option value="">-- {t('attendance.selectGroup')} --</option>
                 {groups.map(group => (
                   <option key={group._id} value={group._id}>
-                    {group.displayId} - {group.subject} ({group.class}) {group._type === 'schedule' ? '🗓️' : ''}
+                    {group.displayId} - {group.subject?.name || String(group.subject || '')} ({group.class}) {group._type === 'schedule' ? '🗓️' : ''}
                   </option>
                 ))}
               </select>
@@ -406,7 +406,7 @@ const StudentAttendance = () => {
               marginBottom: '20px'
             }}>
               <strong>{t('sidebar.dashboard')}:</strong> {selectedGroupData.groupId} | 
-              <strong style={{ marginLeft: '15px' }}>{t('exams.subject')}:</strong> {selectedGroupData.subject} | 
+              <strong style={{ marginLeft: '15px' }}>{t('exams.subject')}:</strong> {selectedGroupData.subject?.name || String(selectedGroupData.subject || '')} | 
               <strong style={{ marginLeft: '15px' }}>{t('forms.class')}:</strong> {selectedGroupData.class} | 
               <strong style={{ marginLeft: '15px' }}>{t('students.name')}:</strong> {selectedGroupData.students?.length || 0}
             </div>

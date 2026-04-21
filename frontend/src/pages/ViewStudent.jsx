@@ -285,7 +285,7 @@ const ViewStudent = () => {
               {(student.subjectPayments && student.subjectPayments.length > 0) ? (
                 student.subjectPayments.map((ps, idx) => (
                   <div className="info-row" key={idx}>
-                    <span className="info-label">{ps.subject}</span>
+                    <span className="info-label">{ps.subject?.name || String(ps.subject || '')}</span>
                     <span className="info-value" style={{ fontWeight: '600', color: 'var(--blue)' }}>
                       {language === 'en' ? t('common.currencySymbol') : ''}{ps.amount.toLocaleString(t('common.locale'))}{language !== 'en' ? ` ${t('common.currencySymbol')}` : ''} / {t('attendance.month')}
                     </span>
@@ -294,7 +294,7 @@ const ViewStudent = () => {
               ) : (student.paymentSubjects && student.paymentSubjects.length > 0) ? (
                 student.paymentSubjects.map((ps, idx) => (
                   <div className="info-row" key={idx}>
-                    <span className="info-label">{ps.subject}</span>
+                    <span className="info-label">{ps.subject?.name || String(ps.subject || '')}</span>
                     <span className="info-value" style={{ fontWeight: '600', color: 'var(--blue)' }}>
                       {language === 'en' ? t('common.currencySymbol') : ''}{ps.amount.toLocaleString(t('common.locale'))}{language !== 'en' ? ` ${t('common.currencySymbol')}` : ''} / {t('attendance.month')}
                     </span>
@@ -473,7 +473,7 @@ const ViewStudent = () => {
               <div key={item._id} className="feedback-item">
                 <div className="feedback-header">
                   <div className="feedback-course">
-                    <h3>{item.subject || item.course}</h3>
+                    <h3>{item.subject?.name || String(item.subject || '') || item.course}</h3>
                     <p>{t('students.teacher')}: {item.teacher?.name || t('common.noData')}</p>
                   </div>
                   <div className="feedback-date">

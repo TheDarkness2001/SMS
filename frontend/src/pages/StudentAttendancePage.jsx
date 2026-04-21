@@ -258,7 +258,7 @@ const StudentAttendancePage = () => {
                     day: 'numeric' 
                   })}
                 </div>
-                <div className="record-subject">{record.subject || t('common.unknown')}</div>
+                <div className="record-subject">{record.subject?.name || String(record.subject || '') || t('common.unknown')}</div>
                 <div className={`record-status status-${record.status}`}>
                   {t(`attendance.${record.status}`)}
                 </div>
