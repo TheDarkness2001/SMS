@@ -86,10 +86,7 @@ const StudentAttendance = () => {
           }))
         ];
         
-        // Set filter mode from backend response (prefer exam groups' filter mode)
-        if (groupsRes.data.filter) {
-          setFilterMode(groupsRes.data.filter);
-        }
+        // Backend response may include filter data
         
         // Backend already filters exam groups for teachers (including via schedules)
         // Only need to filter out empty groups (must have students to take attendance)
