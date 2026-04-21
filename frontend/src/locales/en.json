@@ -308,6 +308,8 @@
     "markAttendance": "Mark Attendance",
     "studentsList": "Students List",
     "noStudents": "No students",
+    "allClasses": "All Classes",
+    "todaysClasses": "Today's Classes",
     "attendanceRecord": "Attendance Record",
     "noRecord": "No records available for the selected filters.",
     "selectGroup": "Select Group",

@@ -275,6 +275,8 @@
     "markAttendance": "Отметить посещаемость",
     "studentsList": "Список студентов",
     "noStudents": "Нет студентов",
+    "allClasses": "Все классы",
+    "todaysClasses": "Сегодняшние занятия",
     "attendanceRecord": "Запись о посещаемости",
     "noRecord": "Нет записей для выбранных фильтров.",
     "selectGroup": "Выберите группу",

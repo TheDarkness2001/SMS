@@ -275,6 +275,8 @@
     "markAttendance": "Davomatni belgilash",
     "studentsList": "O'quvchilar ro'yxati",
     "noStudents": "O'quvchilar yo'q",
+    "allClasses": "Barcha guruhlar",
+    "todaysClasses": "Bugungi guruhlar",
     "attendanceRecord": "Davomatni qayd qilish",
     "noRecord": "Tanlangan filtrlar uchun yozuvlar mavjud emas.",
     "selectGroup": "Guruhni tanlang",
