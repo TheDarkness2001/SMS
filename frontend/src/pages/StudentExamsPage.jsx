@@ -121,7 +121,7 @@ const StudentExamsPage = () => {
                 <div className="exam-details">
                   <h3 className="exam-name">{exam.examName}</h3>
                   <div className="exam-info">
-                    <span>{t('exams.subject')}: {exam.subject}</span>
+                    <span>{t('exams.subject')}: {exam.subject?.name || String(exam.subject || '')}</span>
                     <span>{t('exams.date')}: {new Date(exam.examDate).toLocaleDateString(t('common.locale'))}</span>
                     <span>{t('attendance.classTime')}: {exam.startTime}</span>
                     <span>{t('exams.duration')}: {exam.duration} {t('common.min')}</span>

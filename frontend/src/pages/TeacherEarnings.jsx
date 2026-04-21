@@ -215,7 +215,7 @@ export const TeacherEarnings = () => {
                       {formatDate(earning.classDate)}
                     </td>
                     <td className="teacher-earnings__cell">
-                      {earning.subject}
+                      {earning.subject?.name || String(earning.subject || '')}
                     </td>
                     <td className="teacher-earnings__cell">
                       {earning.classId || 'N/A'}

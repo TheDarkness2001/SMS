@@ -158,7 +158,7 @@ const ViewTeacher = () => {
                     {tt.periods.map((period, index) => (
                       <tr key={index}>
                         <td>{period.periodNumber}</td>
-                        <td>{period.subject}</td>
+                        <td>{period.subject?.name || String(period.subject || '')}</td>
                         <td>{period.startTime} - {period.endTime}</td>
                         <td>{period.room}</td>
                       </tr>

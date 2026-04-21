@@ -156,7 +156,7 @@ const ExamResults = () => {
         <div>
           <h1>{exam.examName} {t('examResults.results')}</h1>
           <p className="text-muted">
-            {t('attendance.subject')}: {exam.subject} | {t('students.class')}: {exam.class} | {t('payments.date')}: {new Date(exam.examDate).toLocaleDateString(t('common.locale'))}
+            {t('attendance.subject')}: {exam.subject?.name || String(exam.subject || '')} | {t('students.class')}: {exam.class} | {t('payments.date')}: {new Date(exam.examDate).toLocaleDateString(t('common.locale'))}
           </p>
         </div>
         <button onClick={() => navigate('/exams')} className="btn btn-secondary">

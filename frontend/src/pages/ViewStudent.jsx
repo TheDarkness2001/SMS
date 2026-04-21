@@ -533,7 +533,7 @@ const ViewStudent = () => {
                 {payments.map((payment) => (
                   <tr key={payment._id}>
                     <td>{new Date(payment.month).toLocaleDateString(t('common.locale') || 'en-US', { year: 'numeric', month: 'long' })}</td>
-                    <td>{payment.subject}</td>
+                    <td>{payment.subject?.name || String(payment.subject || '')}</td>
                     <td>{language === 'en' ? t('common.currencySymbol') : ''}{payment.amount.toLocaleString(t('common.locale'))}{language !== 'en' ? ` ${t('common.currencySymbol')}` : ''}</td>
                     <td>
                       <span className={`badge badge-${payment.status === 'paid' ? 'success' : payment.status === 'partial' ? 'warning' : 'danger'}`}>

@@ -189,7 +189,7 @@ export const StudentClassPayments = () => {
                 </span>
               </div>
               <div className="student-class-payments__history-subject">
-                {attendance.subject}
+                {attendance.subject?.name || String(attendance.subject || '')}
               </div>
             </div>
           ))}
