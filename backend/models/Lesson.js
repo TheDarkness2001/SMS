@@ -6,10 +6,10 @@ const lessonSchema = new mongoose.Schema({
     required: [true, 'Lesson name is required'],
     trim: true
   },
-  level: {
-    type: String,
-    required: [true, 'Level is required'],
-    trim: true
+  levelId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Level',
+    required: [true, 'Level is required']
   },
   order: {
     type: Number,
@@ -34,6 +34,6 @@ const lessonSchema = new mongoose.Schema({
   }
 });
 
-lessonSchema.index({ level: 1, order: 1 });
+lessonSchema.index({ levelId: 1, order: 1 });
 
 module.exports = mongoose.model('Lesson', lessonSchema);

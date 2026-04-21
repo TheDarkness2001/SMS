@@ -292,10 +292,26 @@ export const homeworkAPI = {
   resetStudentProgress: (id) => api.post(`/homework/students/${id}/reset-progress`)
 };
 
+// Language API
+export const languageAPI = {
+  getAll: () => api.get('/homework/languages'),
+  create: (data) => api.post('/homework/languages', data),
+  update: (id, data) => api.put(`/homework/languages/${id}`, data),
+  delete: (id) => api.delete(`/homework/languages/${id}`)
+};
+
+// Level API
+export const levelAPI = {
+  getByLanguage: (languageId) => api.get(`/homework/levels/language/${languageId}`),
+  create: (data) => api.post('/homework/levels', data),
+  update: (id, data) => api.put(`/homework/levels/${id}`, data),
+  delete: (id) => api.delete(`/homework/levels/${id}`)
+};
+
 // Lesson API
 export const lessonAPI = {
   // Admin
-  getAllLessons: (level) => api.get('/homework/lessons', { params: level ? { level } : {} }),
+  getAllLessons: (levelId) => api.get('/homework/lessons', { params: levelId ? { levelId } : {} }),
   getLesson: (id) => api.get(`/homework/lessons/${id}`),
   createLesson: (data) => api.post('/homework/lessons', data),
   updateLesson: (id, data) => api.put(`/homework/lessons/${id}`, data),

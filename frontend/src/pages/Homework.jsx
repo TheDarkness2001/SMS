@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { homeworkAPI, lessonAPI } from '../utils/api';
+import { homeworkAPI, lessonAPI, languageAPI, levelAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import LessonsTab from '../components/homework/LessonsTab';
@@ -30,7 +30,6 @@ const Homework = () => {
     uzToEnTotal: 0
   });
   const [sessionComplete, setSessionComplete] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Level state
   const [selectedLevel, setSelectedLevel] = useState('');
@@ -47,6 +46,16 @@ const Homework = () => {
   const [myProgress, setMyProgress] = useState([]);
   const [activeExamLesson, setActiveExamLesson] = useState(null);
   const [showClassExam, setShowClassExam] = useState(false);
+
+  // 3-tier hierarchy state for student
+  const [languages, setLanguages] = useState([]);
+  const [levelsList, setLevelsList] = useState([]);
+  const [selectedLanguageId, setSelectedLanguageId] = useState('');
+  const [selectedLevelId, setSelectedLevelId] = useState('');
+
+  // Exam tab lesson selection state
+  const [examLessons, setExamLessons] = useState([]);
+  const [examLoading, setExamLoading] = useState(false);
 
   // Fetch available levels
   useEffect(() => {
@@ -82,6 +91,63 @@ const Homework = () => {
     };
     fetchMyProgress();
   }, [isStudent]);
+
+  // Fetch languages for student
+  useEffect(() => {
+    if (!isStudent) return;
+    const fetchLanguages = async () => {
+      try {
+        const res = await languageAPI.getAll();
+        if (res.data.success) {
+          setLanguages(res.data.data.languages);
+          if (res.data.data.languages.length > 0) {
+            setSelectedLanguageId(res.data.data.languages[0]._id);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching languages:', error);
+      }
+    };
+    fetchLanguages();
+  }, [isStudent]);
+
+  // Fetch levels when language selected
+  useEffect(() => {
+    if (!isStudent || !selectedLanguageId) return;
+    const fetchLevels = async () => {
+      try {
+        const res = await levelAPI.getByLanguage(selectedLanguageId);
+        if (res.data.success) {
+          setLevelsList(res.data.data.levels);
+          if (res.data.data.levels.length > 0) {
+            setSelectedLevelId(res.data.data.levels[0]._id);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching levels:', error);
+      }
+    };
+    fetchLevels();
+  }, [isStudent, selectedLanguageId]);
+
+  // Fetch lessons for exam tab when level selected
+  useEffect(() => {
+    if (!isStudent || !selectedLevelId) return;
+    const fetchLessons = async () => {
+      setExamLoading(true);
+      try {
+        const res = await lessonAPI.getAllLessons(selectedLevelId);
+        if (res.data.success) {
+          setExamLessons(res.data.data.lessons);
+        }
+      } catch (error) {
+        console.error('Error fetching lessons:', error);
+      } finally {
+        setExamLoading(false);
+      }
+    };
+    fetchLessons();
+  }, [isStudent, selectedLevelId]);
 
   // Fetch random word
   const fetchRandomWord = useCallback(async () => {
@@ -156,30 +222,6 @@ const Homework = () => {
       setSessionComplete(true);
     } else {
       fetchRandomWord();
-    }
-  };
-
-  // Submit exam results
-  const handleFinishExam = async () => {
-    setIsSubmitting(true);
-    try {
-      await homeworkAPI.submitResult(sessionStats);
-    } catch (error) {
-      console.error('Error submitting results:', error);
-    } finally {
-      setIsSubmitting(false);
-      setActiveTab('results');
-      setSessionComplete(false);
-      setSessionStats({
-        totalAttempts: 0,
-        correctAnswers: 0,
-        enToUzCorrect: 0,
-        enToUzTotal: 0,
-        uzToEnCorrect: 0,
-        uzToEnTotal: 0
-      });
-      setCurrentWord(null);
-      setFeedback(null);
     }
   };
 
@@ -310,21 +352,33 @@ const Homework = () => {
         {activeTab === 'myLessons' && isStudent && (
           <div className="my-lessons-section">
             <div className="level-selector">
-              <label>{t('homework.level') || 'Level'}:</label>
+              <label>{t('homework.language') || 'Language'}:</label>
               <select
-                value={selectedLevel}
-                onChange={(e) => setSelectedLevel(e.target.value)}
+                value={selectedLanguageId}
+                onChange={(e) => setSelectedLanguageId(e.target.value)}
                 className="level-select"
               >
-                {levels.map(lvl => (
-                  <option key={lvl} value={lvl}>{lvl}</option>
+                {languages.map(lang => (
+                  <option key={lang._id} value={lang._id}>{lang.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="level-selector">
+              <label>{t('homework.level') || 'Level'}:</label>
+              <select
+                value={selectedLevelId}
+                onChange={(e) => setSelectedLevelId(e.target.value)}
+                className="level-select"
+              >
+                {levelsList.map(lvl => (
+                  <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
                 ))}
               </select>
             </div>
 
             <div className="lessons-progress-list">
               {myProgress
-                .filter(p => p.lessonId?.level === selectedLevel)
+                .filter(p => p.lessonId?.levelId === selectedLevelId)
                 .sort((a, b) => (a.lessonId?.order || 0) - (b.lessonId?.order || 0))
                 .map(progress => {
                   const status = progress.status;
@@ -383,7 +437,7 @@ const Homework = () => {
                     </div>
                   );
                 })}
-              {myProgress.filter(p => p.lessonId?.level === selectedLevel).length === 0 && (
+              {myProgress.filter(p => p.lessonId?.levelId === selectedLevelId).length === 0 && (
                 <div className="no-lessons">
                   {t('homework.noLessonsYet') || 'No lessons available yet.'}
                 </div>
@@ -392,8 +446,8 @@ const Homework = () => {
           </div>
         )}
 
-        {/* PRACTICE / EXAM MODES */}
-        {(activeTab === 'practice' || activeTab === 'exam') && (
+        {/* PRACTICE MODE */}
+        {activeTab === 'practice' && (
           <div className="game-section">
             <div className="level-selector">
               <label>{t('homework.level') || 'Level'}:</label>
@@ -421,27 +475,10 @@ const Homework = () => {
               </select>
             </div>
 
-            {activeTab === 'exam' && (
-              <div className="exam-stats-bar">
-                <div className="progress-info">
-                  <span>{t('homework.question') || 'Question'} {Math.min(sessionStats.totalAttempts + 1, SESSION_LIMIT)} {t('homework.of') || 'of'} {SESSION_LIMIT}</span>
-                  <span>{accuracy}% {t('homework.accuracy') || 'Accuracy'}</span>
-                </div>
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{ width: `${((sessionStats.totalAttempts) / SESSION_LIMIT) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'practice' && (
-              <div className="practice-stats">
-                <span>{t('homework.score') || 'Score'}: {sessionStats.correctAnswers}/{sessionStats.totalAttempts}</span>
-                <span>{t('homework.accuracy') || 'Accuracy'}: {accuracy}%</span>
-              </div>
-            )}
+            <div className="practice-stats">
+              <span>{t('homework.score') || 'Score'}: {sessionStats.correctAnswers}/{sessionStats.totalAttempts}</span>
+              <span>{t('homework.accuracy') || 'Accuracy'}: {accuracy}%</span>
+            </div>
 
             {isLoading ? (
               <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
@@ -475,9 +512,7 @@ const Homework = () => {
                       onClick={handleNext}
                       className="btn btn-primary"
                     >
-                      {activeTab === 'exam' && sessionStats.totalAttempts >= SESSION_LIMIT
-                        ? (t('homework.finish') || 'Finish')
-                        : (t('homework.next') || 'Next')}
+                      {t('homework.next') || 'Next'}
                     </button>
                   )}
                 </div>
@@ -505,13 +540,204 @@ const Homework = () => {
               </div>
             )}
 
-            {activeTab === 'practice' && (
-              <div className="game-tip">
-                <p><strong>{t('homework.tip') || 'Tip'}:</strong> {t('homework.pressEnter') || 'Press Enter to submit your answer or go to the next word.'}</p>
+            <div className="game-tip">
+              <p><strong>{t('homework.tip') || 'Tip'}:</strong> {t('homework.pressEnter') || 'Press Enter to submit your answer or go to the next word.'}</p>
+            </div>
+          </div>
+        )}
+
+        {/* EXAM MODE - Student: Lesson Selection */}
+        {activeTab === 'exam' && isStudent && (
+          <div className="exam-lesson-selection">
+            <div className="tier-selectors">
+              <div className="level-selector">
+                <label>{t('homework.language') || 'Language'}:</label>
+                <select
+                  value={selectedLanguageId}
+                  onChange={(e) => setSelectedLanguageId(e.target.value)}
+                  className="level-select"
+                >
+                  {languages.map(lang => (
+                    <option key={lang._id} value={lang._id}>{lang.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="level-selector">
+                <label>{t('homework.level') || 'Level'}:</label>
+                <select
+                  value={selectedLevelId}
+                  onChange={(e) => setSelectedLevelId(e.target.value)}
+                  className="level-select"
+                >
+                  {levelsList.map(lvl => (
+                    <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <h3 className="section-title">{t('homework.selectLessonForExam') || 'Select a Lesson to Start Exam'}</h3>
+
+            {examLoading ? (
+              <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
+            ) : (
+              <div className="exam-lessons-grid">
+                {examLessons.map(lesson => {
+                  const progress = myProgress.find(p => p.lessonId?._id === lesson._id);
+                  const status = progress?.status || 'locked';
+                  const canTakeExam = status === 'available' || status === 'passed';
+                  return (
+                    <div key={lesson._id} className={`exam-lesson-card ${status}`}>
+                      <div className="exam-lesson-header">
+                        <h4>{lesson.name}</h4>
+                        <span className={`status-badge ${status}`}>
+                          {status === 'locked' ? (t('homework.locked') || 'Locked')
+                            : status === 'available' ? (t('homework.available') || 'Available')
+                            : (t('homework.passed') || 'Passed')
+                          }
+                        </span>
+                      </div>
+                      <div className="exam-lesson-info">
+                        <span>{lesson.wordIds?.length || 0} {t('homework.words') || 'words'}</span>
+                        <span>{t('homework.timeLimit') || 'Time'}: {Math.floor(lesson.examTimeLimit / 60)} {t('homework.minutes') || 'min'}</span>
+                      </div>
+                      {progress?.bestExamScore > 0 && (
+                        <div className="exam-best-score">
+                          {t('homework.bestScore') || 'Best'}: {progress.bestExamScore}%
+                        </div>
+                      )}
+                      <button
+                        className="btn btn-primary btn-full"
+                        disabled={!canTakeExam}
+                        onClick={() => {
+                          setActiveExamLesson({ id: lesson._id, name: lesson.name });
+                          setShowClassExam(true);
+                        }}
+                      >
+                        {status === 'passed'
+                          ? (t('homework.retakeExam') || 'Retake Exam')
+                          : (t('homework.startExam') || 'Start Exam')
+                        }
+                      </button>
+                    </div>
+                  );
+                })}
+                {examLessons.length === 0 && (
+                  <div className="no-lessons">
+                    {t('homework.noLessonsYet') || 'No lessons available yet.'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* EXAM MODE - Admin/Teacher: Random word game */}
+        {activeTab === 'exam' && !isStudent && (
+          <div className="game-section">
+            <div className="level-selector">
+              <label>{t('homework.level') || 'Level'}:</label>
+              <select
+                value={selectedLevel}
+                onChange={(e) => {
+                  setSelectedLevel(e.target.value);
+                  setCurrentWord(null);
+                  setFeedback(null);
+                  setSessionStats({
+                    totalAttempts: 0,
+                    correctAnswers: 0,
+                    enToUzCorrect: 0,
+                    enToUzTotal: 0,
+                    uzToEnCorrect: 0,
+                    uzToEnTotal: 0
+                  });
+                  setSessionComplete(false);
+                }}
+                className="level-select"
+              >
+                {levels.map(lvl => (
+                  <option key={lvl} value={lvl}>{lvl}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="exam-stats-bar">
+              <div className="progress-info">
+                <span>{t('homework.question') || 'Question'} {Math.min(sessionStats.totalAttempts + 1, SESSION_LIMIT)} {t('homework.of') || 'of'} {SESSION_LIMIT}</span>
+                <span>{accuracy}% {t('homework.accuracy') || 'Accuracy'}</span>
+              </div>
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${((sessionStats.totalAttempts) / SESSION_LIMIT) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
+            ) : currentWord ? (
+              <div className="word-card">
+                <div className="direction-label">{getDirectionLabel()}</div>
+                <div className="word-display">{getDisplayText()}</div>
+
+                <div className="answer-section">
+                  <input
+                    type="text"
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={getPlaceholder()}
+                    disabled={isChecking || feedback !== null}
+                    className="answer-input"
+                    autoFocus
+                  />
+
+                  {!feedback ? (
+                    <button
+                      onClick={handleCheckAnswer}
+                      disabled={!userAnswer.trim() || isChecking}
+                      className="btn btn-primary"
+                    >
+                      {isChecking ? (t('homework.checking') || 'Checking...') : (t('homework.checkAnswer') || 'Check Answer')}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNext}
+                      className="btn btn-primary"
+                    >
+                      {sessionStats.totalAttempts >= SESSION_LIMIT
+                        ? (t('homework.finish') || 'Finish')
+                        : (t('homework.next') || 'Next')
+                      }
+                    </button>
+                  )}
+                </div>
+
+                {feedback && (
+                  <div className={`feedback ${feedback.isCorrect ? 'correct' : 'incorrect'}`}>
+                    {feedback.isCorrect ? (
+                      <>
+                        <div className="feedback-title">{t('homework.correct') || 'Correct!'}</div>
+                        <p>{t('homework.greatJob') || 'Great job! Your answer is correct.'}</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="feedback-title">{t('homework.incorrect') || 'Incorrect'}</div>
+                        <p>{t('homework.yourAnswer') || 'Your answer'}: <strong>{feedback.userAnswer}</strong></p>
+                        <p>{t('homework.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="no-words">
+                {t('homework.noWords') || 'No words available. Please contact admin to add words.'}
               </div>
             )}
 
-            {activeTab === 'exam' && sessionComplete && (
+            {sessionComplete && (
               <div className="session-complete-overlay">
                 <div className="session-complete-card">
                   <h2>{t('homework.sessionComplete') || 'Session Complete!'}</h2>
@@ -526,35 +752,25 @@ const Homework = () => {
                     </div>
                   </div>
                   <p className="performance-msg">{getPerformanceMessage(accuracy)}</p>
-                  {isStudent ? (
-                    <button
-                      onClick={handleFinishExam}
-                      disabled={isSubmitting}
-                      className="btn btn-primary btn-large"
-                    >
-                      {isSubmitting ? (t('homework.saving') || 'Saving...') : (t('homework.viewResults') || 'View Results')}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setSessionComplete(false);
-                        setSessionStats({
-                          totalAttempts: 0,
-                          correctAnswers: 0,
-                          enToUzCorrect: 0,
-                          enToUzTotal: 0,
-                          uzToEnCorrect: 0,
-                          uzToEnTotal: 0
-                        });
-                        setCurrentWord(null);
-                        setFeedback(null);
-                        fetchRandomWord();
-                      }}
-                      className="btn btn-primary btn-large"
-                    >
-                      {t('homework.tryAgain') || 'Try Again'}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setSessionComplete(false);
+                      setSessionStats({
+                        totalAttempts: 0,
+                        correctAnswers: 0,
+                        enToUzCorrect: 0,
+                        enToUzTotal: 0,
+                        uzToEnCorrect: 0,
+                        uzToEnTotal: 0
+                      });
+                      setCurrentWord(null);
+                      setFeedback(null);
+                      fetchRandomWord();
+                    }}
+                    className="btn btn-primary btn-large"
+                  >
+                    {t('homework.tryAgain') || 'Try Again'}
+                  </button>
                 </div>
               </div>
             )}
@@ -563,7 +779,7 @@ const Homework = () => {
 
         {/* LESSONS TAB (Admin) */}
         {activeTab === 'lessons' && isAdmin && (
-          <LessonsTab t={t} levels={levels} />
+          <LessonsTab t={t} />
         )}
 
         {/* STUDENT PROGRESS TAB (Admin) */}

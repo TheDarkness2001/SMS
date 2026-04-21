@@ -6,9 +6,9 @@ const Student = require('../models/Student');
 // Get all lessons
 exports.getAllLessons = async (req, res) => {
   try {
-    const { level } = req.query;
-    const filter = level ? { level } : {};
-    const lessons = await Lesson.find(filter).sort({ level: 1, order: 1 });
+    const { levelId } = req.query;
+    const filter = levelId ? { levelId } : {};
+    const lessons = await Lesson.find(filter).sort({ levelId: 1, order: 1 });
     res.json({
       success: true,
       count: lessons.length,
@@ -55,18 +55,18 @@ exports.getLesson = async (req, res) => {
 // Create lesson
 exports.createLesson = async (req, res) => {
   try {
-    const { name, level, order, examTimeLimit, minPassScore } = req.body;
+    const { name, levelId, order, examTimeLimit, minPassScore } = req.body;
 
-    if (!name || !level) {
+    if (!name || !levelId) {
       return res.status(400).json({
         success: false,
-        message: 'Name and level are required'
+        message: 'Name and levelId are required'
       });
     }
 
     const lesson = new Lesson({
       name: name.trim(),
-      level: level.trim(),
+      levelId,
       order: order || 1,
       examTimeLimit: examTimeLimit || 300,
       minPassScore: minPassScore || 70,
@@ -94,7 +94,7 @@ exports.createLesson = async (req, res) => {
 exports.updateLesson = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, level, order, examTimeLimit, minPassScore } = req.body;
+    const { name, levelId, order, examTimeLimit, minPassScore } = req.body;
 
     const lesson = await Lesson.findById(id);
     if (!lesson) {
@@ -105,7 +105,7 @@ exports.updateLesson = async (req, res) => {
     }
 
     if (name) lesson.name = name.trim();
-    if (level) lesson.level = level.trim();
+    if (levelId) lesson.levelId = levelId;
     if (order !== undefined) lesson.order = order;
     if (examTimeLimit !== undefined) lesson.examTimeLimit = examTimeLimit;
     if (minPassScore !== undefined) lesson.minPassScore = minPassScore;
@@ -344,7 +344,7 @@ exports.submitExam = async (req, res) => {
 
       // Unlock next lesson
       const nextLesson = await Lesson.findOne({
-        level: lesson.level,
+        levelId: lesson.levelId,
         order: lesson.order + 1
       });
 
@@ -397,7 +397,7 @@ exports.getStudentProgress = async (req, res) => {
     const studentId = req.user.id;
 
     // Get all lessons and existing progress
-    const allLessons = await Lesson.find().sort({ level: 1, order: 1 });
+    const allLessons = await Lesson.find().sort({ levelId: 1, order: 1 });
     const progressRecords = await StudentLessonProgress.find({ studentId });
     const progressMap = new Map(progressRecords.map(p => [p.lessonId.toString(), p]));
 
@@ -447,11 +447,11 @@ exports.initStudentProgress = async (req, res) => {
   try {
     const studentId = req.user.id;
 
-    const levels = await Lesson.distinct('level');
+    const levelIds = await Lesson.distinct('levelId');
     const unlockedLessons = [];
 
-    for (const level of levels) {
-      const firstLesson = await Lesson.findOne({ level }).sort({ order: 1 });
+    for (const levelId of levelIds) {
+      const firstLesson = await Lesson.findOne({ levelId }).sort({ order: 1 });
       if (firstLesson) {
         let progress = await StudentLessonProgress.findOne({
           studentId,
@@ -493,7 +493,7 @@ exports.getAllStudentProgress = async (req, res) => {
     const result = await Promise.all(
       students.map(async (student) => {
         const progress = await StudentLessonProgress.find({ studentId: student._id })
-          .populate('lessonId', 'name level order');
+          .populate('lessonId', 'name levelId order');
         return {
           ...student.toObject(),
           progress

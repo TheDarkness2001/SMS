@@ -1008,6 +1008,91 @@
   overflow-x: auto;
 }
 
+/* Exam Lesson Selection */
+.exam-lesson-selection {
+  padding: 20px 0;
+}
+
+.tier-selectors {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.tier-selectors .level-selector {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 20px 0;
+}
+
+.exam-lessons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.exam-lesson-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exam-lesson-card.available {
+  border-left-color: #4caf50;
+}
+
+.exam-lesson-card.passed {
+  border-left-color: #2196f3;
+}
+
+.exam-lesson-card.locked {
+  opacity: 0.7;
+  background: #f8f9fa;
+}
+
+.exam-lesson-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.exam-lesson-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #1a1a2e;
+}
+
+.exam-lesson-info {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+.exam-best-score {
+  font-size: 13px;
+  color: #4a90d9;
+  font-weight: 600;
+}
+
+.btn-full {
+  width: 100%;
+  margin-top: auto;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .lesson-row {
@@ -1021,5 +1106,17 @@
 
   .lesson-actions {
     width: 100%;
+  }
+
+  .tier-selectors {
+    flex-direction: column;
+  }
+
+  .tier-selectors .level-selector {
+    width: 100%;
+  }
+
+  .exam-lessons-grid {
+    grid-template-columns: 1fr;
   }
 }
