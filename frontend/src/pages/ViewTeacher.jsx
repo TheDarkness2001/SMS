@@ -91,7 +91,7 @@ const ViewTeacher = () => {
             <strong>{t('login.email')}:</strong> {teacher.email}
           </div>
           <div className="detail-item">
-            <strong>{t('attendance.subject')}:</strong> {Array.isArray(teacher.subject) ? teacher.subject.join(', ') : teacher.subject}
+            <strong>{t('attendance.subject')}:</strong> {Array.isArray(teacher.subject) ? teacher.subject.filter(s => typeof s === 'string').join(', ') : String(teacher.subject || '')}
           </div>
           <div className="detail-item">
             <strong>{t('teachers.department')}:</strong> {teacher.department}
