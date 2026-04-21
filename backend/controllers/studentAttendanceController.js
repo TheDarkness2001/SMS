@@ -51,13 +51,48 @@ const createClassRecordForAttendance = async (attendanceRecord, recordedBy) => {
 };
 
 // Helper function to check if attendance can be marked
-const canMarkAttendance = async (userId, userRole, studentId, subject) => {
+const canMarkAttendance = async (userId, userRole, studentId, subject, startTime, endTime) => {
   // Admin, Manager, and Founder can always mark attendance
   if (userRole === 'admin' || userRole === 'manager' || userRole === 'founder') {
     return { allowed: true, reason: '' };
   }
 
-  // For teachers, allow marking attendance anytime
+  // For teachers, check time window if start/end times provided
+  if (userRole === 'teacher' && startTime && endTime) {
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+
+    const classStartDate = new Date();
+    classStartDate.setHours(startHour, startMinute, 0, 0);
+
+    const classEndDate = new Date();
+    classEndDate.setHours(endHour, endMinute, 0, 0);
+
+    // Add 30 minutes grace period after class ends
+    const attendanceDeadline = new Date(classEndDate.getTime() + 30 * 60000);
+    const attendanceDeadlineTime = attendanceDeadline.toTimeString().slice(0, 5);
+
+    if (now < classStartDate) {
+      return {
+        allowed: false,
+        reason: `Class hasn't started yet. Class time: ${startTime} - ${endTime}`
+      };
+    }
+
+    if (now > attendanceDeadline) {
+      return {
+        allowed: false,
+        reason: `Attendance window closed. You can mark attendance from ${startTime} to ${attendanceDeadlineTime} (class end + 30 min)`
+      };
+    }
+
+    return { allowed: true, reason: '' };
+  }
+
+  // If no time info provided, allow (backward compatibility)
   return { allowed: true, reason: '' };
 };
 
@@ -252,7 +287,9 @@ exports.createAttendance = async (req, res) => {
       req.user.role,
       req.body.student,
       req.body.class,
-      req.body.subject
+      req.body.subject,
+      req.body.startTime,
+      req.body.endTime
     );
 
     if (!timeWindowCheck.allowed) {

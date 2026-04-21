@@ -153,6 +153,30 @@
   transform: translateY(-2px);
 }
 
+.class-card--closed {
+  opacity: 0.85;
+  border-left: 4px solid #f44336;
+}
+
+.time-window-badge {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.time-window-open {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.time-window-closed {
+  background: #ffebee;
+  color: #c62828;
+}
+
 .class-header {
   display: flex;
   justify-content: space-between;

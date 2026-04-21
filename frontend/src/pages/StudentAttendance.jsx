@@ -22,6 +22,31 @@ const StudentAttendance = () => {
   const isAdmin = ['admin', 'manager', 'founder'].includes(user.role);
   const [viewMode, setViewMode] = useState('today');
 
+  // Helper: Check if current time is within class window + 30 min grace
+  const getTimeWindowStatus = (startTime, endTime) => {
+    if (!startTime || !endTime || isAdmin) return { isOpen: true, message: '' };
+    
+    const now = new Date();
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    const classStart = new Date();
+    classStart.setHours(startHour, startMin, 0, 0);
+    
+    const classEnd = new Date();
+    classEnd.setHours(endHour, endMin, 0, 0);
+    
+    const deadline = new Date(classEnd.getTime() + 30 * 60000);
+    
+    if (now < classStart) {
+      return { isOpen: false, message: t('attendance.classNotStarted', { start: startTime, end: endTime }) };
+    }
+    if (now > deadline) {
+      return { isOpen: false, message: t('attendance.windowClosed', { start: startTime, deadline: deadline.toTimeString().slice(0, 5) }) };
+    }
+    return { isOpen: true, message: t('attendance.windowOpen', { end: endTime, deadline: deadline.toTimeString().slice(0, 5) }) };
+  };
+
   // Fetch groups
   useEffect(() => {
     const fetchGroups = async () => {
@@ -239,7 +264,9 @@ const StudentAttendance = () => {
         subject: subjectId,
         teacher: teacherId,
         period: 1,
-        notes: studentAttendance[studentId]?.notes || ''
+        notes: studentAttendance[studentId]?.notes || '',
+        startTime: group.startTime,
+        endTime: group.endTime
       };
 
       console.log('Sending attendance data:', attendancePayload);
@@ -377,8 +404,9 @@ const StudentAttendance = () => {
         <div className="classes-grid">
           {displayedGroups.map(group => {
             const isSelected = selectedGroup === group._id;
+            const timeStatus = getTimeWindowStatus(group.startTime, group.endTime);
             return (
-              <div key={group._id} className={`class-card ${isSelected ? 'class-card--active' : ''}`}>
+              <div key={group._id} className={`class-card ${isSelected ? 'class-card--active' : ''} ${!timeStatus.isOpen ? 'class-card--closed' : ''}`}>
                 <div className="class-header">
                   <h3>{group.groupName || group.displayName || 'Unnamed'}</h3>
                   <span className="class-badge">{group.class || group.className || 'N/A'}</span>
@@ -392,10 +420,17 @@ const StudentAttendance = () => {
                   )}
                 </div>
 
+                {timeStatus.message && (
+                  <div className={`time-window-badge ${timeStatus.isOpen ? 'time-window-open' : 'time-window-closed'}`}>
+                    {timeStatus.isOpen ? '🟢' : '🔴'} {timeStatus.message}
+                  </div>
+                )}
+
                 <button
                   className="btn btn-primary"
                   onClick={() => setSelectedGroup(isSelected ? null : group._id)}
                   style={{ width: '100%', marginBottom: '12px' }}
+                  disabled={!timeStatus.isOpen && isTeacher}
                 >
                   {isSelected ? t('common.close') : t('attendance.markAttendance')}
                 </button>

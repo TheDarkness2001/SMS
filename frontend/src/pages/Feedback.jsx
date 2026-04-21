@@ -48,6 +48,33 @@ const Feedback = () => {
                   (currentUser.role || '').toLowerCase().trim() === 'manager' || 
                   (currentUser.role || '').toLowerCase().trim() === 'founder';
 
+  const isTeacher = (currentUser.role || '').toLowerCase().trim() === 'teacher';
+
+  // Helper: Check if current time is within class window + 30 min grace
+  const getTimeWindowStatus = (startTime, endTime) => {
+    if (!startTime || !endTime || isAdmin) return { isOpen: true, message: '' };
+    
+    const now = new Date();
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    const classStart = new Date();
+    classStart.setHours(startHour, startMin, 0, 0);
+    
+    const classEnd = new Date();
+    classEnd.setHours(endHour, endMin, 0, 0);
+    
+    const deadline = new Date(classEnd.getTime() + 30 * 60000);
+    
+    if (now < classStart) {
+      return { isOpen: false, message: t('attendance.classNotStarted', { start: startTime, end: endTime }) };
+    }
+    if (now > deadline) {
+      return { isOpen: false, message: t('attendance.windowClosed', { start: startTime, deadline: deadline.toTimeString().slice(0, 5) }) };
+    }
+    return { isOpen: true, message: t('attendance.windowOpen', { end: endTime, deadline: deadline.toTimeString().slice(0, 5) }) };
+  };
+
   const filteredClasses = useMemo(() => {
     let result = viewMode === 'all' ? allClasses : todayClasses;
 
@@ -400,8 +427,10 @@ const Feedback = () => {
           </div>
         ) : (
           <div className="classes-grid">
-            {filteredClasses.map((classSchedule) => (
-              <div key={classSchedule._id} className="class-card">
+            {filteredClasses.map((classSchedule) => {
+              const timeStatus = getTimeWindowStatus(classSchedule.startTime, classSchedule.endTime);
+              return (
+              <div key={classSchedule._id} className={`class-card ${!timeStatus.isOpen ? 'class-card--closed' : ''}`}>
                 <div className="class-header">
                   <h3>{classSchedule.subject?.name || classSchedule.subject}</h3>
                   <span className="class-badge">{classSchedule.className}</span>
@@ -414,6 +443,12 @@ const Feedback = () => {
                   <p><strong>{t('exams.room')}:</strong> {classSchedule.roomNumber || t('common.noData')}</p>
                   <p><strong>{t('feedback.students')}:</strong> {classSchedule.enrolledStudents?.length || 0}</p>
                 </div>
+
+                {timeStatus.message && (
+                  <div className={`time-window-badge ${timeStatus.isOpen ? 'time-window-open' : 'time-window-closed'}`}>
+                    {timeStatus.isOpen ? '🟢' : '🔴'} {timeStatus.message}
+                  </div>
+                )}
 
                 <div className="students-list">
                   <h4>{t('feedback.giveFeedback')}:</h4>
@@ -445,6 +480,7 @@ const Feedback = () => {
                             <button
                               className={`feedback-action-btn ${alreadySubmitted ? 'feedback-btn-done' : 'feedback-btn-add'}`}
                               onClick={() => handleOpenModal(classSchedule, student)}
+                              disabled={!timeStatus.isOpen && isTeacher}
                             >
                               {alreadySubmitted ? (
                                 <>
@@ -467,7 +503,8 @@ const Feedback = () => {
                   )}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
