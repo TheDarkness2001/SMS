@@ -529,10 +529,10 @@ const Groups = () => {
                 return (
                   <tr key={group._id} style={{ backgroundColor: rowColor }}>
                     <td>
-                      <div style={{ fontWeight: '600', color: '#333' }}>{group.groupName}</div>
+                      <div style={{ fontWeight: '600', color: '#333' }}>{group.groupName || ''}</div>
                       <div style={{ fontSize: '0.85em', color: '#666' }}>ID: {group.groupId || '—'}</div>
                     </td>
-                    <td>{group.class} {group.section}</td>
+                    <td>{String(group.class || '')} {String(group.section || '')}</td>
                     <td>
                       {schedule ? (
                         <div>
@@ -548,7 +548,7 @@ const Groups = () => {
                       {group.teachers?.length > 0 ? (
                         group.teachers.map((teacher, idx) => (
                           <div key={idx} style={{ fontSize: '0.9em', marginBottom: '2px' }}>
-                            {teacher.teacherId ? `${teacher.teacherId} - ` : ''}{teacher.name || teacher}
+                            {teacher.teacherId ? `${teacher.teacherId} - ` : ''}{String(teacher.name || teacher || '')}
                           </div>
                         ))
                       ) : (
@@ -689,7 +689,7 @@ const Groups = () => {
                         <label key={teacher._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0', cursor: 'pointer' }}>
                           <input type="checkbox" checked={selectedTeachers.includes(teacher._id)}
                             onChange={() => setSelectedTeachers(prev => prev.includes(teacher._id) ? prev.filter(id => id !== teacher._id) : [...prev, teacher._id])} />
-                          <span>{teacher.teacherId} - {teacher.name}</span>
+                          <span>{String(teacher.teacherId || '')} - {String(teacher.name || '')}</span>
                           {(Array.isArray(teacher.subjects) || typeof teacher.subject === 'string') && (
                             <span style={{ fontSize: '0.8em', color: '#667eea', marginLeft: 'auto' }}>
                               {Array.isArray(teacher.subjects) 
@@ -723,7 +723,7 @@ const Groups = () => {
                         <label key={student._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0', cursor: 'pointer' }}>
                           <input type="checkbox" checked={selectedStudents.includes(student._id)}
                             onChange={() => setSelectedStudents(prev => prev.includes(student._id) ? prev.filter(id => id !== student._id) : [...prev, student._id])} />
-                          <span>{student.studentId} - {student.name}</span>
+                          <span>{String(student.studentId || '')} - {String(student.name || '')}</span>
                           {Array.isArray(student.subjects) && student.subjects.length > 0 && (
                             <span style={{ fontSize: '0.8em', color: '#28a745', marginLeft: 'auto' }}>
                               {student.subjects.filter(s => typeof s === 'string').slice(0, 2).join(', ')}
