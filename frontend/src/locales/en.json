@@ -188,7 +188,9 @@
     "update": "Update",
     "words": "Words",
     "assignWords": "Assign Words",
-    "noLessons": "No lessons yet. Create one above."
+    "noLessons": "No lessons yet. Create one above.",
+    "close": "Close",
+    "wordsInLesson": "Words in this lesson"
   },
   "teachers": {
     "title": "Teachers",

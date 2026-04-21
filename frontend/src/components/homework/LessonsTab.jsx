@@ -5,10 +5,12 @@ const LessonsTab = ({ t, levels }) => {
   const [lessons, setLessons] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState('');
   const [loading, setLoading] = useState(false);
-  const [words, setWords] = useState([]);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [assignLessonId, setAssignLessonId] = useState(null);
-  const [selectedWordIds, setSelectedWordIds] = useState([]);
+
+  // Expanded lesson word editor state
+  const [expandedLessonId, setExpandedLessonId] = useState(null);
+  const [lessonWords, setLessonWords] = useState([]);
+  const [wordsLoading, setWordsLoading] = useState(false);
+  const [newWord, setNewWord] = useState({ english: '', uzbek: '' });
 
   // Form state
   const [formMode, setFormMode] = useState('create');
@@ -48,14 +50,62 @@ const LessonsTab = ({ t, levels }) => {
     }
   };
 
-  const fetchWords = async () => {
+  const expandLesson = async (lessonId) => {
+    if (expandedLessonId === lessonId) {
+      setExpandedLessonId(null);
+      setLessonWords([]);
+      return;
+    }
+    setExpandedLessonId(lessonId);
+    setWordsLoading(true);
     try {
-      const res = await homeworkAPI.getAllWords();
+      const res = await lessonAPI.getLesson(lessonId);
       if (res.data.success) {
-        setWords(res.data.data.words);
+        setLessonWords(res.data.data.words || []);
       }
     } catch (err) {
-      console.error('Error fetching words:', err);
+      console.error('Error fetching lesson words:', err);
+    } finally {
+      setWordsLoading(false);
+    }
+  };
+
+  const handleAddWord = async (e, lessonId) => {
+    e.preventDefault();
+    if (!newWord.english.trim() || !newWord.uzbek.trim()) return;
+    try {
+      // Create word with the lesson's level
+      const lesson = lessons.find(l => l._id === lessonId);
+      const createRes = await homeworkAPI.addWord({
+        english: newWord.english.trim(),
+        uzbek: newWord.uzbek.trim(),
+        level: lesson?.level || selectedLevel
+      });
+      if (createRes.data.success) {
+        const wordId = createRes.data.data.word._id;
+        await lessonAPI.addWordsToLesson(lessonId, [wordId]);
+        setNewWord({ english: '', uzbek: '' });
+        // Refresh words
+        const res = await lessonAPI.getLesson(lessonId);
+        if (res.data.success) {
+          setLessonWords(res.data.data.words || []);
+        }
+        fetchLessons();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error adding word');
+    }
+  };
+
+  const handleRemoveWord = async (lessonId, wordId) => {
+    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
+    try {
+      await lessonAPI.removeWordFromLesson(lessonId, wordId);
+      await homeworkAPI.deleteWord(wordId);
+      setLessonWords(prev => prev.filter(w => w._id !== wordId));
+      fetchLessons();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error removing word');
     }
   };
 
@@ -99,39 +149,14 @@ const LessonsTab = ({ t, levels }) => {
     if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
     try {
       await lessonAPI.deleteLesson(id);
+      if (expandedLessonId === id) {
+        setExpandedLessonId(null);
+        setLessonWords([]);
+      }
       fetchLessons();
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting lesson');
     }
-  };
-
-  const openAssignModal = async (lessonId) => {
-    setAssignLessonId(lessonId);
-    setSelectedWordIds([]);
-    await fetchWords();
-    setShowAssignModal(true);
-  };
-
-  const handleAssignWords = async () => {
-    if (selectedWordIds.length === 0) {
-      setShowAssignModal(false);
-      return;
-    }
-    try {
-      await lessonAPI.addWordsToLesson(assignLessonId, selectedWordIds);
-      setShowAssignModal(false);
-      fetchLessons();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error assigning words');
-    }
-  };
-
-  const toggleWordSelection = (wordId) => {
-    setSelectedWordIds(prev =>
-      prev.includes(wordId)
-        ? prev.filter(id => id !== wordId)
-        : [...prev, wordId]
-    );
   };
 
   const formatTime = (seconds) => {
@@ -182,7 +207,7 @@ const LessonsTab = ({ t, levels }) => {
             onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
             className="form-input"
             min="1"
-            style={{ maxWidth: '100px' }}
+            style={{ maxWidth: '80px' }}
           />
           <input
             type="number"
@@ -191,7 +216,7 @@ const LessonsTab = ({ t, levels }) => {
             onChange={(e) => setFormData({ ...formData, examTimeLimit: parseInt(e.target.value) || 300 })}
             className="form-input"
             min="30"
-            style={{ maxWidth: '120px' }}
+            style={{ maxWidth: '100px' }}
           />
           <input
             type="number"
@@ -201,7 +226,7 @@ const LessonsTab = ({ t, levels }) => {
             className="form-input"
             min="1"
             max="100"
-            style={{ maxWidth: '100px' }}
+            style={{ maxWidth: '80px' }}
           />
           <button type="submit" className="btn btn-primary">
             {formMode === 'create' ? (t('homework.add') || 'Add') : (t('homework.update') || 'Update')}
@@ -221,85 +246,102 @@ const LessonsTab = ({ t, levels }) => {
       {loading ? (
         <div className="loading">{t('homework.loading') || 'Loading...'}</div>
       ) : (
-        <div className="lessons-table-container">
-          <table className="words-table">
-            <thead>
-              <tr>
-                <th>{t('homework.order') || 'Order'}</th>
-                <th>{t('homework.lessonName') || 'Lesson Name'}</th>
-                <th>{t('homework.level') || 'Level'}</th>
-                <th>{t('homework.words') || 'Words'}</th>
-                <th>{t('homework.timeLimit') || 'Time Limit'}</th>
-                <th>{t('homework.passScore') || 'Pass Score'}</th>
-                <th className="actions">{t('homework.actions') || 'Actions'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lessons.length === 0 ? (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
-                    {t('homework.noLessons') || 'No lessons yet. Create one above.'}
-                  </td>
-                </tr>
-              ) : (
-                lessons.map(lesson => (
-                  <tr key={lesson._id}>
-                    <td>{lesson.order}</td>
-                    <td>{lesson.name}</td>
-                    <td><span className="level-badge">{lesson.level}</span></td>
-                    <td>{lesson.wordIds?.length || 0}</td>
-                    <td>{formatTime(lesson.examTimeLimit)}</td>
-                    <td>{lesson.minPassScore}%</td>
-                    <td className="actions">
-                      <button className="btn btn-small btn-edit" onClick={() => handleEdit(lesson)}>
-                        {t('homework.edit') || 'Edit'}
-                      </button>
-                      <button className="btn btn-small btn-secondary" onClick={() => openAssignModal(lesson._id)}>
-                        {t('homework.assignWords') || 'Words'}
-                      </button>
-                      <button className="btn btn-small btn-delete" onClick={() => handleDelete(lesson._id)}>
-                        {t('homework.delete') || 'Delete'}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <div className="lessons-list">
+          {lessons.length === 0 ? (
+            <div className="no-lessons">{t('homework.noLessons') || 'No lessons yet. Create one above.'}</div>
+          ) : (
+            lessons.map(lesson => (
+              <div key={lesson._id} className="lesson-item">
+                <div className="lesson-row">
+                  <div className="lesson-main">
+                    <span className="lesson-order">{lesson.order}</span>
+                    <span className="lesson-name">{lesson.name}</span>
+                    <span className="level-badge">{lesson.level}</span>
+                    <span className="lesson-meta">{lesson.wordIds?.length || 0} {t('homework.words') || 'words'} · {formatTime(lesson.examTimeLimit)} · {lesson.minPassScore}%</span>
+                  </div>
+                  <div className="lesson-actions">
+                    <button className="btn btn-small btn-edit" onClick={() => handleEdit(lesson)}>
+                      {t('homework.edit') || 'Edit'}
+                    </button>
+                    <button
+                      className={`btn btn-small ${expandedLessonId === lesson._id ? 'btn-secondary' : 'btn-primary'}`}
+                      onClick={() => expandLesson(lesson._id)}
+                    >
+                      {expandedLessonId === lesson._id ? (t('homework.close') || 'Close') : (t('homework.words') || 'Words')}
+                    </button>
+                    <button className="btn btn-small btn-delete" onClick={() => handleDelete(lesson._id)}>
+                      {t('homework.delete') || 'Delete'}
+                    </button>
+                  </div>
+                </div>
 
-      {showAssignModal && (
-        <div className="modal-overlay" onClick={() => setShowAssignModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{t('homework.assignWords') || 'Assign Words to Lesson'}</h3>
-            <div className="word-selection-list">
-              {words.length === 0 ? (
-                <p>{t('homework.noWords') || 'No words available.'}</p>
-              ) : (
-                words.map(word => (
-                  <label key={word._id} className="word-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={selectedWordIds.includes(word._id)}
-                      onChange={() => toggleWordSelection(word._id)}
-                    />
-                    <span>{word.english}</span>
-                    <span className="word-trans">{word.uzbek}</span>
-                    <span className="level-badge">{word.level}</span>
-                  </label>
-                ))
-              )}
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-primary" onClick={handleAssignWords}>
-                {t('homework.save') || 'Save'} ({selectedWordIds.length})
-              </button>
-              <button className="btn btn-secondary" onClick={() => setShowAssignModal(false)}>
-                {t('homework.cancel') || 'Cancel'}
-              </button>
-            </div>
-          </div>
+                {expandedLessonId === lesson._id && (
+                  <div className="lesson-words-panel">
+                    <h4>{t('homework.wordsInLesson') || 'Words in this lesson'}</h4>
+
+                    <form onSubmit={(e) => handleAddWord(e, lesson._id)} className="word-form inline">
+                      <div className="form-row">
+                        <input
+                          type="text"
+                          placeholder={t('homework.englishWord') || 'English word'}
+                          value={newWord.english}
+                          onChange={(e) => setNewWord({ ...newWord, english: e.target.value })}
+                          className="form-input"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder={t('homework.uzbekWord') || 'Uzbek word'}
+                          value={newWord.uzbek}
+                          onChange={(e) => setNewWord({ ...newWord, uzbek: e.target.value })}
+                          className="form-input"
+                          required
+                        />
+                        <button type="submit" className="btn btn-primary">
+                          {t('homework.add') || 'Add'}
+                        </button>
+                      </div>
+                    </form>
+
+                    {wordsLoading ? (
+                      <div className="loading">{t('homework.loading') || 'Loading...'}</div>
+                    ) : (
+                      <div className="lesson-words-table">
+                        <table className="words-table">
+                          <thead>
+                            <tr>
+                              <th>{t('homework.english') || 'English'}</th>
+                              <th>{t('homework.uzbek') || 'Uzbek'}</th>
+                              <th className="actions">{t('homework.actions') || 'Actions'}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {lessonWords.map(word => (
+                              <tr key={word._id}>
+                                <td>{word.english}</td>
+                                <td>{word.uzbek}</td>
+                                <td className="actions">
+                                  <button
+                                    className="btn btn-small btn-delete"
+                                    onClick={() => handleRemoveWord(lesson._id, word._id)}
+                                  >
+                                    {t('homework.delete') || 'Delete'}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {lessonWords.length === 0 && (
+                          <div className="no-data">{t('homework.noWordsInLesson') || 'No words in this lesson yet.'}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>

@@ -31,18 +31,13 @@ const Homework = () => {
   });
   const [sessionComplete, setSessionComplete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [overallProgress, setOverallProgress] = useState(null);
 
   // Level state
   const [selectedLevel, setSelectedLevel] = useState('');
   const [levels, setLevels] = useState([]);
 
   // Admin state
-  const [words, setWords] = useState([]);
-  const [wordsFilter, setWordsFilter] = useState('');
   const [studentsProgress, setStudentsProgress] = useState([]);
-  const [newWord, setNewWord] = useState({ english: '', uzbek: '', level: '' });
-  const [editingWord, setEditingWord] = useState(null);
   const [adminLoading, setAdminLoading] = useState(false);
 
   const isAdmin = ['admin', 'manager', 'founder'].includes((user?.role || '').toLowerCase().trim());
@@ -169,10 +164,6 @@ const Homework = () => {
     setIsSubmitting(true);
     try {
       await homeworkAPI.submitResult(sessionStats);
-      const progressResponse = await homeworkAPI.getProgress();
-      if (progressResponse.data.success) {
-        setOverallProgress(progressResponse.data.data.progress);
-      }
     } catch (error) {
       console.error('Error submitting results:', error);
     } finally {
@@ -227,29 +218,7 @@ const Homework = () => {
     ? Math.round((sessionStats.correctAnswers / sessionStats.totalAttempts) * 100)
     : 0;
 
-  // Fetch overall progress for results tab
-  useEffect(() => {
-    if (activeTab === 'results' && isStudent) {
-      const fetchProgress = async () => {
-        try {
-          const response = await homeworkAPI.getProgress();
-          if (response.data.success) {
-            setOverallProgress(response.data.data.progress);
-          }
-        } catch (error) {
-          console.error('Error fetching progress:', error);
-        }
-      };
-      fetchProgress();
-    }
-  }, [activeTab, isStudent]);
 
-  // Fetch words for admin
-  useEffect(() => {
-    if (activeTab === 'words' && isAdmin) {
-      fetchWords();
-    }
-  }, [activeTab, isAdmin]);
 
   // Fetch student progress for admin
   useEffect(() => {
@@ -257,20 +226,6 @@ const Homework = () => {
       fetchStudentProgress();
     }
   }, [activeTab, isAdmin]);
-
-  const fetchWords = async () => {
-    setAdminLoading(true);
-    try {
-      const response = await homeworkAPI.getAllWords();
-      if (response.data.success) {
-        setWords(response.data.data.words);
-      }
-    } catch (error) {
-      console.error('Error fetching words:', error);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
 
   const fetchStudentProgress = async () => {
     setAdminLoading(true);
@@ -283,46 +238,6 @@ const Homework = () => {
       console.error('Error fetching student progress:', error);
     } finally {
       setAdminLoading(false);
-    }
-  };
-
-  const handleAddWord = async (e) => {
-    e.preventDefault();
-    if (!newWord.english.trim() || !newWord.uzbek.trim() || !newWord.level.trim()) return;
-    try {
-      await homeworkAPI.addWord(newWord);
-      setNewWord({ english: '', uzbek: '', level: '' });
-      fetchWords();
-    } catch (error) {
-      console.error('Error adding word:', error);
-      alert(error.response?.data?.message || 'Failed to add word');
-    }
-  };
-
-  const handleUpdateWord = async (e) => {
-    e.preventDefault();
-    if (!editingWord) return;
-    try {
-      await homeworkAPI.updateWord(editingWord._id, {
-        english: editingWord.english,
-        uzbek: editingWord.uzbek,
-        level: editingWord.level
-      });
-      setEditingWord(null);
-      fetchWords();
-    } catch (error) {
-      console.error('Error updating word:', error);
-      alert(error.response?.data?.message || 'Failed to update word');
-    }
-  };
-
-  const handleDeleteWord = async (id) => {
-    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure you want to delete this word?')) return;
-    try {
-      await homeworkAPI.deleteWord(id);
-      fetchWords();
-    } catch (error) {
-      console.error('Error deleting word:', error);
     }
   };
 
@@ -350,20 +265,17 @@ const Homework = () => {
     tabs.push(
       { id: 'myLessons', label: t('homework.myLessons') || 'My Lessons' },
       { id: 'practice', label: t('homework.practice') || 'Practice' },
-      { id: 'exam', label: t('homework.exam') || 'Exam' },
-      { id: 'results', label: t('homework.myResults') || 'My Results' }
+      { id: 'exam', label: t('homework.exam') || 'Exam' }
     );
   } else {
     tabs.push(
       { id: 'practice', label: t('homework.practice') || 'Practice' },
-      { id: 'exam', label: t('homework.exam') || 'Exam' },
-      { id: 'results', label: t('homework.myResults') || 'My Results' }
+      { id: 'exam', label: t('homework.exam') || 'Exam' }
     );
   }
 
   if (isAdmin) {
     tabs.push(
-      { id: 'words', label: t('homework.wordBank') || 'Word Bank' },
       { id: 'lessons', label: t('homework.lessons') || 'Lessons' },
       { id: 'progress', label: t('homework.studentProgress') || 'Student Progress' }
     );
@@ -644,178 +556,6 @@ const Homework = () => {
                     </button>
                   )}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* RESULTS TAB */}
-        {activeTab === 'results' && (
-          <div className="results-section">
-            {!isStudent ? (
-              <div className="info-message">
-                {t('homework.studentOnlyResults') || 'Results tracking is available for students only.'}
-              </div>
-            ) : overallProgress ? (
-              <>
-                <div className="results-stats-grid">
-                  <div className="stat-card">
-                    <div className="stat-value large">{overallProgress.accuracy}%</div>
-                    <div className="stat-label">{t('homework.totalAccuracy') || 'Total Accuracy'}</div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-value large">{overallProgress.correctAnswers}/{overallProgress.totalAttempts}</div>
-                    <div className="stat-label">{t('homework.totalCorrect') || 'Total Correct'}</div>
-                  </div>
-                </div>
-
-                <div className="direction-breakdown">
-                  <h3>{t('homework.breakdown') || 'Breakdown by Direction'}</h3>
-                  <div className="breakdown-grid">
-                    <div className="breakdown-item">
-                      <span className="breakdown-label">{t('homework.enToUz') || 'English to Uzbek'}</span>
-                      <span className="breakdown-value">{overallProgress.enToUzAccuracy}%</span>
-                    </div>
-                    <div className="breakdown-item">
-                      <span className="breakdown-label">{t('homework.uzToEn') || 'Uzbek to English'}</span>
-                      <span className="breakdown-value">{overallProgress.uzToEnAccuracy}%</span>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="no-results">
-                {t('homework.noResultsYet') || 'No results yet. Take an exam to see your progress!'}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* WORD BANK TAB (Admin) */}
-        {activeTab === 'words' && isAdmin && (
-          <div className="word-bank-section">
-            <form onSubmit={handleAddWord} className="word-form">
-              <h3>{t('homework.addNewWord') || 'Add New Word'}</h3>
-              <div className="form-row">
-                <input
-                  type="text"
-                  placeholder={t('homework.englishWord') || 'English word'}
-                  value={newWord.english}
-                  onChange={(e) => setNewWord({ ...newWord, english: e.target.value })}
-                  className="form-input"
-                />
-                <input
-                  type="text"
-                  placeholder={t('homework.uzbekWord') || 'Uzbek word'}
-                  value={newWord.uzbek}
-                  onChange={(e) => setNewWord({ ...newWord, uzbek: e.target.value })}
-                  className="form-input"
-                />
-                <input
-                  type="text"
-                  placeholder={t('homework.level') || 'Level'}
-                  value={newWord.level}
-                  onChange={(e) => setNewWord({ ...newWord, level: e.target.value })}
-                  className="form-input"
-                  list="level-suggestions"
-                />
-                <datalist id="level-suggestions">
-                  {levels.map(lvl => (
-                    <option key={lvl} value={lvl} />
-                  ))}
-                </datalist>
-                <button type="submit" className="btn btn-primary">
-                  {t('homework.add') || 'Add'}
-                </button>
-              </div>
-            </form>
-
-            {editingWord && (
-              <form onSubmit={handleUpdateWord} className="word-form edit-form">
-                <h3>{t('homework.editWord') || 'Edit Word'}</h3>
-                <div className="form-row">
-                  <input
-                    type="text"
-                    value={editingWord.english}
-                    onChange={(e) => setEditingWord({ ...editingWord, english: e.target.value })}
-                    className="form-input"
-                  />
-                  <input
-                    type="text"
-                    value={editingWord.uzbek}
-                    onChange={(e) => setEditingWord({ ...editingWord, uzbek: e.target.value })}
-                    className="form-input"
-                  />
-                  <input
-                    type="text"
-                    value={editingWord.level || ''}
-                    onChange={(e) => setEditingWord({ ...editingWord, level: e.target.value })}
-                    className="form-input"
-                    list="level-suggestions"
-                  />
-                  <button type="submit" className="btn btn-primary">
-                    {t('homework.save') || 'Save'}
-                  </button>
-                  <button type="button" onClick={() => setEditingWord(null)} className="btn btn-secondary">
-                    {t('homework.cancel') || 'Cancel'}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            <div className="word-filter">
-              <input
-                type="text"
-                placeholder={t('homework.filterByLevel') || 'Filter by level...'}
-                value={wordsFilter}
-                onChange={(e) => setWordsFilter(e.target.value)}
-                className="form-input"
-                list="level-suggestions"
-              />
-            </div>
-
-            {adminLoading ? (
-              <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
-            ) : (
-              <div className="words-table-container">
-                <table className="words-table">
-                  <thead>
-                    <tr>
-                      <th>{t('homework.english') || 'English'}</th>
-                      <th>{t('homework.uzbek') || 'Uzbek'}</th>
-                      <th>{t('homework.level') || 'Level'}</th>
-                      <th>{t('homework.actions') || 'Actions'}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {words
-                      .filter(word => !wordsFilter || (word.level || '').toLowerCase().includes(wordsFilter.toLowerCase()))
-                      .map(word => (
-                        <tr key={word._id}>
-                          <td>{word.english}</td>
-                          <td>{word.uzbek}</td>
-                          <td><span className="level-badge">{word.level || '-'}</span></td>
-                          <td className="actions">
-                            <button
-                              onClick={() => setEditingWord(word)}
-                              className="btn btn-small btn-edit"
-                            >
-                              {t('homework.edit') || 'Edit'}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteWord(word._id)}
-                              className="btn btn-small btn-delete"
-                            >
-                              {t('homework.delete') || 'Delete'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-                {words.length === 0 && (
-                  <div className="no-data">{t('homework.noWordsYet') || 'No words added yet.'}</div>
-                )}
               </div>
             )}
           </div>

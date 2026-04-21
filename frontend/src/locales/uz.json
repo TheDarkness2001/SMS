@@ -183,7 +183,9 @@
     "update": "Yangilash",
     "words": "So'zlar",
     "assignWords": "So'zlarni Belgilash",
-    "noLessons": "Hali darslar yo'q. Yuqorida yaratish."
+    "noLessons": "Hali darslar yo'q. Yuqorida yaratish.",
+    "close": "Yopish",
+    "wordsInLesson": "Bu darsdagi so'zlar"
   },
   "teachers": {
     "title": "O'qituvchilar",
