@@ -120,6 +120,7 @@
   },
   "students": {
     "title": "Студенты",
+    "student": "Студент",
     "addStudent": "Добавить студента",
     "name": "Имя",
     "email": "Email",

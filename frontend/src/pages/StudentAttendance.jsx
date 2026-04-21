@@ -365,7 +365,7 @@ const StudentAttendance = () => {
         </div>
       </div>
 
-      {error && !selectedGroup && <div className="alert alert-error">{error}</div>}
+      {error && <div className="alert alert-error">{error}</div>}
 
       {/* Admin Filter Toolbar */}
       {isAdmin && (

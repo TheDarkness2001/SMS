@@ -125,6 +125,7 @@
   },
   "students": {
     "title": "Students",
+    "student": "Student",
     "addStudent": "Add Student",
     "name": "Name",
     "email": "Email",

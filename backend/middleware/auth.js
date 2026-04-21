@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Teacher = require('../models/Teacher');
 const Student = require('../models/Student');
+const Settings = require('../models/Settings');
 
 // Protect routes - verify JWT token
 exports.protect = async (req, res, next) => {
@@ -102,52 +103,81 @@ exports.authorize = (...roles) => {
 
 // Check specific permissions
 exports.checkPermission = (permission) => {
-  return (req, res, next) => {
-    // Allow both teachers and parents/students for appropriate operations
-    const isTeacher = req.userType === 'teacher';
-    const isParent = req.userType === 'parent';
-    const isStudent = req.userType === 'student';
-    
-    // For non-teacher users
-    if (!isTeacher && !isParent && !isStudent) {
-      return res.status(403).json({
-        success: false,
-        message: 'User type not recognized'
-      });
-    }
+  return async (req, res, next) => {
+    try {
+      // Allow both teachers and parents/students for appropriate operations
+      const isTeacher = req.userType === 'teacher';
+      const isParent = req.userType === 'parent';
+      const isStudent = req.userType === 'student';
 
-    // For students and parents, check if they have a role field
-    // Students don't have roles, so handle them separately
-    if (isStudent || isParent) {
-      // Full access for managers and founders (if they somehow have student/parent type)
+      // For non-teacher users
+      if (!isTeacher && !isParent && !isStudent) {
+        return res.status(403).json({
+          success: false,
+          message: 'User type not recognized'
+        });
+      }
+
+      // For students and parents, check if they have a role field
+      // Students don't have roles, so handle them separately
+      if (isStudent || isParent) {
+        // Full access for managers and founders (if they somehow have student/parent type)
+        const userRole = req.user?.role?.toLowerCase().trim();
+        if (userRole === 'manager' || userRole === 'founder' || userRole === 'admin') {
+          return next();
+        }
+        // For regular students/parents on feedback endpoints, allow without permission check
+        if (req.originalUrl.includes('feedback') || req.originalUrl.includes('students')) {
+          return next();
+        }
+        // Allow students to access their own data
+        return next();
+      }
+
+      // Full access for managers and founders
       const userRole = req.user?.role?.toLowerCase().trim();
       if (userRole === 'manager' || userRole === 'founder' || userRole === 'admin') {
         return next();
       }
-      // For regular students/parents on feedback endpoints, allow without permission check
-      if (req.originalUrl.includes('feedback') || req.originalUrl.includes('students')) {
-        return next();
-      }
-      // Allow students to access their own data
-      return next();
-    }
 
-    // Full access for managers and founders
-    const userRole = req.user?.role?.toLowerCase().trim();
-    if (userRole === 'manager' || userRole === 'founder' || userRole === 'admin') {
-      return next();
-    }
+      // Teachers: check permissions from database
+      if (isTeacher) {
+        // First check individual teacher permissions
+        const individualPermission = req.user.permissions ? req.user.permissions[permission] : undefined;
 
-    // Teachers: check permissions from database
-    if (isTeacher) {
-      if (!req.user.permissions || !req.user.permissions[permission]) {
+        // If individual permission is explicitly set (true or false), use it
+        if (individualPermission === true) {
+          return next();
+        }
+        if (individualPermission === false) {
+          return res.status(403).json({
+            success: false,
+            message: 'You do not have permission to access this resource'
+          });
+        }
+
+        // If individual permission is undefined, fall back to role-based settings
+        const settings = await Settings.findOne();
+        const rolePermissions = settings?.rolePermissions?.[userRole] || {};
+        const rolePermission = rolePermissions[permission];
+
+        if (rolePermission === true) {
+          return next();
+        }
+
         return res.status(403).json({
           success: false,
           message: 'You do not have permission to access this resource'
         });
       }
-    }
 
-    next();
+      next();
+    } catch (error) {
+      console.error('[PERMISSION] Error checking permission:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error checking permissions'
+      });
+    }
   };
 };

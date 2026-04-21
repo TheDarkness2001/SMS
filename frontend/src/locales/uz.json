@@ -120,6 +120,7 @@
   },
   "students": {
     "title": "Talabaları",
+    "student": "Talaba",
     "addStudent": "Talaba qo'shish",
     "name": "Ism",
     "email": "Email",
