@@ -292,6 +292,24 @@ export const homeworkAPI = {
   resetStudentProgress: (id) => api.post(`/homework/students/${id}/reset-progress`)
 };
 
+// Lesson API
+export const lessonAPI = {
+  // Admin
+  getAllLessons: (level) => api.get('/homework/lessons', { params: level ? { level } : {} }),
+  getLesson: (id) => api.get(`/homework/lessons/${id}`),
+  createLesson: (data) => api.post('/homework/lessons', data),
+  updateLesson: (id, data) => api.put(`/homework/lessons/${id}`, data),
+  deleteLesson: (id) => api.delete(`/homework/lessons/${id}`),
+  addWordsToLesson: (id, wordIds) => api.post(`/homework/lessons/${id}/words`, { wordIds }),
+  removeWordFromLesson: (id, wordId) => api.delete(`/homework/lessons/${id}/words/${wordId}`),
+  getAllStudentLessonProgress: () => api.get('/homework/lessons/students/progress'),
+  // Student
+  getExamWords: (id) => api.get(`/homework/lessons/${id}/exam`),
+  submitExam: (id, answers) => api.post(`/homework/lessons/${id}/exam`, { answers }),
+  getMyLessonProgress: () => api.get('/homework/lessons/student/progress'),
+  initMyProgress: () => api.post('/homework/lessons/student/init')
+};
+
 // Helper function to get image URL from backend
 export const getImageUrl = (filename) => {
   if (!filename) return null;

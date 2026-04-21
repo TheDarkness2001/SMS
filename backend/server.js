@@ -90,6 +90,7 @@ app.use('/api/teacher-earnings', require('./routes/teacherEarningRoutes'));
 app.use('/api/staff-earnings', require('./routes/staffEarningRoutes'));
 app.use('/api/staff-payouts', require('./routes/staffPayoutRoutes'));
 app.use('/api/homework', require('./routes/homeworkRoutes'));
+app.use('/api/homework/lessons', require('./routes/lessonRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

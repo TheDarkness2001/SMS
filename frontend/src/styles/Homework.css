@@ -198,6 +198,7 @@
 
 /* Buttons */
 .btn {
+  display: inline-block;
   padding: 12px 24px;
   border: none;
   border-radius: 8px;
@@ -205,6 +206,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .btn:disabled {
@@ -458,20 +460,23 @@
   color: #333;
 }
 
-.form-row {
+.word-form .form-row {
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: stretch;
   flex-wrap: wrap;
 }
 
-.form-input {
-  flex: 1;
-  min-width: 150px;
+.word-form .form-row .form-input {
+  flex: 1 1 180px;
   padding: 10px 14px;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 14px;
+}
+
+.word-form .form-row .btn {
+  align-self: center;
 }
 
 .form-input:focus {
@@ -602,4 +607,334 @@
   .progress-table td {
     padding: 8px 10px;
   }
+}
+
+/* My Lessons Section */
+.my-lessons-section {
+  padding: 20px 0;
+}
+
+.lessons-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lesson-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-left: 4px solid #ddd;
+}
+
+.lesson-card.available {
+  border-left-color: #4caf50;
+}
+
+.lesson-card.passed {
+  border-left-color: #2196f3;
+}
+
+.lesson-card.locked {
+  opacity: 0.7;
+  background: #f8f9fa;
+}
+
+.lesson-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.lesson-info h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #1a1a2e;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.status-badge.locked {
+  background: #e0e0e0;
+  color: #666;
+}
+
+.status-badge.available {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.passed {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.best-score {
+  font-size: 13px;
+  color: #666;
+}
+
+.lesson-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.locked-text {
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.no-lessons {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  background: white;
+  border-radius: 12px;
+}
+
+/* Class Exam Overlay */
+.class-exam-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.class-exam-container {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.exam-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.exam-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #1a1a2e;
+}
+
+.exam-timer {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  background: #f0f0f0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: monospace;
+}
+
+.exam-timer.urgent {
+  color: #d32f2f;
+  background: #ffebee;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.exam-progress {
+  margin-bottom: 32px;
+}
+
+.exam-progress .progress-bar {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.exam-progress .progress-fill {
+  height: 100%;
+  background: #4a90d9;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.exam-progress .progress-text {
+  font-size: 13px;
+  color: #666;
+}
+
+.exam-question {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.exam-question .direction-label {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.exam-question .question-word {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 24px;
+}
+
+.exam-answer-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 14px 18px;
+  font-size: 18px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.exam-answer-input:focus {
+  outline: none;
+  border-color: #4a90d9;
+}
+
+.exam-result {
+  text-align: center;
+  padding: 20px;
+}
+
+.exam-result.passed h2 {
+  color: #2e7d32;
+}
+
+.exam-result.failed h2 {
+  color: #d32f2f;
+}
+
+.exam-score {
+  margin: 24px 0;
+}
+
+.exam-score .score-value {
+  display: block;
+  font-size: 56px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.exam-score .score-detail {
+  font-size: 16px;
+  color: #666;
+}
+
+.pass-requirement {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-content h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+}
+
+.word-selection-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.word-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.word-checkbox-label:hover {
+  background: #f5f5f5;
+}
+
+.word-checkbox-label input {
+  flex-shrink: 0;
+}
+
+.word-checkbox-label .word-trans {
+  color: #666;
+  font-size: 13px;
+}
+
+.word-checkbox-label .level-badge {
+  margin-left: auto;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Lessons Table */
+.lessons-table-container {
+  overflow-x: auto;
+}
+
+.lessons-table-container .words-table {
+  width: 100%;
 }
