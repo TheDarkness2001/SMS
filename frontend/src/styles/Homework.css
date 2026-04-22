@@ -245,23 +245,25 @@
 }
 
 .btn-edit {
-  background: #eff6ff;
-  color: var(--primary);
-  border: 1px solid #bfdbfe;
+  background: #f59e0b;
+  color: white;
+  border: 1px solid #f59e0b;
 }
 
 .btn-edit:hover {
-  background: #dbeafe;
+  background: #d97706;
+  border-color: #d97706;
 }
 
 .btn-delete {
-  background: #fef2f2;
-  color: var(--danger);
-  border: 1px solid #fecaca;
+  background: #ef4444;
+  color: white;
+  border: 1px solid #ef4444;
 }
 
 .btn-delete:hover {
-  background: #fee2e2;
+  background: #dc2626;
+  border-color: #dc2626;
 }
 
 /* Feedback */
