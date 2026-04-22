@@ -382,65 +382,63 @@ const LessonsTab = ({ t }) => {
       {/* LEVELS VIEW */}
       {view === 'levels' && selectedLanguage && (
         <>
-          <form onSubmit={handleCreateLevel} className="word-form">
+          <form onSubmit={handleCreateLevel} className="level-form">
             <h3>{t('homework.addLevel') || 'Add Level'}</h3>
-            <div className="form-row">
+            <div className="level-form-main">
               <input
                 type="text"
                 placeholder={t('homework.levelName') || 'Level name (e.g., Blackhole 1)'}
                 value={newLevel}
                 onChange={(e) => setNewLevel(e.target.value)}
-                className="form-input"
+                className="form-input level-name-input"
                 required
               />
-              <div className="form-field-with-label">
-                <label className="form-field-label">{t('homework.classesCount') || 'Classes'}</label>
+              <button type="submit" className="btn btn-primary level-add-btn">{t('homework.add') || 'Add'}</button>
+            </div>
+            <div className="level-form-config">
+              <div className="config-field">
+                <span className="config-label">{t('homework.classesCount') || 'Classes'}</span>
                 <input
                   type="number"
                   value={levelConfig.classesCount}
                   onChange={(e) => setLevelConfig({ ...levelConfig, classesCount: e.target.value })}
-                  className="form-input"
+                  className="config-input"
                   min="1"
-                  style={{ maxWidth: '80px' }}
                   title={t('homework.defaultClasses') || 'Default classes count'}
                 />
               </div>
-              <div className="form-field-with-label">
-                <label className="form-field-label">{t('homework.wordsPerClass') || 'Words/Class'}</label>
+              <div className="config-field">
+                <span className="config-label">{t('homework.wordsPerClass') || 'Words/Class'}</span>
                 <input
                   type="number"
                   value={levelConfig.wordsPerClass}
                   onChange={(e) => setLevelConfig({ ...levelConfig, wordsPerClass: e.target.value })}
-                  className="form-input"
+                  className="config-input"
                   min="1"
-                  style={{ maxWidth: '90px' }}
                   title={t('homework.defaultWords') || 'Default words per class'}
                 />
               </div>
-              <div className="form-field-with-label">
-                <label className="form-field-label">{t('homework.timeLimit') || 'Time (sec)'}</label>
+              <div className="config-field">
+                <span className="config-label">{t('homework.timeLimit') || 'Time (sec)'}</span>
                 <input
                   type="number"
                   value={levelConfig.examTimeLimit}
                   onChange={(e) => setLevelConfig({ ...levelConfig, examTimeLimit: e.target.value })}
-                  className="form-input"
+                  className="config-input"
                   min="30"
-                  style={{ maxWidth: '100px' }}
                 />
               </div>
-              <div className="form-field-with-label">
-                <label className="form-field-label">{t('homework.passScore') || 'Pass %'}</label>
+              <div className="config-field">
+                <span className="config-label">{t('homework.passScore') || 'Pass %'}</span>
                 <input
                   type="number"
                   value={levelConfig.minPassScore}
                   onChange={(e) => setLevelConfig({ ...levelConfig, minPassScore: e.target.value })}
-                  className="form-input"
+                  className="config-input"
                   min="1"
                   max="100"
-                  style={{ maxWidth: '80px' }}
                 />
               </div>
-              <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
             </div>
           </form>
 

@@ -479,19 +479,83 @@
   align-self: center;
 }
 
-/* Labeled form fields */
-.form-field-with-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* Level form - clean two-row layout */
+.level-form {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.form-field-label {
-  font-size: 11px;
+.level-form h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.level-form-main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.level-name-input {
+  flex: 1;
+}
+
+.level-add-btn {
+  flex-shrink: 0;
+}
+
+.level-form-config {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.config-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-field + .config-field::before {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 24px;
+  background: #ddd;
+  margin-right: 4px;
+}
+
+.config-label {
+  font-size: 12px;
   font-weight: 500;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #777;
+  white-space: nowrap;
+}
+
+.config-input {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.config-input:focus {
+  outline: none;
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
 }
 
 .form-input:focus {
