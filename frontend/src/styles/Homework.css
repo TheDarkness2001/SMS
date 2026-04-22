@@ -1232,9 +1232,9 @@
 
 /* Hierarchy Cards */
 .hierarchy-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .hierarchy-card {
@@ -1255,6 +1255,10 @@
   transform: translateY(-2px);
 }
 
+.hierarchy-card .btn-delete {
+  flex-shrink: 0;
+}
+
 .hierarchy-icon {
   font-size: 32px;
   flex-shrink: 0;
@@ -1263,15 +1267,13 @@
 .hierarchy-info {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
 }
 
 .hierarchy-info h4 {
   margin: 0 0 4px 0;
   font-size: 16px;
   color: var(--text-primary);
-  overflow-wrap: break-word;
-  word-break: break-word;
+  white-space: normal;
 }
 
 .hierarchy-meta {
