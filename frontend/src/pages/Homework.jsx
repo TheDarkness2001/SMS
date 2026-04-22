@@ -35,7 +35,7 @@ const Homework = () => {
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
 
-  const isAdmin = ['admin', 'manager', 'founder'].includes((user?.role || '').toLowerCase().trim());
+  const isAdmin = (user?.role || '').toLowerCase().trim() === 'founder' || user?.permissions?.canManageHomework === true;
   const isStudent = user?.userType === 'student';
 
   // Lesson system state

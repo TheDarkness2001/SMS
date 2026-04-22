@@ -312,9 +312,13 @@ const Settings = () => {
                         id={`${role}-${permission}`}
                         checked={value}
                         onChange={(e) => handleRolePermissionChange(role, permission, e.target.checked)}
+                        disabled={permission === 'canManageHomework' && !isFounder}
                       />
                       <label htmlFor={`${role}-${permission}`}>
                         {t(`settings.permissions.${permission}`) || permission.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        {permission === 'canManageHomework' && !isFounder && (
+                          <span className="text-muted" style={{ fontSize: '0.8em', marginLeft: '4px' }}>({t('settings.founderOnly') || 'Founder only'})</span>
+                        )}
                       </label>
                     </div>
                   ))}
@@ -530,9 +534,13 @@ const Settings = () => {
                           id={`permission-${permission}`}
                           checked={value}
                           onChange={(e) => handlePermissionChange(permission, e.target.checked)}
+                          disabled={permission === 'canManageHomework' && !isFounder}
                         />
                         <label htmlFor={`permission-${permission}`}>
                           {t(`settings.permissions.${permission}`) || permission.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                          {permission === 'canManageHomework' && !isFounder && (
+                            <span className="text-muted" style={{ fontSize: '0.8em', marginLeft: '4px' }}>({t('settings.founderOnly') || 'Founder only'})</span>
+                          )}
                         </label>
                       </div>
                     ))}

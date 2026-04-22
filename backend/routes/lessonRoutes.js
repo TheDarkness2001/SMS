@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const lessonController = require('../controllers/lessonController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorizeHomework } = require('../middleware/auth');
 
 // Student specific routes (must come before /:id)
 router.get('/student/progress', protect, lessonController.getStudentProgress);
@@ -9,15 +9,15 @@ router.get('/student/aggregated-progress', protect, lessonController.getStudentA
 router.post('/student/init', protect, lessonController.initStudentProgress);
 router.post('/student/practice-stats', protect, lessonController.updatePracticeStats);
 
-// Admin routes
-router.get('/students/progress', protect, authorize('admin', 'manager', 'founder'), lessonController.getAllStudentProgress);
-router.get('/', protect, authorize('admin', 'manager', 'founder'), lessonController.getAllLessons);
-router.post('/', protect, authorize('admin', 'manager', 'founder'), lessonController.createLesson);
-router.get('/:id', protect, authorize('admin', 'manager', 'founder'), lessonController.getLesson);
-router.put('/:id', protect, authorize('admin', 'manager', 'founder'), lessonController.updateLesson);
-router.delete('/:id', protect, authorize('admin', 'manager', 'founder'), lessonController.deleteLesson);
-router.post('/:id/auto-generate', protect, authorize('admin', 'manager', 'founder'), lessonController.autoGenerateClasses);
-router.delete('/:id/words/:wordId', protect, authorize('admin', 'manager', 'founder'), lessonController.removeWordFromLesson);
+// Admin routes (founder only + users with canManageHomework permission)
+router.get('/students/progress', protect, authorizeHomework(), lessonController.getAllStudentProgress);
+router.get('/', protect, authorizeHomework(), lessonController.getAllLessons);
+router.post('/', protect, authorizeHomework(), lessonController.createLesson);
+router.get('/:id', protect, authorizeHomework(), lessonController.getLesson);
+router.put('/:id', protect, authorizeHomework(), lessonController.updateLesson);
+router.delete('/:id', protect, authorizeHomework(), lessonController.deleteLesson);
+router.post('/:id/auto-generate', protect, authorizeHomework(), lessonController.autoGenerateClasses);
+router.delete('/:id/words/:wordId', protect, authorizeHomework(), lessonController.removeWordFromLesson);
 
 // Student lesson routes
 router.get('/:id/exam', protect, lessonController.getExamWords);

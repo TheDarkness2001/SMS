@@ -152,8 +152,8 @@ const Sidebar = ({ user, isOpen, onClose }) => {
           </Link>
         </li>
 
-        {/* 📚 HOMEWORK */}
-        {!isParent && (
+        {/* 📚 HOMEWORK (Founder only + users with canManageHomework permission) */}
+        {!isParent && (userData.role === 'founder' || userData.permissions?.canManageHomework) && (
           <li className={isActive('/homework')}>
             <Link to="/homework">
               <span className="icon"><AiOutlineBook size={20} /></span>

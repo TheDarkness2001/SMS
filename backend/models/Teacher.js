@@ -66,7 +66,8 @@ const teacherSchema = new mongoose.Schema({
     canManageAttendance: { type: Boolean, default: true },
     canViewFeedback: { type: Boolean, default: true },
     canManageFeedback: { type: Boolean, default: false },
-    canAccessSettings: { type: Boolean, default: false }
+    canAccessSettings: { type: Boolean, default: false },
+    canManageHomework: { type: Boolean, default: false }
   },
   joiningDate: {
     type: Date,

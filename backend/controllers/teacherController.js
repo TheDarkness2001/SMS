@@ -137,6 +137,15 @@ exports.updateTeacher = async (req, res) => {
           // Skip - don't overwrite existing teacherId
           return;
         }
+        // Only founder can grant canManageHomework permission
+        if (key === 'permissions' && req.body.permissions?.canManageHomework !== undefined && req.user.role !== 'founder') {
+          // Keep the existing value, don't allow non-founders to change it
+          if (teacher.permissions) {
+            req.body.permissions.canManageHomework = teacher.permissions.canManageHomework || false;
+          } else {
+            delete req.body.permissions.canManageHomework;
+          }
+        }
         teacher[key] = req.body[key];
       }
     });
@@ -232,9 +241,21 @@ exports.uploadPhoto = async (req, res) => {
 // @access  Private/Admin
 exports.updatePermissions = async (req, res) => {
   try {
+    // Only founder can grant canManageHomework permission
+    const permissionsData = { ...req.body };
+    if (permissionsData.canManageHomework !== undefined && req.user.role !== 'founder') {
+      // Keep existing value for non-founders
+      const existingTeacher = await Teacher.findById(req.params.id).select('permissions');
+      if (existingTeacher) {
+        permissionsData.canManageHomework = existingTeacher.permissions?.canManageHomework || false;
+      } else {
+        delete permissionsData.canManageHomework;
+      }
+    }
+
     const teacher = await Teacher.findByIdAndUpdate(
       req.params.id,
-      { permissions: req.body },
+      { permissions: permissionsData },
       { new: true, runValidators: true }
     ).select('-password');
 

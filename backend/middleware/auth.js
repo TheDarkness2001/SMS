@@ -101,6 +101,75 @@ exports.authorize = (...roles) => {
   };
 };
 
+// Check homework management access
+// Only founder has full control; others need canManageHomework permission granted by founder
+exports.authorizeHomework = () => {
+  return async (req, res, next) => {
+    try {
+      const userRole = req.user?.role || null;
+
+      if (!userRole) {
+        return res.status(403).json({
+          success: false,
+          message: 'User role undefined. Access denied.'
+        });
+      }
+
+      // Founder always has full access
+      if (userRole === 'founder') {
+        return next();
+      }
+
+      // Students and parents cannot manage homework
+      if (req.userType === 'student' || req.userType === 'parent') {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to manage homework'
+        });
+      }
+
+      // For teacher-type users (admin, manager, teacher, etc.), check canManageHomework permission
+      const Settings = require('../models/Settings');
+      let settings = await Settings.findOne();
+      if (!settings) {
+        settings = await Settings.create({});
+      }
+
+      // Check role-level permission first
+      const rolePermissions = settings.rolePermissions?.[userRole] || {};
+      const rolePermission = rolePermissions.canManageHomework;
+
+      if (rolePermission === true) {
+        return next();
+      }
+      if (rolePermission === false) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to manage homework. Contact the founder for access.'
+        });
+      }
+
+      // If role permission is undefined, check individual teacher permissions as fallback
+      const individualPermission = req.user.permissions?.canManageHomework;
+      if (individualPermission === true) {
+        return next();
+      }
+
+      // Default deny
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to manage homework. Contact the founder for access.'
+      });
+    } catch (error) {
+      console.error('[HOMEWORK_AUTH] Error checking homework permission:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error checking homework permissions'
+      });
+    }
+  };
+};
+
 // Check specific permissions
 exports.checkPermission = (permission) => {
   return async (req, res, next) => {

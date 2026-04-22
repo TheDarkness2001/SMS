@@ -38,6 +38,21 @@ exports.updateSettings = async (req, res) => {
       });
     }
 
+    // Only founder can modify canManageHomework permission in rolePermissions
+    if (req.user.role !== 'founder' && req.body.rolePermissions) {
+      const currentSettings = await Settings.findOne();
+      if (currentSettings) {
+        // Preserve existing canManageHomework values for each role
+        for (const role of Object.keys(req.body.rolePermissions)) {
+          if (req.body.rolePermissions[role] && req.body.rolePermissions[role].hasOwnProperty('canManageHomework')) {
+            // Revert to the current value - non-founders cannot change this
+            const currentValue = currentSettings.rolePermissions?.[role]?.canManageHomework;
+            req.body.rolePermissions[role].canManageHomework = currentValue ?? false;
+          }
+        }
+      }
+    }
+
     // Get the first (and only) settings document
     let settings = await Settings.findOne();
     
