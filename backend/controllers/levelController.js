@@ -1,5 +1,6 @@
 const Level = require('../models/Level');
 const Lesson = require('../models/Lesson');
+const Word = require('../models/Word');
 
 exports.getLevelsByLanguage = async (req, res) => {
   try {
@@ -14,11 +15,18 @@ exports.getLevelsByLanguage = async (req, res) => {
 
 exports.createLevel = async (req, res) => {
   try {
-    const { name, languageId } = req.body;
+    const { name, languageId, classesCount, wordsPerClass, examTimeLimit, minPassScore } = req.body;
     if (!name?.trim() || !languageId) {
       return res.status(400).json({ success: false, message: 'Name and language are required' });
     }
-    const level = new Level({ name: name.trim(), languageId });
+    const level = new Level({
+      name: name.trim(),
+      languageId,
+      classesCount: classesCount || 11,
+      wordsPerClass: wordsPerClass || 20,
+      examTimeLimit: examTimeLimit || 300,
+      minPassScore: minPassScore || 70
+    });
     await level.save();
     res.status(201).json({ success: true, message: 'Level created', data: { level } });
   } catch (error) {
@@ -43,10 +51,22 @@ exports.updateLevel = async (req, res) => {
 exports.deleteLevel = async (req, res) => {
   try {
     const { id } = req.params;
-    const level = await Level.findByIdAndDelete(id);
+    const level = await Level.findById(id);
     if (!level) return res.status(404).json({ success: false, message: 'Level not found' });
+
+    // Get all lessons in this level
+    const lessons = await Lesson.find({ levelId: id });
+
+    // Delete all words in all lessons
+    for (const lesson of lessons) {
+      await Word.deleteMany({ _id: { $in: lesson.wordIds } });
+    }
+
+    // Delete lessons and progress
     await Lesson.deleteMany({ levelId: id });
-    res.json({ success: true, message: 'Level and its lessons deleted' });
+    await Level.findByIdAndDelete(id);
+
+    res.json({ success: true, message: 'Level, classes, and words deleted' });
   } catch (error) {
     console.error('Delete level error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });

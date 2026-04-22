@@ -1093,6 +1093,163 @@
   margin-top: auto;
 }
 
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+  background: none;
+  border: none;
+  color: #4a90d9;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.breadcrumb-item:hover {
+  background: #e3f2fd;
+}
+
+.breadcrumb-item.active {
+  color: #333;
+  font-weight: 600;
+  cursor: default;
+}
+
+.breadcrumb-item.active:hover {
+  background: none;
+}
+
+.breadcrumb-sep {
+  color: #999;
+  font-weight: 300;
+}
+
+/* Hierarchy Cards */
+.hierarchy-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.hierarchy-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 4px solid #4a90d9;
+}
+
+.hierarchy-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.hierarchy-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.hierarchy-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.hierarchy-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hierarchy-meta {
+  font-size: 12px;
+  color: #666;
+  display: block;
+}
+
+/* Auto-generate bar */
+.auto-generate-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.auto-generate-hint {
+  font-size: 13px;
+  color: #888;
+}
+
+/* Level Summary */
+.level-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-stat {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.summary-number {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.summary-label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Lesson Meta Row */
+.lesson-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Memorization Badge */
+.memorization-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  background: #fff3e0;
+  color: #e65100;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .lesson-row {
@@ -1117,6 +1274,14 @@
   }
 
   .exam-lessons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .level-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hierarchy-list {
     grid-template-columns: 1fr;
   }
 }

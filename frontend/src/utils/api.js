@@ -276,12 +276,12 @@ export const salaryPayoutsAPI = {
 // Homework API
 export const homeworkAPI = {
   // Game
-  getRandomWord: (level) => api.get('/homework/words/random', { params: level ? { level } : {} }),
+  getRandomWord: (params) => api.get('/homework/words/random', { params: params || {} }),
   checkAnswer: (data) => api.post('/homework/check-answer', data),
   submitResult: (sessionStats) => api.post('/homework/submit-result', { sessionStats }),
   getProgress: () => api.get('/homework/progress'),
   // Word management (admin)
-  getLevels: () => api.get('/homework/levels'),
+  getLevels: (languageId) => api.get('/homework/levels', { params: languageId ? { languageId } : {} }),
   getAllWords: () => api.get('/homework/words'),
   addWord: (data) => api.post('/homework/words', data),
   updateWord: (id, data) => api.put(`/homework/words/${id}`, data),
@@ -316,14 +316,23 @@ export const lessonAPI = {
   createLesson: (data) => api.post('/homework/lessons', data),
   updateLesson: (id, data) => api.put(`/homework/lessons/${id}`, data),
   deleteLesson: (id) => api.delete(`/homework/lessons/${id}`),
-  addWordsToLesson: (id, wordIds) => api.post(`/homework/lessons/${id}/words`, { wordIds }),
+  autoGenerateClasses: (id, data) => api.post(`/homework/lessons/${id}/auto-generate`, data),
   removeWordFromLesson: (id, wordId) => api.delete(`/homework/lessons/${id}/words/${wordId}`),
   getAllStudentLessonProgress: () => api.get('/homework/lessons/students/progress'),
   // Student
   getExamWords: (id) => api.get(`/homework/lessons/${id}/exam`),
   submitExam: (id, answers) => api.post(`/homework/lessons/${id}/exam`, { answers }),
   getMyLessonProgress: () => api.get('/homework/lessons/student/progress'),
-  initMyProgress: () => api.post('/homework/lessons/student/init')
+  getMyAggregatedProgress: (params) => api.get('/homework/lessons/student/aggregated-progress', { params: params || {} }),
+  initMyProgress: () => api.post('/homework/lessons/student/init'),
+  updatePracticeStats: (data) => api.post('/homework/lessons/student/practice-stats', data)
+};
+
+// System Config API
+export const configAPI = {
+  getAll: () => api.get('/homework/config'),
+  get: (key) => api.get(`/homework/config/${key}`),
+  update: (key, value) => api.put(`/homework/config/${key}`, { value })
 };
 
 // Helper function to get image URL from backend

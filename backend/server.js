@@ -93,6 +93,11 @@ app.use('/api/homework', require('./routes/homeworkRoutes'));
 app.use('/api/homework/languages', require('./routes/languageRoutes'));
 app.use('/api/homework/levels', require('./routes/levelRoutes'));
 app.use('/api/homework/lessons', require('./routes/lessonRoutes'));
+app.use('/api/homework/config', require('./routes/systemConfigRoutes'));
+
+// Initialize system defaults
+const { initDefaults } = require('./controllers/systemConfigController');
+initDefaults().catch(err => console.error('Failed to init system defaults:', err));
 
 // Health check route
 app.get('/api/health', (req, res) => {

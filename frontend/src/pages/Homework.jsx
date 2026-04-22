@@ -31,10 +31,6 @@ const Homework = () => {
   });
   const [sessionComplete, setSessionComplete] = useState(false);
 
-  // Level state
-  const [selectedLevel, setSelectedLevel] = useState('');
-  const [levels, setLevels] = useState([]);
-
   // Admin state
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -44,37 +40,21 @@ const Homework = () => {
 
   // Lesson system state
   const [myProgress, setMyProgress] = useState([]);
+  const [aggregatedProgress, setAggregatedProgress] = useState([]);
   const [activeExamLesson, setActiveExamLesson] = useState(null);
   const [showClassExam, setShowClassExam] = useState(false);
 
-  // 3-tier hierarchy state for student
+  // 3-tier hierarchy state (shared across tabs)
   const [languages, setLanguages] = useState([]);
   const [levelsList, setLevelsList] = useState([]);
   const [selectedLanguageId, setSelectedLanguageId] = useState('');
   const [selectedLevelId, setSelectedLevelId] = useState('');
+  const [levelLessons, setLevelLessons] = useState([]);
+  const [lessonsLoading, setLessonsLoading] = useState(false);
 
-  // Exam tab lesson selection state
-  const [examLessons, setExamLessons] = useState([]);
-  const [examLoading, setExamLoading] = useState(false);
-
-  // Fetch available levels
-  useEffect(() => {
-    const fetchLevels = async () => {
-      try {
-        const response = await homeworkAPI.getLevels();
-        if (response.data.success) {
-          setLevels(response.data.data.levels);
-          if (response.data.data.levels.length > 0 && !selectedLevel) {
-            setSelectedLevel(response.data.data.levels[0]);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching levels:', error);
-      }
-    };
-    fetchLevels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Practice mode state
+  const [selectedPracticeLessonId, setSelectedPracticeLessonId] = useState('');
+  const [practiceMode, setPracticeMode] = useState('level'); // 'level' or 'lesson'
 
   // Fetch student lesson progress
   useEffect(() => {
@@ -89,12 +69,22 @@ const Homework = () => {
         console.error('Error fetching lesson progress:', error);
       }
     };
+    const fetchAggregated = async () => {
+      try {
+        const res = await lessonAPI.getMyAggregatedProgress();
+        if (res.data.success) {
+          setAggregatedProgress(res.data.data.progress);
+        }
+      } catch (error) {
+        console.error('Error fetching aggregated progress:', error);
+      }
+    };
     fetchMyProgress();
+    fetchAggregated();
   }, [isStudent]);
 
-  // Fetch languages for student
+  // Fetch languages for all users
   useEffect(() => {
-    if (!isStudent) return;
     const fetchLanguages = async () => {
       try {
         const res = await languageAPI.getAll();
@@ -109,11 +99,11 @@ const Homework = () => {
       }
     };
     fetchLanguages();
-  }, [isStudent]);
+  }, []);
 
   // Fetch levels when language selected
   useEffect(() => {
-    if (!isStudent || !selectedLanguageId) return;
+    if (!selectedLanguageId) return;
     const fetchLevels = async () => {
       try {
         const res = await levelAPI.getByLanguage(selectedLanguageId);
@@ -128,26 +118,29 @@ const Homework = () => {
       }
     };
     fetchLevels();
-  }, [isStudent, selectedLanguageId]);
+  }, [selectedLanguageId]);
 
-  // Fetch lessons for exam tab when level selected
+  // Fetch lessons when level selected
   useEffect(() => {
-    if (!isStudent || !selectedLevelId) return;
+    if (!selectedLevelId) return;
     const fetchLessons = async () => {
-      setExamLoading(true);
+      setLessonsLoading(true);
       try {
         const res = await lessonAPI.getAllLessons(selectedLevelId);
         if (res.data.success) {
-          setExamLessons(res.data.data.lessons);
+          setLevelLessons(res.data.data.lessons);
+          if (res.data.data.lessons.length > 0) {
+            setSelectedPracticeLessonId(res.data.data.lessons[0]._id);
+          }
         }
       } catch (error) {
         console.error('Error fetching lessons:', error);
       } finally {
-        setExamLoading(false);
+        setLessonsLoading(false);
       }
     };
     fetchLessons();
-  }, [isStudent, selectedLevelId]);
+  }, [selectedLevelId]);
 
   // Fetch random word
   const fetchRandomWord = useCallback(async () => {
@@ -155,7 +148,13 @@ const Homework = () => {
     setFeedback(null);
     setUserAnswer('');
     try {
-      const response = await homeworkAPI.getRandomWord(selectedLevel);
+      const params = {};
+      if (practiceMode === 'lesson' && selectedPracticeLessonId) {
+        params.lessonId = selectedPracticeLessonId;
+      } else if (selectedLevelId) {
+        params.levelId = selectedLevelId;
+      }
+      const response = await homeworkAPI.getRandomWord(params);
       if (response.data.success) {
         setCurrentWord(response.data.data.word);
       }
@@ -164,7 +163,7 @@ const Homework = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedLevel]);
+  }, [selectedLevelId, selectedPracticeLessonId, practiceMode]);
 
   // Load first word when tab changes to practice or exam
   useEffect(() => {
@@ -208,6 +207,18 @@ const Homework = () => {
           }
           return newStats;
         });
+
+        // Track practice stats per lesson (student only, practice mode only)
+        if (isStudent && activeTab === 'practice' && practiceMode === 'lesson' && selectedPracticeLessonId) {
+          try {
+            await lessonAPI.updatePracticeStats({
+              lessonId: selectedPracticeLessonId,
+              isCorrect
+            });
+          } catch (err) {
+            // Silently fail - practice tracking is not critical
+          }
+        }
       }
     } catch (error) {
       console.error('Error checking answer:', error);
@@ -348,131 +359,211 @@ const Homework = () => {
       </div>
 
       <div className="tab-content">
-        {/* MY LESSONS TAB (Student) */}
+        {/* MY LESSONS TAB (Student) - Aggregated Progress */}
         {activeTab === 'myLessons' && isStudent && (
           <div className="my-lessons-section">
-            <div className="level-selector">
-              <label>{t('homework.language') || 'Language'}:</label>
-              <select
-                value={selectedLanguageId}
-                onChange={(e) => setSelectedLanguageId(e.target.value)}
-                className="level-select"
-              >
-                {languages.map(lang => (
-                  <option key={lang._id} value={lang._id}>{lang.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="level-selector">
-              <label>{t('homework.level') || 'Level'}:</label>
-              <select
-                value={selectedLevelId}
-                onChange={(e) => setSelectedLevelId(e.target.value)}
-                className="level-select"
-              >
-                {levelsList.map(lvl => (
-                  <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
-                ))}
-              </select>
+            <div className="tier-selectors">
+              <div className="level-selector">
+                <label>{t('homework.language') || 'Language'}:</label>
+                <select
+                  value={selectedLanguageId}
+                  onChange={(e) => setSelectedLanguageId(e.target.value)}
+                  className="level-select"
+                >
+                  {languages.map(lang => (
+                    <option key={lang._id} value={lang._id}>{lang.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="level-selector">
+                <label>{t('homework.level') || 'Level'}:</label>
+                <select
+                  value={selectedLevelId}
+                  onChange={(e) => setSelectedLevelId(e.target.value)}
+                  className="level-select"
+                >
+                  {levelsList.map(lvl => (
+                    <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="lessons-progress-list">
-              {myProgress
-                .filter(p => p.lessonId?.levelId === selectedLevelId)
-                .sort((a, b) => (a.lessonId?.order || 0) - (b.lessonId?.order || 0))
-                .map(progress => {
-                  const status = progress.status;
-                  const lesson = progress.lessonId;
-                  return (
-                    <div key={progress._id} className={`lesson-card ${status}`}>
-                      <div className="lesson-info">
-                        <h4>{lesson?.name || 'Lesson'}</h4>
-                        <span className={`status-badge ${status}`}>
-                          {status === 'locked' ? (t('homework.locked') || 'Locked')
-                            : status === 'available' ? (t('homework.available') || 'Available')
-                            : (t('homework.passed') || 'Passed')
-                          }
-                        </span>
-                        {progress.bestExamScore > 0 && (
-                          <span className="best-score">{t('homework.bestScore') || 'Best'}: {progress.bestExamScore}%</span>
-                        )}
-                      </div>
-                      <div className="lesson-actions">
-                        {status === 'available' && (
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => {
-                              setActiveExamLesson({ id: lesson?._id, name: lesson?.name });
-                              setShowClassExam(true);
-                            }}
-                          >
-                            {t('homework.takeClassExam') || 'Take Class Exam'}
-                          </button>
-                        )}
-                        {status === 'passed' && (
-                          <>
-                            <button
-                              className="btn btn-secondary"
-                              onClick={() => {
-                                setActiveExamLesson({ id: lesson?._id, name: lesson?.name });
-                                setShowClassExam(true);
-                              }}
-                            >
-                              {t('homework.retakeExam') || 'Retake Exam'}
-                            </button>
-                            <button
-                              className="btn btn-primary"
-                              onClick={() => {
-                                setActiveTab('practice');
-                              }}
-                            >
-                              {t('homework.practice') || 'Practice'}
-                            </button>
-                          </>
-                        )}
-                        {status === 'locked' && (
-                          <span className="locked-text">{t('homework.completePrevious') || 'Complete previous lesson'}</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              {myProgress.filter(p => p.lessonId?.levelId === selectedLevelId).length === 0 && (
+            {/* Level Summary */}
+            {(() => {
+              const langData = aggregatedProgress.find(l => l.languageId === selectedLanguageId);
+              const levelData = langData?.levels?.find(l => l.levelId === selectedLevelId);
+              if (!levelData) return (
                 <div className="no-lessons">
                   {t('homework.noLessonsYet') || 'No lessons available yet.'}
                 </div>
-              )}
-            </div>
+              );
+              return (
+                <>
+                  <div className="level-summary">
+                    <div className="summary-stat">
+                      <span className="summary-number">{levelData.memorizationPercent}%</span>
+                      <span className="summary-label">{t('homework.memorization') || 'Memorized'}</span>
+                    </div>
+                    <div className="summary-stat">
+                      <span className="summary-number">{levelData.passedClasses}/{levelData.totalClasses}</span>
+                      <span className="summary-label">{t('homework.classesPassed') || 'Classes Passed'}</span>
+                    </div>
+                    <div className="summary-stat">
+                      <span className="summary-number">{levelData.totalWords}</span>
+                      <span className="summary-label">{t('homework.totalWords') || 'Total Words'}</span>
+                    </div>
+                    <div className="summary-stat">
+                      <span className="summary-number">{levelData.memorizedWords}</span>
+                      <span className="summary-label">{t('homework.wordsMemorized') || 'Words Memorized'}</span>
+                    </div>
+                  </div>
+
+                  <div className="lessons-progress-list">
+                    {levelData.classes
+                      .sort((a, b) => (a.lessonId?.order || 0) - (b.lessonId?.order || 0))
+                      .map(cls => {
+                        const status = cls.status;
+                        const lesson = cls.lessonId;
+                        return (
+                          <div key={cls.lessonId?._id || cls.lessonId} className={`lesson-card ${status}`}>
+                            <div className="lesson-info">
+                              <h4>{lesson?.name || 'Class'}</h4>
+                              <div className="lesson-meta-row">
+                                <span className={`status-badge ${status}`}>
+                                  {status === 'locked' ? (t('homework.locked') || 'Locked')
+                                    : status === 'available' ? (t('homework.available') || 'Available')
+                                    : (t('homework.passed') || 'Passed')
+                                  }
+                                </span>
+                                {cls.wordsTotal > 0 && (
+                                  <span className="memorization-badge">
+                                    {cls.wordsMemorized}/{cls.wordsTotal} {t('homework.words') || 'words'}
+                                  </span>
+                                )}
+                                {cls.bestExamScore > 0 && (
+                                  <span className="best-score">{t('homework.bestScore') || 'Best'}: {cls.bestExamScore}%</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="lesson-actions">
+                              {status === 'available' && (
+                                <button
+                                  className="btn btn-primary"
+                                  onClick={() => {
+                                    setActiveExamLesson({ id: lesson?._id, name: lesson?.name });
+                                    setShowClassExam(true);
+                                  }}
+                                >
+                                  {t('homework.takeClassExam') || 'Take Class Exam'}
+                                </button>
+                              )}
+                              {status === 'passed' && (
+                                <>
+                                  <button
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                      setActiveExamLesson({ id: lesson?._id, name: lesson?.name });
+                                      setShowClassExam(true);
+                                    }}
+                                  >
+                                    {t('homework.retakeExam') || 'Retake Exam'}
+                                  </button>
+                                  <button
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                      setSelectedPracticeLessonId(lesson?._id);
+                                      setPracticeMode('lesson');
+                                      setActiveTab('practice');
+                                    }}
+                                  >
+                                    {t('homework.practice') || 'Practice'}
+                                  </button>
+                                </>
+                              )}
+                              {status === 'locked' && (
+                                <span className="locked-text">{t('homework.completePrevious') || 'Complete previous class'}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
         {/* PRACTICE MODE */}
         {activeTab === 'practice' && (
           <div className="game-section">
-            <div className="level-selector">
-              <label>{t('homework.level') || 'Level'}:</label>
-              <select
-                value={selectedLevel}
-                onChange={(e) => {
-                  setSelectedLevel(e.target.value);
-                  setCurrentWord(null);
-                  setFeedback(null);
-                  setSessionStats({
-                    totalAttempts: 0,
-                    correctAnswers: 0,
-                    enToUzCorrect: 0,
-                    enToUzTotal: 0,
-                    uzToEnCorrect: 0,
-                    uzToEnTotal: 0
-                  });
-                  setSessionComplete(false);
-                }}
-                className="level-select"
-              >
-                {levels.map(lvl => (
-                  <option key={lvl} value={lvl}>{lvl}</option>
-                ))}
-              </select>
+            <div className="tier-selectors">
+              <div className="level-selector">
+                <label>{t('homework.language') || 'Language'}:</label>
+                <select
+                  value={selectedLanguageId}
+                  onChange={(e) => {
+                    setSelectedLanguageId(e.target.value);
+                    setCurrentWord(null);
+                    setFeedback(null);
+                  }}
+                  className="level-select"
+                >
+                  {languages.map(lang => (
+                    <option key={lang._id} value={lang._id}>{lang.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="level-selector">
+                <label>{t('homework.level') || 'Level'}:</label>
+                <select
+                  value={selectedLevelId}
+                  onChange={(e) => {
+                    setSelectedLevelId(e.target.value);
+                    setCurrentWord(null);
+                    setFeedback(null);
+                  }}
+                  className="level-select"
+                >
+                  {levelsList.map(lvl => (
+                    <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="level-selector">
+                <label>{t('homework.practiceMode') || 'Mode'}:</label>
+                <select
+                  value={practiceMode}
+                  onChange={(e) => {
+                    setPracticeMode(e.target.value);
+                    setCurrentWord(null);
+                    setFeedback(null);
+                  }}
+                  className="level-select"
+                >
+                  <option value="level">{t('homework.allClassesInLevel') || 'All Classes in Level'}</option>
+                  <option value="lesson">{t('homework.specificClass') || 'Specific Class'}</option>
+                </select>
+              </div>
+              {practiceMode === 'lesson' && (
+                <div className="level-selector">
+                  <label>{t('homework.class') || 'Class'}:</label>
+                  <select
+                    value={selectedPracticeLessonId}
+                    onChange={(e) => {
+                      setSelectedPracticeLessonId(e.target.value);
+                      setCurrentWord(null);
+                      setFeedback(null);
+                    }}
+                    className="level-select"
+                  >
+                    {levelLessons.map(lesson => (
+                      <option key={lesson._id} value={lesson._id}>{lesson.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="practice-stats">
@@ -578,11 +669,11 @@ const Homework = () => {
 
             <h3 className="section-title">{t('homework.selectLessonForExam') || 'Select a Lesson to Start Exam'}</h3>
 
-            {examLoading ? (
+            {lessonsLoading ? (
               <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
             ) : (
               <div className="exam-lessons-grid">
-                {examLessons.map(lesson => {
+                {levelLessons.map(lesson => {
                   const progress = myProgress.find(p => p.lessonId?._id === lesson._id);
                   const status = progress?.status || 'locked';
                   const canTakeExam = status === 'available' || status === 'passed';
@@ -622,7 +713,7 @@ const Homework = () => {
                     </div>
                   );
                 })}
-                {examLessons.length === 0 && (
+                {levelLessons.length === 0 && (
                   <div className="no-lessons">
                     {t('homework.noLessonsYet') || 'No lessons available yet.'}
                   </div>
@@ -635,30 +726,48 @@ const Homework = () => {
         {/* EXAM MODE - Admin/Teacher: Random word game */}
         {activeTab === 'exam' && !isStudent && (
           <div className="game-section">
-            <div className="level-selector">
-              <label>{t('homework.level') || 'Level'}:</label>
-              <select
-                value={selectedLevel}
-                onChange={(e) => {
-                  setSelectedLevel(e.target.value);
-                  setCurrentWord(null);
-                  setFeedback(null);
-                  setSessionStats({
-                    totalAttempts: 0,
-                    correctAnswers: 0,
-                    enToUzCorrect: 0,
-                    enToUzTotal: 0,
-                    uzToEnCorrect: 0,
-                    uzToEnTotal: 0
-                  });
-                  setSessionComplete(false);
-                }}
-                className="level-select"
-              >
-                {levels.map(lvl => (
-                  <option key={lvl} value={lvl}>{lvl}</option>
-                ))}
-              </select>
+            <div className="tier-selectors">
+              <div className="level-selector">
+                <label>{t('homework.language') || 'Language'}:</label>
+                <select
+                  value={selectedLanguageId}
+                  onChange={(e) => {
+                    setSelectedLanguageId(e.target.value);
+                    setCurrentWord(null);
+                    setFeedback(null);
+                  }}
+                  className="level-select"
+                >
+                  {languages.map(lang => (
+                    <option key={lang._id} value={lang._id}>{lang.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="level-selector">
+                <label>{t('homework.level') || 'Level'}:</label>
+                <select
+                  value={selectedLevelId}
+                  onChange={(e) => {
+                    setSelectedLevelId(e.target.value);
+                    setCurrentWord(null);
+                    setFeedback(null);
+                    setSessionStats({
+                      totalAttempts: 0,
+                      correctAnswers: 0,
+                      enToUzCorrect: 0,
+                      enToUzTotal: 0,
+                      uzToEnCorrect: 0,
+                      uzToEnTotal: 0
+                    });
+                    setSessionComplete(false);
+                  }}
+                  className="level-select"
+                >
+                  {levelsList.map(lvl => (
+                    <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="exam-stats-bar">
@@ -840,6 +949,9 @@ const Homework = () => {
               if (isStudent) {
                 lessonAPI.getMyLessonProgress().then(res => {
                   if (res.data.success) setMyProgress(res.data.data.progress);
+                });
+                lessonAPI.getMyAggregatedProgress().then(res => {
+                  if (res.data.success) setAggregatedProgress(res.data.data.progress);
                 });
               }
             }}

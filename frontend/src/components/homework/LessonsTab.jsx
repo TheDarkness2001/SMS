@@ -19,9 +19,18 @@ const LessonsTab = ({ t }) => {
   // Form states
   const [newLanguage, setNewLanguage] = useState('');
   const [newLevel, setNewLevel] = useState('');
+  const [levelConfig, setLevelConfig] = useState({
+    classesCount: 11,
+    wordsPerClass: 20,
+    examTimeLimit: 300,
+    minPassScore: 70
+  });
   const [lessonForm, setLessonForm] = useState({ name: '', order: 1, examTimeLimit: 300, minPassScore: 70 });
   const [editingLesson, setEditingLesson] = useState(null);
   const [newWord, setNewWord] = useState({ english: '', uzbek: '' });
+  const [editingWord, setEditingWord] = useState(null);
+  const [editWordForm, setEditWordForm] = useState({ english: '', uzbek: '' });
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     fetchLanguages();
@@ -109,8 +118,16 @@ const LessonsTab = ({ t }) => {
     e.preventDefault();
     if (!newLevel.trim() || !selectedLanguage) return;
     try {
-      await levelAPI.create({ name: newLevel.trim(), languageId: selectedLanguage._id });
+      await levelAPI.create({
+        name: newLevel.trim(),
+        languageId: selectedLanguage._id,
+        classesCount: parseInt(levelConfig.classesCount) || 11,
+        wordsPerClass: parseInt(levelConfig.wordsPerClass) || 20,
+        examTimeLimit: parseInt(levelConfig.examTimeLimit) || 300,
+        minPassScore: parseInt(levelConfig.minPassScore) || 70
+      });
       setNewLevel('');
+      setLevelConfig({ classesCount: 11, wordsPerClass: 20, examTimeLimit: 300, minPassScore: 70 });
       fetchLevels(selectedLanguage._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating level');
@@ -196,6 +213,27 @@ const LessonsTab = ({ t }) => {
     setView('words');
   };
 
+  // Auto-generate classes
+  const handleAutoGenerate = async () => {
+    if (!selectedLevel) return;
+    setGenerating(true);
+    try {
+      const res = await lessonAPI.autoGenerateClasses(selectedLevel._id, {
+        count: selectedLevel.classesCount || 11,
+        wordsPerClass: selectedLevel.wordsPerClass || 20,
+        examTimeLimit: selectedLevel.examTimeLimit || 300,
+        minPassScore: selectedLevel.minPassScore || 70
+      });
+      if (res.data.success) {
+        fetchLessons(selectedLevel._id);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error generating classes');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   // Word handlers
   const handleAddWord = async (e) => {
     e.preventDefault();
@@ -204,10 +242,9 @@ const LessonsTab = ({ t }) => {
       const createRes = await homeworkAPI.addWord({
         english: newWord.english.trim(),
         uzbek: newWord.uzbek.trim(),
-        level: selectedLevel?.name || ''
+        lessonId: selectedLesson._id
       });
       if (createRes.data.success) {
-        await lessonAPI.addWordsToLesson(selectedLesson._id, [createRes.data.data.word._id]);
         setNewWord({ english: '', uzbek: '' });
         fetchLessonWords(selectedLesson._id);
         fetchLessons(selectedLevel._id);
@@ -221,12 +258,37 @@ const LessonsTab = ({ t }) => {
     if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
     try {
       await lessonAPI.removeWordFromLesson(selectedLesson._id, wordId);
-      await homeworkAPI.deleteWord(wordId);
       fetchLessonWords(selectedLesson._id);
       fetchLessons(selectedLevel._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting word');
     }
+  };
+
+  const startEditWord = (word) => {
+    setEditingWord(word._id);
+    setEditWordForm({ english: word.english, uzbek: word.uzbek });
+  };
+
+  const handleUpdateWord = async (e) => {
+    e.preventDefault();
+    if (!editWordForm.english.trim() || !editWordForm.uzbek.trim()) return;
+    try {
+      await homeworkAPI.updateWord(editingWord, {
+        english: editWordForm.english.trim(),
+        uzbek: editWordForm.uzbek.trim()
+      });
+      setEditingWord(null);
+      setEditWordForm({ english: '', uzbek: '' });
+      fetchLessonWords(selectedLesson._id);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error updating word');
+    }
+  };
+
+  const cancelEditWord = () => {
+    setEditingWord(null);
+    setEditWordForm({ english: '', uzbek: '' });
   };
 
   const formatTime = (seconds) => {
@@ -331,6 +393,45 @@ const LessonsTab = ({ t }) => {
                 className="form-input"
                 required
               />
+              <input
+                type="number"
+                placeholder={t('homework.classesCount') || 'Classes'}
+                value={levelConfig.classesCount}
+                onChange={(e) => setLevelConfig({ ...levelConfig, classesCount: e.target.value })}
+                className="form-input"
+                min="1"
+                style={{ maxWidth: '80px' }}
+                title={t('homework.defaultClasses') || 'Default classes count'}
+              />
+              <input
+                type="number"
+                placeholder={t('homework.wordsPerClass') || 'Words/Class'}
+                value={levelConfig.wordsPerClass}
+                onChange={(e) => setLevelConfig({ ...levelConfig, wordsPerClass: e.target.value })}
+                className="form-input"
+                min="1"
+                style={{ maxWidth: '90px' }}
+                title={t('homework.defaultWords') || 'Default words per class'}
+              />
+              <input
+                type="number"
+                placeholder={t('homework.timeLimit') || 'Time (sec)'}
+                value={levelConfig.examTimeLimit}
+                onChange={(e) => setLevelConfig({ ...levelConfig, examTimeLimit: e.target.value })}
+                className="form-input"
+                min="30"
+                style={{ maxWidth: '100px' }}
+              />
+              <input
+                type="number"
+                placeholder={t('homework.passScore') || 'Pass %'}
+                value={levelConfig.minPassScore}
+                onChange={(e) => setLevelConfig({ ...levelConfig, minPassScore: e.target.value })}
+                className="form-input"
+                min="1"
+                max="100"
+                style={{ maxWidth: '80px' }}
+              />
               <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
             </div>
           </form>
@@ -347,6 +448,12 @@ const LessonsTab = ({ t }) => {
                     <div className="hierarchy-icon">📚</div>
                     <div className="hierarchy-info">
                       <h4>{lvl.name}</h4>
+                      <span className="hierarchy-meta">
+                        {lvl.classesCount || 11} {t('homework.classes') || 'classes'} ·
+                        {lvl.wordsPerClass || 20} {t('homework.wordsPerClassShort') || 'words/class'} ·
+                        {Math.floor((lvl.examTimeLimit || 300) / 60)} {t('homework.min') || 'min'} ·
+                        {lvl.minPassScore || 70}%
+                      </span>
                     </div>
                     <button
                       className="btn btn-small btn-delete"
@@ -365,6 +472,23 @@ const LessonsTab = ({ t }) => {
       {/* LESSONS VIEW */}
       {view === 'lessons' && selectedLevel && (
         <>
+          <div className="auto-generate-bar">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleAutoGenerate}
+              disabled={generating}
+            >
+              {generating
+                ? (t('homework.generating') || 'Generating...')
+                : (t('homework.autoGenerateClasses') || `Auto-generate ${selectedLevel?.classesCount || 11} Classes`)
+              }
+            </button>
+            <span className="auto-generate-hint">
+              {t('homework.autoGenerateHint') || 'Creates classes with configured defaults'}
+            </span>
+          </div>
+
           <form onSubmit={editingLesson ? handleUpdateLesson : handleCreateLesson} className="word-form">
             <h3>{editingLesson ? (t('homework.editLesson') || 'Edit Lesson') : (t('homework.addNewLesson') || 'Add New Lesson')}</h3>
             <div className="form-row">
@@ -494,13 +618,49 @@ const LessonsTab = ({ t }) => {
                 <tbody>
                   {lessonWords.map(word => (
                     <tr key={word._id}>
-                      <td>{word.english}</td>
-                      <td>{word.uzbek}</td>
-                      <td className="actions">
-                        <button className="btn btn-small btn-delete" onClick={() => handleDeleteWord(word._id)}>
-                          {t('homework.delete') || 'Delete'}
-                        </button>
-                      </td>
+                      {editingWord === word._id ? (
+                        <>
+                          <td>
+                            <input
+                              type="text"
+                              value={editWordForm.english}
+                              onChange={(e) => setEditWordForm({ ...editWordForm, english: e.target.value })}
+                              className="form-input"
+                              style={{ width: '100%', padding: '4px 8px' }}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={editWordForm.uzbek}
+                              onChange={(e) => setEditWordForm({ ...editWordForm, uzbek: e.target.value })}
+                              className="form-input"
+                              style={{ width: '100%', padding: '4px 8px' }}
+                            />
+                          </td>
+                          <td className="actions">
+                            <button className="btn btn-small btn-primary" onClick={handleUpdateWord}>
+                              {t('homework.save') || 'Save'}
+                            </button>
+                            <button className="btn btn-small btn-secondary" onClick={cancelEditWord}>
+                              {t('homework.cancel') || 'Cancel'}
+                            </button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td>{word.english}</td>
+                          <td>{word.uzbek}</td>
+                          <td className="actions">
+                            <button className="btn btn-small btn-edit" onClick={() => startEditWord(word)}>
+                              {t('homework.edit') || 'Edit'}
+                            </button>
+                            <button className="btn btn-small btn-delete" onClick={() => handleDeleteWord(word._id)}>
+                              {t('homework.delete') || 'Delete'}
+                            </button>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>

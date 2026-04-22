@@ -11,16 +11,17 @@ const wordSchema = new mongoose.Schema({
     required: [true, 'Uzbek translation is required'],
     trim: true
   },
-  level: {
-    type: String,
-    required: [true, 'Level is required'],
-    trim: true,
-    default: 'General'
+  lessonId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson',
+    required: [true, 'Class (lesson) is required']
   },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+wordSchema.index({ lessonId: 1 });
 
 module.exports = mongoose.model('Word', wordSchema);

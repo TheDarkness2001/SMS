@@ -1,17 +1,28 @@
 const Word = require('../models/Word');
+const Lesson = require('../models/Lesson');
+const Level = require('../models/Level');
 const HomeworkProgress = require('../models/HomeworkProgress');
 const Student = require('../models/Student');
 
-// Get random word
+// Get random word for practice
 exports.getRandomWord = async (req, res) => {
   try {
-    const { level } = req.query;
-    const filter = level ? { level } : {};
+    const { lessonId, levelId, mode } = req.query;
+    let filter = {};
+
+    if (lessonId) {
+      filter = { lessonId };
+    } else if (levelId) {
+      const lessons = await Lesson.find({ levelId }).select('_id');
+      const lessonIds = lessons.map(l => l._id);
+      filter = { lessonId: { $in: lessonIds } };
+    }
+
     const count = await Word.countDocuments(filter);
     if (count === 0) {
       return res.status(404).json({
         success: false,
-        message: level ? `No words found for level: ${level}` : 'No words found in database'
+        message: 'No words found for the selected criteria'
       });
     }
 
@@ -205,13 +216,15 @@ exports.getProgress = async (req, res) => {
 
 // ===== ADMIN WORD MANAGEMENT =====
 
-// Get all unique levels
+// Get all levels (from Level collection)
 exports.getLevels = async (req, res) => {
   try {
-    const levels = await Word.distinct('level');
+    const { languageId } = req.query;
+    const filter = languageId ? { languageId } : {};
+    const levels = await Level.find(filter).sort({ name: 1 });
     res.json({
       success: true,
-      data: { levels: levels.sort() }
+      data: { levels }
     });
   } catch (error) {
     console.error('Get levels error:', error);
@@ -242,23 +255,39 @@ exports.getAllWords = async (req, res) => {
   }
 };
 
-// Add new word
+// Add new word to a class (lesson)
 exports.addWord = async (req, res) => {
   try {
-    const { english, uzbek, level } = req.body;
+    const { english, uzbek, lessonId } = req.body;
 
-    if (!english || !uzbek || !level) {
+    if (!english || !uzbek || !lessonId) {
       return res.status(400).json({
         success: false,
-        message: 'English, Uzbek words and level are required'
+        message: 'English, Uzbek words and class (lesson) ID are required'
+      });
+    }
+
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      return res.status(404).json({
+        success: false,
+        message: 'Class not found'
+      });
+    }
+
+    // Check word count limit
+    if (lesson.maxWords && lesson.wordIds.length >= lesson.maxWords) {
+      return res.status(400).json({
+        success: false,
+        message: `Class is full. Maximum ${lesson.maxWords} words allowed.`
       });
     }
 
     const trimmedEnglish = english.trim().toLowerCase();
     const trimmedUzbek = uzbek.trim().toLowerCase();
-    const trimmedLevel = level.trim();
 
     const existingWord = await Word.findOne({
+      lessonId,
       $or: [
         { english: trimmedEnglish },
         { uzbek: trimmedUzbek }
@@ -268,17 +297,21 @@ exports.addWord = async (req, res) => {
     if (existingWord) {
       return res.status(400).json({
         success: false,
-        message: 'Word already exists'
+        message: 'Word already exists in this class'
       });
     }
 
     const word = new Word({
       english: trimmedEnglish,
       uzbek: trimmedUzbek,
-      level: trimmedLevel
+      lessonId
     });
 
     await word.save();
+
+    // Add word to lesson
+    lesson.wordIds.push(word._id);
+    await lesson.save();
 
     res.status(201).json({
       success: true,
@@ -299,7 +332,7 @@ exports.addWord = async (req, res) => {
 exports.updateWord = async (req, res) => {
   try {
     const { id } = req.params;
-    const { english, uzbek, level } = req.body;
+    const { english, uzbek } = req.body;
 
     const word = await Word.findById(id);
     if (!word) {
@@ -311,7 +344,6 @@ exports.updateWord = async (req, res) => {
 
     if (english) word.english = english.trim().toLowerCase();
     if (uzbek) word.uzbek = uzbek.trim().toLowerCase();
-    if (level) word.level = level.trim();
 
     await word.save();
 

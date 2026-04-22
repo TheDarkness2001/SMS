@@ -1,6 +1,8 @@
 const Lesson = require('../models/Lesson');
+const Level = require('../models/Level');
+const Language = require('../models/Language');
 const Word = require('../models/Word');
-const StudentLessonProgress = require('../models/StudentLessonProgress');
+const StudentVocabProgress = require('../models/StudentVocabProgress');
 const Student = require('../models/Student');
 
 // Get all lessons
@@ -140,12 +142,15 @@ exports.deleteLesson = async (req, res) => {
       });
     }
 
+    // Delete all words in this lesson (words cannot be orphaned)
+    await Word.deleteMany({ _id: { $in: lesson.wordIds } });
+
     await Lesson.findByIdAndDelete(id);
-    await StudentLessonProgress.deleteMany({ lessonId: id });
+    await StudentVocabProgress.deleteMany({ lessonId: id });
 
     res.json({
       success: true,
-      message: 'Lesson deleted successfully'
+      message: 'Class and its words deleted successfully'
     });
   } catch (error) {
     console.error('Delete lesson error:', error);
@@ -157,48 +162,7 @@ exports.deleteLesson = async (req, res) => {
   }
 };
 
-// Add words to lesson
-exports.addWordsToLesson = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { wordIds } = req.body;
-
-    if (!wordIds || !Array.isArray(wordIds) || wordIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'wordIds array is required'
-      });
-    }
-
-    const lesson = await Lesson.findById(id);
-    if (!lesson) {
-      return res.status(404).json({
-        success: false,
-        message: 'Lesson not found'
-      });
-    }
-
-    const existingIds = new Set(lesson.wordIds.map(w => w.toString()));
-    const newIds = wordIds.filter(wid => !existingIds.has(wid));
-    lesson.wordIds.push(...newIds);
-    await lesson.save();
-
-    res.json({
-      success: true,
-      message: 'Words added to lesson',
-      data: { lesson }
-    });
-  } catch (error) {
-    console.error('Add words to lesson error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-};
-
-// Remove word from lesson
+// Remove word from lesson and delete it
 exports.removeWordFromLesson = async (req, res) => {
   try {
     const { id, wordId } = req.params;
@@ -214,13 +178,66 @@ exports.removeWordFromLesson = async (req, res) => {
     lesson.wordIds = lesson.wordIds.filter(w => w.toString() !== wordId);
     await lesson.save();
 
+    // Delete the word since words cannot be orphaned
+    await Word.findByIdAndDelete(wordId);
+
     res.json({
       success: true,
-      message: 'Word removed from lesson',
+      message: 'Word removed and deleted',
       data: { lesson }
     });
   } catch (error) {
     console.error('Remove word from lesson error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Auto-generate classes for a level
+exports.autoGenerateClasses = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { count, wordsPerClass, examTimeLimit, minPassScore } = req.body;
+
+    const level = await Level.findById(id);
+    if (!level) {
+      return res.status(404).json({
+        success: false,
+        message: 'Level not found'
+      });
+    }
+
+    const classCount = count || level.classesCount || 11;
+    const existingLessons = await Lesson.find({ levelId: id }).sort({ order: 1 });
+    const startOrder = existingLessons.length > 0
+      ? Math.max(...existingLessons.map(l => l.order)) + 1
+      : 1;
+
+    const createdLessons = [];
+    for (let i = 0; i < classCount; i++) {
+      const lesson = new Lesson({
+        name: `Class ${startOrder + i}`,
+        levelId: id,
+        order: startOrder + i,
+        maxWords: wordsPerClass || level.wordsPerClass || 20,
+        examTimeLimit: examTimeLimit || level.examTimeLimit || 300,
+        minPassScore: minPassScore || level.minPassScore || 70,
+        wordIds: []
+      });
+      await lesson.save();
+      createdLessons.push(lesson);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `${createdLessons.length} classes generated`,
+      data: { lessons: createdLessons }
+    });
+  } catch (error) {
+    console.error('Auto generate classes error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -328,9 +345,9 @@ exports.submitExam = async (req, res) => {
     const passed = score >= lesson.minPassScore;
 
     // Update or create progress record
-    let progress = await StudentLessonProgress.findOne({ studentId, lessonId: id });
+    let progress = await StudentVocabProgress.findOne({ studentId, lessonId: id });
     if (!progress) {
-      progress = new StudentLessonProgress({ studentId, lessonId: id });
+      progress = new StudentVocabProgress({ studentId, lessonId: id });
     }
 
     progress.examAttempts += 1;
@@ -338,6 +355,8 @@ exports.submitExam = async (req, res) => {
       progress.bestExamScore = score;
     }
     progress.lastExamDate = new Date();
+    progress.wordsTotal = totalQuestions;
+    progress.wordsMemorized = correctCount;
 
     if (passed && progress.status !== 'passed') {
       progress.status = 'passed';
@@ -349,12 +368,12 @@ exports.submitExam = async (req, res) => {
       });
 
       if (nextLesson) {
-        let nextProgress = await StudentLessonProgress.findOne({
+        let nextProgress = await StudentVocabProgress.findOne({
           studentId,
           lessonId: nextLesson._id
         });
         if (!nextProgress) {
-          nextProgress = new StudentLessonProgress({
+          nextProgress = new StudentVocabProgress({
             studentId,
             lessonId: nextLesson._id,
             status: 'available',
@@ -398,7 +417,7 @@ exports.getStudentProgress = async (req, res) => {
 
     // Get all lessons and existing progress
     const allLessons = await Lesson.find().sort({ levelId: 1, order: 1 });
-    const progressRecords = await StudentLessonProgress.find({ studentId });
+    const progressRecords = await StudentVocabProgress.find({ studentId });
     const progressMap = new Map(progressRecords.map(p => [p.lessonId.toString(), p]));
 
     // Merge: all lessons must appear, default to locked if no progress
@@ -453,12 +472,12 @@ exports.initStudentProgress = async (req, res) => {
     for (const levelId of levelIds) {
       const firstLesson = await Lesson.findOne({ levelId }).sort({ order: 1 });
       if (firstLesson) {
-        let progress = await StudentLessonProgress.findOne({
+        let progress = await StudentVocabProgress.findOne({
           studentId,
           lessonId: firstLesson._id
         });
         if (!progress) {
-          progress = new StudentLessonProgress({
+          progress = new StudentVocabProgress({
             studentId,
             lessonId: firstLesson._id,
             status: 'available',
@@ -492,7 +511,7 @@ exports.getAllStudentProgress = async (req, res) => {
 
     const result = await Promise.all(
       students.map(async (student) => {
-        const progress = await StudentLessonProgress.find({ studentId: student._id })
+        const progress = await StudentVocabProgress.find({ studentId: student._id })
           .populate('lessonId', 'name levelId order');
         return {
           ...student.toObject(),
@@ -507,6 +526,160 @@ exports.getAllStudentProgress = async (req, res) => {
     });
   } catch (error) {
     console.error('Get all student progress error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Get aggregated progress per level and language for a student
+exports.getStudentAggregatedProgress = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { languageId, levelId } = req.query;
+
+    // Build lesson filter
+    const lessonFilter = {};
+    if (levelId) {
+      lessonFilter.levelId = levelId;
+    } else if (languageId) {
+      const levels = await Level.find({ languageId }).select('_id');
+      const levelIds = levels.map(l => l._id);
+      lessonFilter.levelId = { $in: levelIds };
+    }
+
+    const allLessons = await Lesson.find(lessonFilter).sort({ levelId: 1, order: 1 });
+    const progressRecords = await StudentVocabProgress.find({ studentId });
+    const progressMap = new Map(progressRecords.map(p => [p.lessonId.toString(), p]));
+
+    // Group by level
+    const levelMap = new Map();
+    for (const lesson of allLessons) {
+      const lvlId = lesson.levelId.toString();
+      if (!levelMap.has(lvlId)) {
+        levelMap.set(lvlId, []);
+      }
+      const existing = progressMap.get(lesson._id.toString());
+      levelMap.get(lvlId).push({
+        lessonId: lesson,
+        status: existing ? existing.status : 'locked',
+        examAttempts: existing ? existing.examAttempts : 0,
+        bestExamScore: existing ? existing.bestExamScore : 0,
+        wordsMemorized: existing ? existing.wordsMemorized : 0,
+        wordsTotal: lesson.wordIds.length,
+        lastExamDate: existing ? existing.lastExamDate : null
+      });
+    }
+
+    // Build aggregated result
+    const levelIds = [...levelMap.keys()];
+    const levels = await Level.find({ _id: { $in: levelIds } });
+    const levelDetails = await Promise.all(levels.map(async (lvl) => {
+      const classes = levelMap.get(lvl._id.toString()) || [];
+      const totalWords = classes.reduce((sum, c) => sum + c.wordsTotal, 0);
+      const memorizedWords = classes.reduce((sum, c) => sum + c.wordsMemorized, 0);
+      const passedClasses = classes.filter(c => c.status === 'passed').length;
+      const availableClasses = classes.filter(c => c.status === 'available').length;
+      const lockedClasses = classes.filter(c => c.status === 'locked').length;
+
+      return {
+        levelId: lvl._id,
+        levelName: lvl.name,
+        languageId: lvl.languageId,
+        totalClasses: classes.length,
+        passedClasses,
+        availableClasses,
+        lockedClasses,
+        totalWords,
+        memorizedWords,
+        memorizationPercent: totalWords > 0 ? Math.round((memorizedWords / totalWords) * 100) : 0,
+        classes
+      };
+    }));
+
+    // Group by language
+    const languageMap = new Map();
+    for (const lvl of levelDetails) {
+      const langId = lvl.languageId.toString();
+      if (!languageMap.has(langId)) {
+        languageMap.set(langId, []);
+      }
+      languageMap.get(langId).push(lvl);
+    }
+
+    const languageIds = [...languageMap.keys()];
+    const langs = await Language.find({ _id: { $in: languageIds } });
+    const result = langs.map(lang => {
+      const lvls = languageMap.get(lang._id.toString()) || [];
+      const totalWords = lvls.reduce((sum, l) => sum + l.totalWords, 0);
+      const memorizedWords = lvls.reduce((sum, l) => sum + l.memorizedWords, 0);
+      const totalClasses = lvls.reduce((sum, l) => sum + l.totalClasses, 0);
+      const passedClasses = lvls.reduce((sum, l) => sum + l.passedClasses, 0);
+
+      return {
+        languageId: lang._id,
+        languageName: lang.name,
+        totalLevels: lvls.length,
+        totalClasses,
+        passedClasses,
+        totalWords,
+        memorizedWords,
+        memorizationPercent: totalWords > 0 ? Math.round((memorizedWords / totalWords) * 100) : 0,
+        levels: lvls
+      };
+    });
+
+    res.json({
+      success: true,
+      data: { progress: result }
+    });
+  } catch (error) {
+    console.error('Get aggregated progress error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Update practice stats
+exports.updatePracticeStats = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { lessonId, isCorrect } = req.body;
+
+    if (!lessonId) {
+      return res.status(400).json({
+        success: false,
+        message: 'lessonId is required'
+      });
+    }
+
+    let progress = await StudentVocabProgress.findOne({ studentId, lessonId });
+    if (!progress) {
+      progress = new StudentVocabProgress({ studentId, lessonId });
+    }
+
+    progress.practiceAttempts += 1;
+    if (isCorrect) {
+      progress.practiceCorrect += 1;
+    }
+    progress.lastPracticeDate = new Date();
+
+    await progress.save();
+
+    res.json({
+      success: true,
+      data: {
+        practiceAttempts: progress.practiceAttempts,
+        practiceCorrect: progress.practiceCorrect
+      }
+    });
+  } catch (error) {
+    console.error('Update practice stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

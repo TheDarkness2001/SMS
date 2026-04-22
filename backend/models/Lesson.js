@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const lessonSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Lesson name is required'],
+    required: [true, 'Class name is required'],
     trim: true
   },
   levelId: {
@@ -20,6 +20,11 @@ const lessonSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Word'
   }],
+  maxWords: {
+    type: Number,
+    default: 20,
+    min: 1
+  },
   examTimeLimit: {
     type: Number,
     default: 300

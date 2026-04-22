@@ -5,7 +5,9 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Student specific routes (must come before /:id)
 router.get('/student/progress', protect, lessonController.getStudentProgress);
+router.get('/student/aggregated-progress', protect, lessonController.getStudentAggregatedProgress);
 router.post('/student/init', protect, lessonController.initStudentProgress);
+router.post('/student/practice-stats', protect, lessonController.updatePracticeStats);
 
 // Admin routes
 router.get('/students/progress', protect, authorize('admin', 'manager', 'founder'), lessonController.getAllStudentProgress);
@@ -14,7 +16,7 @@ router.post('/', protect, authorize('admin', 'manager', 'founder'), lessonContro
 router.get('/:id', protect, authorize('admin', 'manager', 'founder'), lessonController.getLesson);
 router.put('/:id', protect, authorize('admin', 'manager', 'founder'), lessonController.updateLesson);
 router.delete('/:id', protect, authorize('admin', 'manager', 'founder'), lessonController.deleteLesson);
-router.post('/:id/words', protect, authorize('admin', 'manager', 'founder'), lessonController.addWordsToLesson);
+router.post('/:id/auto-generate', protect, authorize('admin', 'manager', 'founder'), lessonController.autoGenerateClasses);
 router.delete('/:id/words/:wordId', protect, authorize('admin', 'manager', 'founder'), lessonController.removeWordFromLesson);
 
 // Student lesson routes
