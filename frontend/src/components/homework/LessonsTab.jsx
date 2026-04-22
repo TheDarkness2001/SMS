@@ -393,45 +393,53 @@ const LessonsTab = ({ t }) => {
                 className="form-input"
                 required
               />
-              <input
-                type="number"
-                placeholder={t('homework.classesCount') || 'Classes'}
-                value={levelConfig.classesCount}
-                onChange={(e) => setLevelConfig({ ...levelConfig, classesCount: e.target.value })}
-                className="form-input"
-                min="1"
-                style={{ maxWidth: '80px' }}
-                title={t('homework.defaultClasses') || 'Default classes count'}
-              />
-              <input
-                type="number"
-                placeholder={t('homework.wordsPerClass') || 'Words/Class'}
-                value={levelConfig.wordsPerClass}
-                onChange={(e) => setLevelConfig({ ...levelConfig, wordsPerClass: e.target.value })}
-                className="form-input"
-                min="1"
-                style={{ maxWidth: '90px' }}
-                title={t('homework.defaultWords') || 'Default words per class'}
-              />
-              <input
-                type="number"
-                placeholder={t('homework.timeLimit') || 'Time (sec)'}
-                value={levelConfig.examTimeLimit}
-                onChange={(e) => setLevelConfig({ ...levelConfig, examTimeLimit: e.target.value })}
-                className="form-input"
-                min="30"
-                style={{ maxWidth: '100px' }}
-              />
-              <input
-                type="number"
-                placeholder={t('homework.passScore') || 'Pass %'}
-                value={levelConfig.minPassScore}
-                onChange={(e) => setLevelConfig({ ...levelConfig, minPassScore: e.target.value })}
-                className="form-input"
-                min="1"
-                max="100"
-                style={{ maxWidth: '80px' }}
-              />
+              <div className="form-field-with-label">
+                <label className="form-field-label">{t('homework.classesCount') || 'Classes'}</label>
+                <input
+                  type="number"
+                  value={levelConfig.classesCount}
+                  onChange={(e) => setLevelConfig({ ...levelConfig, classesCount: e.target.value })}
+                  className="form-input"
+                  min="1"
+                  style={{ maxWidth: '80px' }}
+                  title={t('homework.defaultClasses') || 'Default classes count'}
+                />
+              </div>
+              <div className="form-field-with-label">
+                <label className="form-field-label">{t('homework.wordsPerClass') || 'Words/Class'}</label>
+                <input
+                  type="number"
+                  value={levelConfig.wordsPerClass}
+                  onChange={(e) => setLevelConfig({ ...levelConfig, wordsPerClass: e.target.value })}
+                  className="form-input"
+                  min="1"
+                  style={{ maxWidth: '90px' }}
+                  title={t('homework.defaultWords') || 'Default words per class'}
+                />
+              </div>
+              <div className="form-field-with-label">
+                <label className="form-field-label">{t('homework.timeLimit') || 'Time (sec)'}</label>
+                <input
+                  type="number"
+                  value={levelConfig.examTimeLimit}
+                  onChange={(e) => setLevelConfig({ ...levelConfig, examTimeLimit: e.target.value })}
+                  className="form-input"
+                  min="30"
+                  style={{ maxWidth: '100px' }}
+                />
+              </div>
+              <div className="form-field-with-label">
+                <label className="form-field-label">{t('homework.passScore') || 'Pass %'}</label>
+                <input
+                  type="number"
+                  value={levelConfig.minPassScore}
+                  onChange={(e) => setLevelConfig({ ...levelConfig, minPassScore: e.target.value })}
+                  className="form-input"
+                  min="1"
+                  max="100"
+                  style={{ maxWidth: '80px' }}
+                />
+              </div>
               <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
             </div>
           </form>
