@@ -35,7 +35,20 @@ const Homework = () => {
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
 
-  const isAdmin = (user?.role || '').toLowerCase().trim() === 'founder' || user?.permissions?.canManageHomework === true;
+  const isAdmin = (() => {
+    // Check from auth context first, then fall back to sessionStorage
+    const role = (user?.role || '').toLowerCase().trim();
+    if (role === 'founder') return true;
+    if (user?.permissions?.canManageHomework === true) return true;
+    // Fallback: check sessionStorage (same source as Sidebar/Navbar)
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const storedRole = (stored.role || '').toLowerCase().trim();
+      if (storedRole === 'founder') return true;
+      if (stored.permissions?.canManageHomework === true) return true;
+    } catch (e) {}
+    return false;
+  })();
   const isStudent = user?.userType === 'student';
 
   // Lesson system state
