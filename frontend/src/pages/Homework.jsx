@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { homeworkAPI, lessonAPI, languageAPI, levelAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -68,6 +68,9 @@ const Homework = () => {
   // Practice mode state
   const [selectedPracticeLessonId, setSelectedPracticeLessonId] = useState('');
   const [practiceMode, setPracticeMode] = useState('level'); // 'level' or 'lesson'
+  const [practiceView, setPracticeView] = useState('levels'); // 'levels' | 'classes' | 'game'
+  const [practiceTimer, setPracticeTimer] = useState(0);
+  const practiceTimerRef = useRef(null);
 
   // Fetch student lesson progress
   useEffect(() => {
@@ -325,6 +328,92 @@ const Homework = () => {
     return t('homework.keepPracticing') || 'Keep practicing! You will improve with time.';
   };
 
+  // Timer helpers
+  const formatTimer = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const startPracticeTimer = () => {
+    setPracticeTimer(0);
+    if (practiceTimerRef.current) clearInterval(practiceTimerRef.current);
+    practiceTimerRef.current = setInterval(() => {
+      setPracticeTimer(prev => prev + 1);
+    }, 1000);
+  };
+
+  const stopPracticeTimer = () => {
+    if (practiceTimerRef.current) {
+      clearInterval(practiceTimerRef.current);
+      practiceTimerRef.current = null;
+    }
+  };
+
+  // Practice navigation
+  const selectLevelForPractice = async (levelId) => {
+    setSelectedLevelId(levelId);
+    setPracticeView('classes');
+    setCurrentWord(null);
+    setFeedback(null);
+    // Fetch lessons for this level
+    setLessonsLoading(true);
+    try {
+      const res = await lessonAPI.getAllLessons(levelId);
+      if (res.data.success) {
+        setLevelLessons(res.data.data.lessons);
+      }
+    } catch (error) {
+      console.error('Error fetching lessons:', error);
+    } finally {
+      setLessonsLoading(false);
+    }
+  };
+
+  const selectClassForPractice = (lessonId) => {
+    setSelectedPracticeLessonId(lessonId);
+    setPracticeMode('lesson');
+    setPracticeView('game');
+    setSessionStats({
+      totalAttempts: 0,
+      correctAnswers: 0,
+      enToUzCorrect: 0,
+      enToUzTotal: 0,
+      uzToEnCorrect: 0,
+      uzToEnTotal: 0
+    });
+    setSessionComplete(false);
+    setCurrentWord(null);
+    setFeedback(null);
+    startPracticeTimer();
+    // Word will be fetched by useEffect when currentWord is null and activeTab is practice
+  };
+
+  const goBackToPracticeLevels = () => {
+    stopPracticeTimer();
+    setPracticeView('levels');
+    setPracticeTimer(0);
+    setCurrentWord(null);
+    setFeedback(null);
+    setSessionComplete(false);
+  };
+
+  const goBackToPracticeClasses = () => {
+    stopPracticeTimer();
+    setPracticeView('classes');
+    setPracticeTimer(0);
+    setCurrentWord(null);
+    setFeedback(null);
+    setSessionComplete(false);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (practiceTimerRef.current) clearInterval(practiceTimerRef.current);
+    };
+  }, []);
+
   const tabs = [];
 
   if (isStudent) {
@@ -511,142 +600,145 @@ const Homework = () => {
         {/* PRACTICE MODE */}
         {activeTab === 'practice' && (
           <div className="game-section">
-            <div className="tier-selectors">
-              <div className="level-selector">
-                <label>{t('homework.language') || 'Language'}:</label>
-                <select
-                  value={selectedLanguageId}
-                  onChange={(e) => {
-                    setSelectedLanguageId(e.target.value);
-                    setCurrentWord(null);
-                    setFeedback(null);
-                  }}
-                  className="level-select"
-                >
-                  {languages.map(lang => (
-                    <option key={lang._id} value={lang._id}>{lang.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="level-selector">
-                <label>{t('homework.level') || 'Level'}:</label>
-                <select
-                  value={selectedLevelId}
-                  onChange={(e) => {
-                    setSelectedLevelId(e.target.value);
-                    setCurrentWord(null);
-                    setFeedback(null);
-                  }}
-                  className="level-select"
-                >
-                  {levelsList.map(lvl => (
-                    <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="level-selector">
-                <label>{t('homework.practiceMode') || 'Mode'}:</label>
-                <select
-                  value={practiceMode}
-                  onChange={(e) => {
-                    setPracticeMode(e.target.value);
-                    setCurrentWord(null);
-                    setFeedback(null);
-                  }}
-                  className="level-select"
-                >
-                  <option value="level">{t('homework.allClassesInLevel') || 'All Classes in Level'}</option>
-                  <option value="lesson">{t('homework.specificClass') || 'Specific Class'}</option>
-                </select>
-              </div>
-              {practiceMode === 'lesson' && (
-                <div className="level-selector">
-                  <label>{t('homework.class') || 'Class'}:</label>
-                  <select
-                    value={selectedPracticeLessonId}
-                    onChange={(e) => {
-                      setSelectedPracticeLessonId(e.target.value);
-                      setCurrentWord(null);
-                      setFeedback(null);
-                    }}
-                    className="level-select"
-                  >
-                    {levelLessons.map(lesson => (
-                      <option key={lesson._id} value={lesson._id}>{lesson.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            <div className="practice-stats">
-              <span>{t('homework.score') || 'Score'}: {sessionStats.correctAnswers}/{sessionStats.totalAttempts}</span>
-              <span>{t('homework.accuracy') || 'Accuracy'}: {accuracy}%</span>
-            </div>
-
-            {isLoading ? (
-              <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
-            ) : currentWord ? (
-              <div className="word-card">
-                <div className="direction-label">{getDirectionLabel()}</div>
-                <div className="word-display">{getDisplayText()}</div>
-
-                <div className="answer-section">
-                  <input
-                    type="text"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={getPlaceholder()}
-                    disabled={isChecking || feedback !== null}
-                    className="answer-input"
-                    autoFocus
-                  />
-
-                  {!feedback ? (
-                    <button
-                      onClick={handleCheckAnswer}
-                      disabled={!userAnswer.trim() || isChecking}
-                      className="btn btn-primary"
+            {/* LEVELS VIEW */}
+            {practiceView === 'levels' && (
+              <>
+                <h3 className="practice-section-title">{t('homework.selectLevel') || 'Select a Level'}</h3>
+                <div className="practice-levels-grid">
+                  {levelsList.map(level => (
+                    <div
+                      key={level._id}
+                      className="practice-level-card"
+                      onClick={() => selectLevelForPractice(level._id)}
                     >
-                      {isChecking ? (t('homework.checking') || 'Checking...') : (t('homework.checkAnswer') || 'Check Answer')}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleNext}
-                      className="btn btn-primary"
-                    >
-                      {t('homework.next') || 'Next'}
-                    </button>
+                      <div className="practice-level-icon">📚</div>
+                      <div className="practice-level-name">{level.name}</div>
+                    </div>
+                  ))}
+                  {levelsList.length === 0 && (
+                    <div className="no-data">{t('homework.noLevels') || 'No levels available yet.'}</div>
                   )}
                 </div>
+              </>
+            )}
 
-                {feedback && (
-                  <div className={`feedback ${feedback.isCorrect ? 'correct' : 'incorrect'}`}>
-                    {feedback.isCorrect ? (
-                      <>
-                        <div className="feedback-title">{t('homework.correct') || 'Correct!'}</div>
-                        <p>{t('homework.greatJob') || 'Great job! Your answer is correct.'}</p>
-                      </>
-                    ) : (
-                      <>
-                        <div className="feedback-title">{t('homework.incorrect') || 'Incorrect'}</div>
-                        <p>{t('homework.yourAnswer') || 'Your answer'}: <strong>{feedback.userAnswer}</strong></p>
-                        <p>{t('homework.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
-                      </>
+            {/* CLASSES VIEW */}
+            {practiceView === 'classes' && (
+              <>
+                <div className="practice-back-bar">
+                  <button className="btn btn-small btn-secondary" onClick={goBackToPracticeLevels}>
+                    ← {t('homework.backToLevels') || 'Back to Levels'}
+                  </button>
+                </div>
+                <h3 className="practice-section-title">
+                  {levelsList.find(l => l._id === selectedLevelId)?.name || ''} — {t('homework.selectClass') || 'Select a Class'}
+                </h3>
+                {lessonsLoading ? (
+                  <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
+                ) : (
+                  <div className="practice-classes-grid">
+                    {levelLessons.map(lesson => (
+                      <div
+                        key={lesson._id}
+                        className="practice-class-card"
+                        onClick={() => selectClassForPractice(lesson._id)}
+                      >
+                        <div className="practice-class-header">
+                          <span className="practice-class-order">{lesson.order}</span>
+                          <span className="practice-class-name">{lesson.name}</span>
+                        </div>
+                        <div className="practice-class-meta">
+                          {lesson.wordIds?.length || 0} {t('homework.words') || 'words'}
+                        </div>
+                      </div>
+                    ))}
+                    {levelLessons.length === 0 && (
+                      <div className="no-data">{t('homework.noLessonsYet') || 'No classes available yet.'}</div>
                     )}
                   </div>
                 )}
-              </div>
-            ) : (
-              <div className="no-words">
-                {t('homework.noWords') || 'No words available. Please contact admin to add words.'}
-              </div>
+              </>
             )}
 
-            <div className="game-tip">
-              <p><strong>{t('homework.tip') || 'Tip'}:</strong> {t('homework.pressEnter') || 'Press Enter to submit your answer or go to the next word.'}</p>
-            </div>
+            {/* GAME VIEW */}
+            {practiceView === 'game' && (
+              <>
+                <div className="practice-game-bar">
+                  <button className="btn btn-small btn-secondary" onClick={goBackToPracticeClasses}>
+                    ← {t('homework.backToClasses') || 'Back to Classes'}
+                  </button>
+                  <div className="practice-timer">⏱️ {formatTimer(practiceTimer)}</div>
+                  <div className="practice-stats">
+                    <span>{t('homework.score') || 'Score'}: {sessionStats.correctAnswers}/{sessionStats.totalAttempts}</span>
+                    <span>{t('homework.accuracy') || 'Accuracy'}: {accuracy}%</span>
+                  </div>
+                </div>
+
+                {isLoading ? (
+                  <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
+                ) : currentWord ? (
+                  <div className="word-card">
+                    <div className="direction-label">{getDirectionLabel()}</div>
+                    <div className="word-display">{getDisplayText()}</div>
+
+                    <div className="answer-section">
+                      <input
+                        type="text"
+                        value={userAnswer}
+                        onChange={(e) => setUserAnswer(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={getPlaceholder()}
+                        disabled={isChecking || feedback !== null}
+                        className="answer-input"
+                        autoFocus
+                      />
+
+                      {!feedback ? (
+                        <button
+                          onClick={handleCheckAnswer}
+                          disabled={!userAnswer.trim() || isChecking}
+                          className="btn btn-primary"
+                        >
+                          {isChecking ? (t('homework.checking') || 'Checking...') : (t('homework.checkAnswer') || 'Check Answer')}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleNext}
+                          className="btn btn-primary"
+                        >
+                          {t('homework.next') || 'Next'}
+                        </button>
+                      )}
+                    </div>
+
+                    {feedback && (
+                      <div className={`feedback ${feedback.isCorrect ? 'correct' : 'incorrect'}`}>
+                        {feedback.isCorrect ? (
+                          <>
+                            <div className="feedback-title">{t('homework.correct') || 'Correct!'}</div>
+                            <p>{t('homework.greatJob') || 'Great job! Your answer is correct.'}</p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="feedback-title">{t('homework.incorrect') || 'Incorrect'}</div>
+                            <p>{t('homework.yourAnswer') || 'Your answer'}: <strong>{feedback.userAnswer}</strong></p>
+                            <p>{t('homework.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="no-words">
+                    {t('homework.noWords') || 'No words available. Please contact admin to add words.'}
+                  </div>
+                )}
+
+                <div className="game-tip">
+                  <p><strong>{t('homework.tip') || 'Tip'}:</strong> {t('homework.pressEnter') || 'Press Enter to submit your answer or go to the next word.'}</p>
+                </div>
+              </>
+            )}
           </div>
         )}
 
