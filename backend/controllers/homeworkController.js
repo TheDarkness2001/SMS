@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Word = require('../models/Word');
 const Lesson = require('../models/Lesson');
 const Level = require('../models/Level');
@@ -11,7 +12,7 @@ exports.getRandomWord = async (req, res) => {
     let filter = {};
 
     if (lessonId) {
-      filter = { lessonId };
+      filter = { lessonId: new mongoose.Types.ObjectId(lessonId) };
     } else if (levelId) {
       const lessons = await Lesson.find({ levelId }).select('_id');
       const lessonIds = lessons.map(l => l._id);
