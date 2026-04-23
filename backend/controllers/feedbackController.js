@@ -37,9 +37,14 @@ const canGiveFeedbackNow = async (scheduleId) => {
       return { allowed: false, reason: 'Schedule not found' };
     }
 
+    // Uzbekistan timezone (UTC+5)
+    const UZBEKISTAN_OFFSET_HOURS = 5;
     const now = new Date();
-    const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
-    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+    // Convert server time to UTC, then to Uzbekistan time
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const uzbekistanNow = new Date(utcTime + (UZBEKISTAN_OFFSET_HOURS * 60 * 60000));
+
+    const currentDay = uzbekistanNow.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
 
     // Check if today is a scheduled day
     if (!schedule.scheduledDays || !schedule.scheduledDays.includes(currentDay)) {
@@ -49,28 +54,28 @@ const canGiveFeedbackNow = async (scheduleId) => {
       };
     }
 
-    // Parse class end time and add 30 minutes
+    // Parse class end time and add 30 minutes (in Uzbekistan timezone)
     const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
-    const classEndDate = new Date();
-    classEndDate.setHours(endHour, endMinute, 0, 0);
+    const classEndDate = new Date(uzbekistanNow);
+    classEndDate.setUTCHours(endHour - UZBEKISTAN_OFFSET_HOURS, endMinute, 0, 0);
     
     // Add 30 minutes grace period
     const feedbackDeadline = new Date(classEndDate.getTime() + 30 * 60000);
     const feedbackDeadlineTime = feedbackDeadline.toTimeString().slice(0, 5);
 
-    // Check if current time is between class start and deadline
+    // Check if current time is between class start and deadline (in Uzbekistan timezone)
     const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
-    const classStartDate = new Date();
-    classStartDate.setHours(startHour, startMinute, 0, 0);
+    const classStartDate = new Date(uzbekistanNow);
+    classStartDate.setUTCHours(startHour - UZBEKISTAN_OFFSET_HOURS, startMinute, 0, 0);
 
-    if (now < classStartDate) {
+    if (uzbekistanNow < classStartDate) {
       return {
         allowed: false,
         reason: `Class hasn't started yet. Class time: ${schedule.startTime} - ${schedule.endTime}`
       };
     }
 
-    if (now > feedbackDeadline) {
+    if (uzbekistanNow > feedbackDeadline) {
       return {
         allowed: false,
         reason: `Feedback window closed. You can give feedback from ${schedule.startTime} to ${feedbackDeadlineTime} (class end + 30 min)`
