@@ -1101,6 +1101,64 @@
   overflow-x: auto;
 }
 
+.words-table .num-col {
+  width: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Duplicate Warning */
+.duplicate-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.duplicate-warning-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.duplicate-warning-content {
+  flex: 1;
+  color: #856404;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.duplicate-warning-content strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.duplicate-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.duplicate-word {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.duplicate-sep {
+  color: #b38f00;
+  font-weight: 600;
+}
+
 /* Exam Lesson Selection */
 .exam-lesson-selection {
   padding: 20px 0;

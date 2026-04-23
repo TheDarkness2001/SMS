@@ -31,6 +31,7 @@ const LessonsTab = ({ t }) => {
   const [editingWord, setEditingWord] = useState(null);
   const [editWordForm, setEditWordForm] = useState({ english: '', uzbek: '' });
   const [generating, setGenerating] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
 
   useEffect(() => {
     fetchLanguages();
@@ -238,6 +239,7 @@ const LessonsTab = ({ t }) => {
   const handleAddWord = async (e) => {
     e.preventDefault();
     if (!newWord.english.trim() || !newWord.uzbek.trim() || !selectedLesson) return;
+    setDuplicateWarning(null);
     try {
       const createRes = await homeworkAPI.addWord({
         english: newWord.english.trim(),
@@ -250,7 +252,18 @@ const LessonsTab = ({ t }) => {
         fetchLessons(selectedLevel._id);
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Error adding word');
+      const status = err.response?.status;
+      const data = err.response?.data;
+      if (status === 409 && data?.duplicate) {
+        setDuplicateWarning({
+          message: data.message,
+          english: data.duplicate.english,
+          uzbek: data.duplicate.uzbek,
+          location: data.duplicate.location
+        });
+      } else {
+        alert(data?.message || 'Error adding word');
+      }
     }
   };
 
@@ -593,7 +606,7 @@ const LessonsTab = ({ t }) => {
                 type="text"
                 placeholder={t('homework.englishWord') || 'English word'}
                 value={newWord.english}
-                onChange={(e) => setNewWord({ ...newWord, english: e.target.value })}
+                onChange={(e) => { setNewWord({ ...newWord, english: e.target.value }); setDuplicateWarning(null); }}
                 className="form-input"
                 required
               />
@@ -601,13 +614,27 @@ const LessonsTab = ({ t }) => {
                 type="text"
                 placeholder={t('homework.uzbekWord') || 'Uzbek word'}
                 value={newWord.uzbek}
-                onChange={(e) => setNewWord({ ...newWord, uzbek: e.target.value })}
+                onChange={(e) => { setNewWord({ ...newWord, uzbek: e.target.value }); setDuplicateWarning(null); }}
                 className="form-input"
                 required
               />
               <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
             </div>
           </form>
+
+          {duplicateWarning && (
+            <div className="duplicate-warning">
+              <div className="duplicate-warning-icon">⚠️</div>
+              <div className="duplicate-warning-content">
+                <strong>{duplicateWarning.message}</strong>
+                <div className="duplicate-details">
+                  <span className="duplicate-word">{duplicateWarning.english}</span>
+                  <span className="duplicate-sep">→</span>
+                  <span className="duplicate-word">{duplicateWarning.uzbek}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <div className="loading">{t('homework.loading') || 'Loading...'}</div>
@@ -616,16 +643,18 @@ const LessonsTab = ({ t }) => {
               <table className="words-table">
                 <thead>
                   <tr>
+                    <th className="num-col">#</th>
                     <th>{t('homework.english') || 'English'}</th>
                     <th>{t('homework.uzbek') || 'Uzbek'}</th>
                     <th className="actions">{t('homework.actions') || 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {lessonWords.map(word => (
+                  {lessonWords.map((word, idx) => (
                     <tr key={word._id}>
                       {editingWord === word._id ? (
                         <>
+                          <td className="num-col">{idx + 1}</td>
                           <td>
                             <input
                               type="text"
@@ -655,6 +684,7 @@ const LessonsTab = ({ t }) => {
                         </>
                       ) : (
                         <>
+                          <td className="num-col">{idx + 1}</td>
                           <td>{word.english}</td>
                           <td>{word.uzbek}</td>
                           <td className="actions">

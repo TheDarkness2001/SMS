@@ -286,18 +286,48 @@ exports.addWord = async (req, res) => {
     const trimmedEnglish = english.trim().toLowerCase();
     const trimmedUzbek = uzbek.trim().toLowerCase();
 
+    // Check for duplicates across ALL lessons/levels
     const existingWord = await Word.findOne({
-      lessonId,
-      $or: [
-        { english: trimmedEnglish },
-        { uzbek: trimmedUzbek }
-      ]
+      english: trimmedEnglish
+    }).populate({
+      path: 'lessonId',
+      select: 'name levelId',
+      populate: {
+        path: 'levelId',
+        select: 'name'
+      }
     });
 
     if (existingWord) {
+      const sameMeaning = existingWord.uzbek.toLowerCase() === trimmedUzbek;
+      const location = existingWord.lessonId?.levelId?.name 
+        ? `${existingWord.lessonId.levelId.name} → ${existingWord.lessonId.name}`
+        : existingWord.lessonId?.name || 'unknown location';
+
+      if (sameMeaning) {
+        return res.status(409).json({
+          success: false,
+          message: `This word already exists with the same meaning in ${location}`,
+          duplicate: {
+            english: existingWord.english,
+            uzbek: existingWord.uzbek,
+            location: location
+          }
+        });
+      }
+      // Different meaning - allow but warn (frontend can show a confirmation)
+    }
+
+    // Also check within same lesson for same Uzbek (different English)
+    const existingUzbekInLesson = await Word.findOne({
+      lessonId,
+      uzbek: trimmedUzbek
+    });
+
+    if (existingUzbekInLesson) {
       return res.status(400).json({
         success: false,
-        message: 'Word already exists in this class'
+        message: 'This Uzbek translation already exists in this class'
       });
     }
 
