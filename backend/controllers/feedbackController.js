@@ -57,16 +57,16 @@ const canGiveFeedbackNow = async (scheduleId) => {
     // Parse class end time and add 30 minutes (in Uzbekistan timezone)
     const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
     const classEndDate = new Date(uzbekistanNow);
-    classEndDate.setUTCHours(endHour - UZBEKISTAN_OFFSET_HOURS, endMinute, 0, 0);
+    classEndDate.setUTCHours(endHour, endMinute, 0, 0);
     
     // Add 30 minutes grace period
     const feedbackDeadline = new Date(classEndDate.getTime() + 30 * 60000);
-    const feedbackDeadlineTime = feedbackDeadline.toTimeString().slice(0, 5);
+    const feedbackDeadlineTime = String(feedbackDeadline.getUTCHours()).padStart(2, '0') + ':' + String(feedbackDeadline.getUTCMinutes()).padStart(2, '0');
 
     // Check if current time is between class start and deadline (in Uzbekistan timezone)
     const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
     const classStartDate = new Date(uzbekistanNow);
-    classStartDate.setUTCHours(startHour - UZBEKISTAN_OFFSET_HOURS, startMinute, 0, 0);
+    classStartDate.setUTCHours(startHour, startMinute, 0, 0);
 
     if (uzbekistanNow < classStartDate) {
       return {
