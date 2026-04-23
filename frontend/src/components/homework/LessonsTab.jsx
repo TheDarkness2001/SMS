@@ -22,10 +22,9 @@ const LessonsTab = ({ t }) => {
   const [levelConfig, setLevelConfig] = useState({
     classesCount: 11,
     wordsPerClass: 20,
-    examTimeLimit: 300,
     minPassScore: 70
   });
-  const [lessonForm, setLessonForm] = useState({ name: '', order: 1, examTimeLimit: 300, minPassScore: 70 });
+  const [lessonForm, setLessonForm] = useState({ name: '', order: 1, minPassScore: 70 });
   const [editingLesson, setEditingLesson] = useState(null);
   const [newWord, setNewWord] = useState({ english: '', uzbek: '' });
   const [editingWord, setEditingWord] = useState(null);
@@ -124,11 +123,10 @@ const LessonsTab = ({ t }) => {
         languageId: selectedLanguage._id,
         classesCount: parseInt(levelConfig.classesCount) || 11,
         wordsPerClass: parseInt(levelConfig.wordsPerClass) || 20,
-        examTimeLimit: parseInt(levelConfig.examTimeLimit) || 300,
         minPassScore: parseInt(levelConfig.minPassScore) || 70
       });
       setNewLevel('');
-      setLevelConfig({ classesCount: 11, wordsPerClass: 20, examTimeLimit: 300, minPassScore: 70 });
+      setLevelConfig({ classesCount: 11, wordsPerClass: 20, minPassScore: 70 });
       fetchLevels(selectedLanguage._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating level');
@@ -160,10 +158,9 @@ const LessonsTab = ({ t }) => {
         name: lessonForm.name.trim(),
         levelId: selectedLevel._id,
         order: lessonForm.order,
-        examTimeLimit: lessonForm.examTimeLimit,
         minPassScore: lessonForm.minPassScore
       });
-      setLessonForm({ name: '', order: 1, examTimeLimit: 300, minPassScore: 70 });
+      setLessonForm({ name: '', order: 1, minPassScore: 70 });
       fetchLessons(selectedLevel._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating lesson');
@@ -177,11 +174,10 @@ const LessonsTab = ({ t }) => {
       await lessonAPI.updateLesson(editingLesson._id, {
         name: lessonForm.name.trim(),
         order: lessonForm.order,
-        examTimeLimit: lessonForm.examTimeLimit,
         minPassScore: lessonForm.minPassScore
       });
       setEditingLesson(null);
-      setLessonForm({ name: '', order: 1, examTimeLimit: 300, minPassScore: 70 });
+      setLessonForm({ name: '', order: 1, minPassScore: 70 });
       fetchLessons(selectedLevel._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error updating lesson');
@@ -203,7 +199,6 @@ const LessonsTab = ({ t }) => {
     setLessonForm({
       name: lesson.name,
       order: lesson.order,
-      examTimeLimit: lesson.examTimeLimit,
       minPassScore: lesson.minPassScore
     });
   };
@@ -222,7 +217,6 @@ const LessonsTab = ({ t }) => {
       const res = await lessonAPI.autoGenerateClasses(selectedLevel._id, {
         count: selectedLevel.classesCount || 11,
         wordsPerClass: selectedLevel.wordsPerClass || 20,
-        examTimeLimit: selectedLevel.examTimeLimit || 300,
         minPassScore: selectedLevel.minPassScore || 70
       });
       if (res.data.success) {
@@ -302,12 +296,6 @@ const LessonsTab = ({ t }) => {
   const cancelEditWord = () => {
     setEditingWord(null);
     setEditWordForm({ english: '', uzbek: '' });
-  };
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   // Breadcrumb
@@ -432,16 +420,6 @@ const LessonsTab = ({ t }) => {
                 />
               </div>
               <div className="config-field">
-                <span className="config-label">{t('homework.timeLimit') || 'Time (sec)'}</span>
-                <input
-                  type="number"
-                  value={levelConfig.examTimeLimit}
-                  onChange={(e) => setLevelConfig({ ...levelConfig, examTimeLimit: e.target.value })}
-                  className="config-input"
-                  min="30"
-                />
-              </div>
-              <div className="config-field">
                 <span className="config-label">{t('homework.passScore') || 'Pass %'}</span>
                 <input
                   type="number"
@@ -470,7 +448,6 @@ const LessonsTab = ({ t }) => {
                       <span className="hierarchy-meta">
                         {lvl.classesCount || 11} {t('homework.classes') || 'classes'} ·
                         {lvl.wordsPerClass || 20} {t('homework.wordsPerClassShort') || 'words/class'} ·
-                        {Math.floor((lvl.examTimeLimit || 300) / 60)} {t('homework.min') || 'min'} ·
                         {lvl.minPassScore || 70}%
                       </span>
                     </div>
@@ -530,15 +507,6 @@ const LessonsTab = ({ t }) => {
               />
               <input
                 type="number"
-                placeholder={t('homework.timeLimit') || 'Time (sec)'}
-                value={lessonForm.examTimeLimit}
-                onChange={(e) => setLessonForm({ ...lessonForm, examTimeLimit: parseInt(e.target.value) || 300 })}
-                className="form-input"
-                min="30"
-                style={{ maxWidth: '100px' }}
-              />
-              <input
-                type="number"
                 placeholder={t('homework.passScore') || 'Pass %'}
                 value={lessonForm.minPassScore}
                 onChange={(e) => setLessonForm({ ...lessonForm, minPassScore: parseInt(e.target.value) || 70 })}
@@ -553,7 +521,7 @@ const LessonsTab = ({ t }) => {
               {editingLesson && (
                 <button type="button" className="btn btn-secondary" onClick={() => {
                   setEditingLesson(null);
-                  setLessonForm({ name: '', order: 1, examTimeLimit: 300, minPassScore: 70 });
+                  setLessonForm({ name: '', order: 1, minPassScore: 70 });
                 }}>
                   {t('homework.cancel') || 'Cancel'}
                 </button>
@@ -574,7 +542,7 @@ const LessonsTab = ({ t }) => {
                       <div className="lesson-main" onClick={() => selectLesson(lesson)} style={{ cursor: 'pointer' }}>
                         <span className="lesson-order">{lesson.order}</span>
                         <span className="lesson-name">{lesson.name}</span>
-                        <span className="lesson-meta">{lesson.wordIds?.length || 0} {t('homework.words') || 'words'} · {formatTime(lesson.examTimeLimit)} · {lesson.minPassScore}%</span>
+                        <span className="lesson-meta">{lesson.wordIds?.length || 0} {t('homework.words') || 'words'} · {lesson.minPassScore}%</span>
                       </div>
                       <div className="lesson-actions">
                         <button className="btn btn-small btn-edit" onClick={() => startEditLesson(lesson)}>

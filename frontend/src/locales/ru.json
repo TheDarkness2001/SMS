@@ -226,7 +226,8 @@
     "selectLevel": "Выберите Уровень",
     "selectClass": "Выберите Класс",
     "best": "Лучший",
-    "examNotAvailable": "Экзамен Недоступен"
+    "examNotAvailable": "Экзамен Недоступен",
+    "notFound": "Не Найдено"
   },
   "teachers": {
     "title": "Учителя",

@@ -226,7 +226,8 @@
     "selectLevel": "Darajani Tanlang",
     "selectClass": "Sinfni Tanlang",
     "best": "Eng Yaxshi",
-    "examNotAvailable": "Imtihon Mavjud Emas"
+    "examNotAvailable": "Imtihon Mavjud Emas",
+    "notFound": "Topilmadi"
   },
   "teachers": {
     "title": "O'qituvchilar",

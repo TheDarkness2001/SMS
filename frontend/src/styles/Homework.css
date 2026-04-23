@@ -1590,6 +1590,16 @@
   letter-spacing: 1px;
 }
 
+.practice-timer.timer-urgent {
+  color: var(--danger);
+  animation: pulse-timer 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-timer {
+  from { opacity: 1; }
+  to { opacity: 0.5; }
+}
+
 .practice-game-bar .practice-stats {
   display: flex;
   gap: 20px;

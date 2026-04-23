@@ -231,7 +231,8 @@
     "selectLevel": "Select a Level",
     "selectClass": "Select a Class",
     "best": "Best",
-    "examNotAvailable": "Exam Not Available"
+    "examNotAvailable": "Exam Not Available",
+    "notFound": "Not Found"
   },
   "teachers": {
     "title": "Teachers",

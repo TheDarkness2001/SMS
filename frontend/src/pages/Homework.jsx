@@ -69,9 +69,13 @@ const Homework = () => {
   const [selectedPracticeLessonId, setSelectedPracticeLessonId] = useState('');
   const [practiceMode, setPracticeMode] = useState('level'); // 'level' or 'lesson'
   const [practiceView, setPracticeView] = useState('levels'); // 'levels' | 'classes' | 'game'
-  const [practiceTimer, setPracticeTimer] = useState(0);
-  const practiceTimerRef = useRef(null);
   const [bestPracticeScore, setBestPracticeScore] = useState(0);
+
+  // Per-word timer for practice
+  const WORD_TIME_LIMIT = 30;
+  const [wordTimeLeft, setWordTimeLeft] = useState(WORD_TIME_LIMIT);
+  const wordTimerRef = useRef(null);
+  const autoAdvanceRef = useRef(null);
 
   // Fetch student lesson progress
   useEffect(() => {
@@ -194,6 +198,13 @@ const Homework = () => {
   const handleCheckAnswer = async () => {
     if (!userAnswer.trim() || !currentWord) return;
     setIsChecking(true);
+    // Stop word timer when user submits
+    if (activeTab === 'practice') {
+      if (wordTimerRef.current) {
+        clearInterval(wordTimerRef.current);
+        wordTimerRef.current = null;
+      }
+    }
     try {
       const response = await homeworkAPI.checkAnswer({
         wordId: currentWord.id,
@@ -237,6 +248,16 @@ const Homework = () => {
             // Silently fail - practice tracking is not critical
           }
         }
+
+        // Auto-advance in practice mode after brief feedback
+        if (activeTab === 'practice') {
+          if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+          autoAdvanceRef.current = setTimeout(() => {
+            setFeedback(null);
+            setUserAnswer('');
+            handleNext();
+          }, 1500);
+        }
       }
     } catch (error) {
       console.error('Error checking answer:', error);
@@ -257,10 +278,16 @@ const Homework = () => {
   // Handle Enter key
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      if (feedback) {
-        handleNext();
+      if (activeTab === 'practice') {
+        // In practice, just submit (auto-advance handles next)
+        if (!feedback && userAnswer.trim()) handleCheckAnswer();
       } else {
-        handleCheckAnswer();
+        // In exam, toggle between check and next
+        if (feedback) {
+          handleNext();
+        } else {
+          handleCheckAnswer();
+        }
       }
     }
   };
@@ -331,25 +358,67 @@ const Homework = () => {
   };
 
   // Timer helpers
-  const formatTimer = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const startPracticeTimer = () => {
-    setPracticeTimer(0);
-    if (practiceTimerRef.current) clearInterval(practiceTimerRef.current);
-    practiceTimerRef.current = setInterval(() => {
-      setPracticeTimer(prev => prev + 1);
+  const startWordTimer = () => {
+    setWordTimeLeft(WORD_TIME_LIMIT);
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+    wordTimerRef.current = setInterval(() => {
+      setWordTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(wordTimerRef.current);
+          wordTimerRef.current = null;
+          handleWordTimeout();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
   };
 
-  const stopPracticeTimer = () => {
-    if (practiceTimerRef.current) {
-      clearInterval(practiceTimerRef.current);
-      practiceTimerRef.current = null;
+  const stopWordTimer = () => {
+    if (wordTimerRef.current) {
+      clearInterval(wordTimerRef.current);
+      wordTimerRef.current = null;
     }
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
+  };
+
+  const handleWordTimeout = () => {
+    if (!currentWord) return;
+    const correctAnswer = currentWord.direction === 'en-to-uz' ? currentWord.uzbek : currentWord.english;
+    setFeedback({
+      isCorrect: false,
+      correctAnswer,
+      userAnswer: '',
+      isTimeout: true
+    });
+    setSessionStats(prev => {
+      const newStats = {
+        totalAttempts: prev.totalAttempts + 1,
+        correctAnswers: prev.correctAnswers,
+        enToUzCorrect: prev.enToUzCorrect,
+        enToUzTotal: prev.enToUzTotal,
+        uzToEnCorrect: prev.uzToEnCorrect,
+        uzToEnTotal: prev.uzToEnTotal
+      };
+      if (currentWord.direction === 'en-to-uz') {
+        newStats.enToUzTotal++;
+      } else {
+        newStats.uzToEnTotal++;
+      }
+      return newStats;
+    });
+    if (isStudent && practiceMode === 'lesson' && selectedPracticeLessonId) {
+      lessonAPI.updatePracticeStats({ lessonId: selectedPracticeLessonId, isCorrect: false }).catch(() => {});
+    }
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    autoAdvanceRef.current = setTimeout(() => {
+      setFeedback(null);
+      setUserAnswer('');
+      handleNext();
+    }, 1500);
   };
 
   // Practice navigation
@@ -387,25 +456,27 @@ const Homework = () => {
     setSessionComplete(false);
     setCurrentWord(null);
     setFeedback(null);
-    startPracticeTimer();
+    setUserAnswer('');
+    setWordTimeLeft(WORD_TIME_LIMIT);
+    stopWordTimer();
     // Word will be fetched by useEffect when currentWord is null and activeTab is practice
   };
 
   const goBackToPracticeLevels = () => {
-    stopPracticeTimer();
+    stopWordTimer();
     setPracticeView('levels');
-    setPracticeTimer(0);
     setCurrentWord(null);
     setFeedback(null);
+    setUserAnswer('');
     setSessionComplete(false);
   };
 
   const goBackToPracticeClasses = () => {
-    stopPracticeTimer();
+    stopWordTimer();
     setPracticeView('classes');
-    setPracticeTimer(0);
     setCurrentWord(null);
     setFeedback(null);
+    setUserAnswer('');
     setSessionComplete(false);
   };
 
@@ -415,19 +486,33 @@ const Homework = () => {
       const currentAccuracy = Math.round((sessionStats.correctAnswers / sessionStats.totalAttempts) * 100);
       setBestPracticeScore(prev => Math.max(prev, currentAccuracy));
     }
-    stopPracticeTimer();
+    stopWordTimer();
     setPracticeView('classes');
-    setPracticeTimer(0);
     setCurrentWord(null);
     setFeedback(null);
     setUserAnswer('');
     setSessionComplete(false);
   };
 
+  // Start per-word timer when word loads in practice
+  useEffect(() => {
+    if (activeTab === 'practice' && practiceView === 'game' && currentWord && !feedback) {
+      startWordTimer();
+    }
+    return () => {
+      if (wordTimerRef.current) {
+        clearInterval(wordTimerRef.current);
+        wordTimerRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWord, activeTab, practiceView]);
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (practiceTimerRef.current) clearInterval(practiceTimerRef.current);
+      if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
     };
   }, []);
 
@@ -684,7 +769,9 @@ const Homework = () => {
                   <button className="btn btn-small btn-secondary" onClick={goBackToPracticeClasses}>
                     ← {t('homework.backToClasses') || 'Back to Classes'}
                   </button>
-                  <div className="practice-timer">⏱️ {formatTimer(practiceTimer)}</div>
+                  <div className={`practice-timer ${wordTimeLeft <= 10 ? 'timer-urgent' : ''}`}>
+                    ⏱️ {wordTimeLeft}s
+                  </div>
                   <div className="practice-stats">
                     <span>{t('homework.score') || 'Score'}: {sessionStats.correctAnswers}/{sessionStats.totalAttempts}</span>
                     <span>{t('homework.accuracy') || 'Accuracy'}: {accuracy}%</span>
@@ -713,35 +800,29 @@ const Homework = () => {
                         autoFocus
                       />
 
-                      {!feedback ? (
-                        <button
-                          onClick={handleCheckAnswer}
-                          disabled={!userAnswer.trim() || isChecking}
-                          className="btn btn-primary"
-                        >
-                          {isChecking ? (t('homework.checking') || 'Checking...') : (t('homework.checkAnswer') || 'Check Answer')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleNext}
-                          className="btn btn-primary"
-                        >
-                          {t('homework.next') || 'Next'}
-                        </button>
-                      )}
+                      <button
+                        onClick={handleCheckAnswer}
+                        disabled={!userAnswer.trim() || isChecking || feedback !== null}
+                        className="btn btn-primary"
+                      >
+                        {isChecking ? (t('homework.checking') || 'Checking...') : (t('homework.checkAnswer') || 'Check')}
+                      </button>
                     </div>
 
                     {feedback && (
                       <div className={`feedback ${feedback.isCorrect ? 'correct' : 'incorrect'}`}>
-                        {feedback.isCorrect ? (
+                        {feedback.isTimeout ? (
+                          <>
+                            <div className="feedback-title">⏰ {t('homework.notFound') || 'Not Found'}</div>
+                            <p>{t('homework.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
+                          </>
+                        ) : feedback.isCorrect ? (
                           <>
                             <div className="feedback-title">{t('homework.correct') || 'Correct!'}</div>
-                            <p>{t('homework.greatJob') || 'Great job! Your answer is correct.'}</p>
                           </>
                         ) : (
                           <>
                             <div className="feedback-title">{t('homework.incorrect') || 'Incorrect'}</div>
-                            <p>{t('homework.yourAnswer') || 'Your answer'}: <strong>{feedback.userAnswer}</strong></p>
                             <p>{t('homework.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
                           </>
                         )}
@@ -754,9 +835,6 @@ const Homework = () => {
                   </div>
                 )}
 
-                <div className="game-tip">
-                  <p><strong>{t('homework.tip') || 'Tip'}:</strong> {t('homework.pressEnter') || 'Press Enter to submit your answer or go to the next word.'}</p>
-                </div>
                 <div className="practice-end-bar">
                   <button className="btn btn-small btn-delete" onClick={endPractice}>
                     {t('homework.endPractice') || 'End Practice'}
@@ -820,7 +898,6 @@ const Homework = () => {
                       </div>
                       <div className="exam-lesson-info">
                         <span>{lesson.wordIds?.length || 0} {t('homework.words') || 'words'}</span>
-                        <span>{t('homework.timeLimit') || 'Time'}: {Math.floor(lesson.examTimeLimit / 60)} {t('homework.minutes') || 'min'}</span>
                       </div>
                       {progress?.bestExamScore > 0 && (
                         <div className="exam-best-score">
