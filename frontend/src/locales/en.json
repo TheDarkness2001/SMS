@@ -224,7 +224,14 @@
     "classesPassed": "Classes Passed",
     "totalWords": "Total Words",
     "wordsMemorized": "Words Memorized",
-    "noWordsInLesson": "No words in this class yet."
+    "noWordsInLesson": "No words in this class yet.",
+    "backToClasses": "Back to Classes",
+    "backToLevels": "Back to Levels",
+    "endPractice": "End Practice",
+    "selectLevel": "Select a Level",
+    "selectClass": "Select a Class",
+    "best": "Best",
+    "examNotAvailable": "Exam Not Available"
   },
   "teachers": {
     "title": "Teachers",

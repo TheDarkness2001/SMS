@@ -219,7 +219,14 @@
     "classesPassed": "Классов Сдано",
     "totalWords": "Всего Слов",
     "wordsMemorized": "Слов Запомнено",
-    "noWordsInLesson": "В этом классе пока нет слов."
+    "noWordsInLesson": "В этом классе пока нет слов.",
+    "backToClasses": "Назад к Классам",
+    "backToLevels": "Назад к Уровням",
+    "endPractice": "Завершить Практику",
+    "selectLevel": "Выберите Уровень",
+    "selectClass": "Выберите Класс",
+    "best": "Лучший",
+    "examNotAvailable": "Экзамен Недоступен"
   },
   "teachers": {
     "title": "Учителя",

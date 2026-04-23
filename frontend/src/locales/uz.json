@@ -219,7 +219,14 @@
     "classesPassed": "Sinflar Topshirilgan",
     "totalWords": "Jami So'zlar",
     "wordsMemorized": "So'zlar Yodlangan",
-    "noWordsInLesson": "Bu sinfda hali so'zlar yo'q."
+    "noWordsInLesson": "Bu sinfda hali so'zlar yo'q.",
+    "backToClasses": "Sinflarga Qaytish",
+    "backToLevels": "Darajalarga Qaytish",
+    "endPractice": "Mashqni Tugatish",
+    "selectLevel": "Darajani Tanlang",
+    "selectClass": "Sinfni Tanlang",
+    "best": "Eng Yaxshi",
+    "examNotAvailable": "Imtihon Mavjud Emas"
   },
   "teachers": {
     "title": "O'qituvchilar",
