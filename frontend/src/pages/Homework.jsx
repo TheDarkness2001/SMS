@@ -71,6 +71,7 @@ const Homework = () => {
   const [practiceView, setPracticeView] = useState('levels'); // 'levels' | 'classes' | 'game'
   const [practiceTimer, setPracticeTimer] = useState(0);
   const practiceTimerRef = useRef(null);
+  const [bestPracticeScore, setBestPracticeScore] = useState(0);
 
   // Fetch student lesson progress
   useEffect(() => {
@@ -183,10 +184,11 @@ const Homework = () => {
 
   // Load first word when tab changes to practice or exam
   useEffect(() => {
-    if ((activeTab === 'practice' || activeTab === 'exam') && !currentWord && !sessionComplete) {
+    const isGameVisible = activeTab === 'exam' || (activeTab === 'practice' && practiceView === 'game');
+    if (isGameVisible && !currentWord && !sessionComplete) {
       fetchRandomWord();
     }
-  }, [activeTab, fetchRandomWord, currentWord, sessionComplete]);
+  }, [activeTab, practiceView, fetchRandomWord, currentWord, sessionComplete]);
 
   // Check answer
   const handleCheckAnswer = async () => {
@@ -404,6 +406,21 @@ const Homework = () => {
     setPracticeTimer(0);
     setCurrentWord(null);
     setFeedback(null);
+    setSessionComplete(false);
+  };
+
+  const endPractice = () => {
+    // Save best score
+    if (sessionStats.totalAttempts > 0) {
+      const currentAccuracy = Math.round((sessionStats.correctAnswers / sessionStats.totalAttempts) * 100);
+      setBestPracticeScore(prev => Math.max(prev, currentAccuracy));
+    }
+    stopPracticeTimer();
+    setPracticeView('classes');
+    setPracticeTimer(0);
+    setCurrentWord(null);
+    setFeedback(null);
+    setUserAnswer('');
     setSessionComplete(false);
   };
 
@@ -671,6 +688,9 @@ const Homework = () => {
                   <div className="practice-stats">
                     <span>{t('homework.score') || 'Score'}: {sessionStats.correctAnswers}/{sessionStats.totalAttempts}</span>
                     <span>{t('homework.accuracy') || 'Accuracy'}: {accuracy}%</span>
+                    {bestPracticeScore > 0 && (
+                      <span className="best-score">{t('homework.best') || 'Best'}: {bestPracticeScore}%</span>
+                    )}
                   </div>
                 </div>
 
@@ -736,6 +756,11 @@ const Homework = () => {
 
                 <div className="game-tip">
                   <p><strong>{t('homework.tip') || 'Tip'}:</strong> {t('homework.pressEnter') || 'Press Enter to submit your answer or go to the next word.'}</p>
+                </div>
+                <div className="practice-end-bar">
+                  <button className="btn btn-small btn-delete" onClick={endPractice}>
+                    {t('homework.endPractice') || 'End Practice'}
+                  </button>
                 </div>
               </>
             )}

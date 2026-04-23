@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { lessonAPI } from '../../utils/api';
 
+const QUESTION_TIME_LIMIT = 35; // 35 seconds per question
+
 const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
   const [examWords, setExamWords] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState('');
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [questionTimeLeft, setQuestionTimeLeft] = useState(QUESTION_TIME_LIMIT);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState([]);
   const [finished, setFinished] = useState(false);
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [examError, setExamError] = useState(null);
 
   useEffect(() => {
     const loadExam = async () => {
@@ -18,26 +21,35 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
         const res = await lessonAPI.getExamWords(lessonId);
         if (res.data.success) {
           setExamWords(res.data.data.examWords);
-          setTimeLeft(res.data.data.timeLimit);
           setLoading(false);
         }
       } catch (err) {
         console.error('Error loading exam:', err);
-        alert(err.response?.data?.message || 'Failed to load exam');
-        onCancel();
+        const status = err.response?.status;
+        const message = err.response?.data?.message || 'Failed to load exam';
+        if (status === 403) {
+          setExamError(message);
+          setLoading(false);
+        } else {
+          alert(message);
+          onCancel();
+        }
       }
     };
     loadExam();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
+  // Per-question timer
   useEffect(() => {
-    if (timeLeft <= 0 || finished || loading) return;
+    if (loading || finished || examWords.length === 0) return;
+    setQuestionTimeLeft(QUESTION_TIME_LIMIT);
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setQuestionTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          finishExam();
+          // Auto-submit empty answer when time runs out
+          submitAnswerTimedOut();
           return 0;
         }
         return prev - 1;
@@ -45,9 +57,28 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
     }, 1000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, finished, loading]);
+  }, [currentIndex, loading, finished, examWords.length]);
 
   const currentWord = examWords[currentIndex];
+
+  const submitAnswerTimedOut = useCallback(() => {
+    if (!currentWord) return;
+    const newAnswer = {
+      wordId: currentWord.id,
+      answer: '',
+      direction: currentWord.direction
+    };
+    const newAnswers = [...answers, newAnswer];
+    setAnswers(newAnswers);
+    setAnswer('');
+
+    if (currentIndex >= examWords.length - 1) {
+      finishExam(newAnswers);
+    } else {
+      setCurrentIndex(prev => prev + 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWord, currentIndex, examWords, answers]);
 
   const submitAnswer = useCallback(() => {
     if (!currentWord) return;
@@ -102,6 +133,21 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
     );
   }
 
+  if (examError) {
+    return (
+      <div className="class-exam-container">
+        <div className="exam-not-available">
+          <div className="exam-not-available-icon">⏰</div>
+          <h3>{t('homework.examNotAvailable') || 'Exam Not Available'}</h3>
+          <p>{examError}</p>
+          <button className="btn btn-secondary" onClick={onCancel}>
+            {t('homework.back') || 'Back'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (finished && result) {
     return (
       <div className="class-exam-container">
@@ -141,8 +187,8 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
     <div className="class-exam-container">
       <div className="exam-header">
         <h3>{t('homework.classExam') || 'Class Exam'}: {lessonName}</h3>
-        <div className={`exam-timer ${timeLeft < 30 ? 'urgent' : ''}`}>
-          {formatTime(timeLeft)}
+        <div className={`exam-timer ${questionTimeLeft < 10 ? 'urgent' : ''}`}>
+          {formatTime(questionTimeLeft)}
         </div>
       </div>
 

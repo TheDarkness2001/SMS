@@ -954,6 +954,28 @@
   margin-bottom: 24px;
 }
 
+.exam-not-available {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.exam-not-available-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.exam-not-available h3 {
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  font-size: 20px;
+}
+
+.exam-not-available p {
+  color: var(--text-secondary);
+  margin: 0 0 24px 0;
+  font-size: 14px;
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;
@@ -1573,6 +1595,17 @@
   gap: 20px;
   font-size: 14px;
   color: var(--text-secondary);
+}
+
+.practice-game-bar .practice-stats .best-score {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.practice-end-bar {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
 /* Responsive */

@@ -4,6 +4,43 @@ const Language = require('../models/Language');
 const Word = require('../models/Word');
 const StudentVocabProgress = require('../models/StudentVocabProgress');
 const Student = require('../models/Student');
+const ClassSchedule = require('../models/ClassSchedule');
+
+// Helper: Check if current time is within class hours (Uzbekistan UTC+5)
+const isWithinClassHours = async (studentId) => {
+  try {
+    const UZBEKISTAN_OFFSET_HOURS = 5;
+    const now = new Date();
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const uzbekistanNow = new Date(utcTime + (UZBEKISTAN_OFFSET_HOURS * 60 * 60000));
+    const currentDay = uzbekistanNow.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+    const currentHour = uzbekistanNow.getUTCHours();
+    const currentMinute = uzbekistanNow.getUTCMinutes();
+    const currentTimeValue = currentHour * 60 + currentMinute;
+
+    // Find student's active schedules for today
+    const schedules = await ClassSchedule.find({
+      enrolledStudents: studentId,
+      scheduledDays: currentDay,
+      isActive: true
+    });
+
+    for (const schedule of schedules) {
+      const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+      const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+      const startTimeValue = startHour * 60 + startMinute;
+      const endTimeValue = endHour * 60 + endMinute;
+
+      if (currentTimeValue >= startTimeValue && currentTimeValue <= endTimeValue) {
+        return { allowed: true, schedule };
+      }
+    }
+
+    return { allowed: false, reason: 'Exam is only available during your class hours.' };
+  } catch (error) {
+    return { allowed: false, reason: error.message };
+  }
+};
 
 // Get all lessons
 exports.getAllLessons = async (req, res) => {
@@ -250,6 +287,17 @@ exports.autoGenerateClasses = async (req, res) => {
 exports.getExamWords = async (req, res) => {
   try {
     const { id } = req.params;
+    const studentId = req.user.id;
+
+    // Check if student can take exam now (class hours only)
+    const timeCheck = await isWithinClassHours(studentId);
+    if (!timeCheck.allowed) {
+      return res.status(403).json({
+        success: false,
+        message: timeCheck.reason,
+        examAvailable: false
+      });
+    }
 
     const lesson = await Lesson.findById(id);
     if (!lesson) {
