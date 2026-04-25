@@ -18,6 +18,7 @@ router.put('/:id', protect, authorizeHomework(), lessonController.updateLesson);
 router.delete('/:id', protect, authorizeHomework(), lessonController.deleteLesson);
 router.post('/:id/auto-generate', protect, authorizeHomework(), lessonController.autoGenerateClasses);
 router.delete('/:id/words/:wordId', protect, authorizeHomework(), lessonController.removeWordFromLesson);
+router.post('/:id/toggle-exam-lock', protect, authorizeHomework(), lessonController.toggleExamLock);
 
 // Student lesson routes
 router.get('/:id/exam', protect, lessonController.getExamWords);

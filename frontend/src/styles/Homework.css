@@ -1618,6 +1618,178 @@
   margin-top: 16px;
 }
 
+/* Exam Control (Staff) */
+.exam-control-section {
+  padding: 8px 0;
+}
+
+.exam-control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.exam-control-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 2px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.exam-control-card.locked {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+}
+
+.exam-control-card.unlocked {
+  border-color: var(--success);
+  background: #f0fdf4;
+}
+
+.exam-control-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.exam-control-order {
+  background: var(--primary);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.exam-control-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.exam-control-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.exam-control-status {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.exam-control-card.locked .exam-control-status {
+  color: #9ca3af;
+}
+
+.exam-control-card.unlocked .exam-control-status {
+  color: var(--success);
+}
+
+/* Student Exam Cards */
+.exam-student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.exam-student-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 2px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.exam-student-card:hover.unlocked.available,
+.exam-student-card:hover.unlocked.passed {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.exam-student-card.locked {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+  opacity: 0.7;
+}
+
+.exam-student-card.unlocked.available {
+  border-color: var(--success);
+  background: #f0fdf4;
+}
+
+.exam-student-card.unlocked.passed {
+  border-color: var(--primary);
+  background: #eff6ff;
+}
+
+.exam-student-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.exam-student-order {
+  background: var(--primary);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.exam-student-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.exam-student-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.exam-student-status {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.status-locked {
+  color: #9ca3af;
+}
+
+.status-progress {
+  color: #f59e0b;
+}
+
+.status-available {
+  color: var(--success);
+}
+
+.status-passed {
+  color: var(--primary);
+}
+
+.exam-student-best {
+  font-size: 12px;
+  color: var(--success);
+  font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .practice-game-bar {

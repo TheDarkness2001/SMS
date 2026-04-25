@@ -166,6 +166,36 @@ exports.updateLesson = async (req, res) => {
   }
 };
 
+// Toggle exam lock for a lesson (staff only)
+exports.toggleExamLock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const lesson = await Lesson.findById(id);
+    if (!lesson) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lesson not found'
+      });
+    }
+
+    lesson.examUnlocked = !lesson.examUnlocked;
+    await lesson.save();
+
+    res.json({
+      success: true,
+      message: `Exam ${lesson.examUnlocked ? 'unlocked' : 'locked'} successfully`,
+      data: { lesson }
+    });
+  } catch (error) {
+    console.error('Toggle exam lock error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while toggling exam lock',
+      error: error.message
+    });
+  }
+};
+
 // Delete lesson
 exports.deleteLesson = async (req, res) => {
   try {
@@ -305,6 +335,33 @@ exports.getExamWords = async (req, res) => {
         success: false,
         message: 'Lesson not found'
       });
+    }
+
+    // Check if exam is unlocked by teacher
+    if (!lesson.examUnlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'This exam is currently locked by your teacher.',
+        examAvailable: false
+      });
+    }
+
+    // Check daily retake limit
+    const progress = await StudentVocabProgress.findOne({ studentId, lessonId: id });
+    if (progress && progress.lastExamDate) {
+      const lastExam = new Date(progress.lastExamDate);
+      const now = new Date();
+      const isSameDay = lastExam.getFullYear() === now.getFullYear() &&
+                        lastExam.getMonth() === now.getMonth() &&
+                        lastExam.getDate() === now.getDate();
+      if (isSameDay) {
+        return res.status(403).json({
+          success: false,
+          message: 'You can only take this exam once per day. Please try again tomorrow.',
+          examAvailable: false,
+          retryAfter: 'tomorrow'
+        });
+      }
     }
 
     if (lesson.wordIds.length === 0) {
@@ -480,7 +537,8 @@ exports.getStudentProgress = async (req, res) => {
           examAttempts: existing.examAttempts,
           bestExamScore: existing.bestExamScore,
           lastExamDate: existing.lastExamDate,
-          unlockedAt: existing.unlockedAt
+          unlockedAt: existing.unlockedAt,
+          examUnlocked: lesson.examUnlocked
         };
       }
       return {
@@ -491,7 +549,8 @@ exports.getStudentProgress = async (req, res) => {
         examAttempts: 0,
         bestExamScore: 0,
         lastExamDate: null,
-        unlockedAt: null
+        unlockedAt: null,
+        examUnlocked: lesson.examUnlocked
       };
     });
 

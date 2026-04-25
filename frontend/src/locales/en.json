@@ -232,7 +232,11 @@
     "selectClass": "Select a Class",
     "best": "Best",
     "examNotAvailable": "Exam Not Available",
-    "notFound": "Not Found"
+    "notFound": "Not Found",
+    "examControl": "Exam Control",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "completePrevious": "Complete previous class"
   },
   "teachers": {
     "title": "Teachers",

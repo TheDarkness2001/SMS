@@ -33,6 +33,10 @@ const lessonSchema = new mongoose.Schema({
     type: Number,
     default: 70
   },
+  examUnlocked: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

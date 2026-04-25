@@ -227,7 +227,11 @@
     "selectClass": "Выберите Класс",
     "best": "Лучший",
     "examNotAvailable": "Экзамен Недоступен",
-    "notFound": "Не Найдено"
+    "notFound": "Не Найдено",
+    "examControl": "Управление Экзаменами",
+    "lock": "Заблокировать",
+    "unlock": "Разблокировать",
+    "completePrevious": "Пройдите предыдущий класс"
   },
   "teachers": {
     "title": "Учителя",

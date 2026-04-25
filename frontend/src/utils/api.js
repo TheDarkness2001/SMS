@@ -318,6 +318,7 @@ export const lessonAPI = {
   deleteLesson: (id) => api.delete(`/homework/lessons/${id}`),
   autoGenerateClasses: (id, data) => api.post(`/homework/lessons/${id}/auto-generate`, data),
   removeWordFromLesson: (id, wordId) => api.delete(`/homework/lessons/${id}/words/${wordId}`),
+  toggleExamLock: (id) => api.post(`/homework/lessons/${id}/toggle-exam-lock`),
   getAllStudentLessonProgress: () => api.get('/homework/lessons/students/progress'),
   // Student
   getExamWords: (id) => api.get(`/homework/lessons/${id}/exam`),

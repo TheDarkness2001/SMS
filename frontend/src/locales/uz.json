@@ -227,7 +227,11 @@
     "selectClass": "Sinfni Tanlang",
     "best": "Eng Yaxshi",
     "examNotAvailable": "Imtihon Mavjud Emas",
-    "notFound": "Topilmadi"
+    "notFound": "Topilmadi",
+    "examControl": "Imtihon Boshqaruvi",
+    "lock": "Bloklash",
+    "unlock": "Blokdan chiqarish",
+    "completePrevious": "Avvalgi sinfni tugating"
   },
   "teachers": {
     "title": "O'qituvchilar",

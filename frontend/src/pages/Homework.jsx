@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import LessonsTab from '../components/homework/LessonsTab';
 import ClassExam from '../components/homework/ClassExam';
+import ExamControl from '../components/homework/ExamControl';
 import '../styles/Homework.css';
 
 const SESSION_LIMIT = 20;
@@ -70,6 +71,9 @@ const Homework = () => {
   const [practiceMode, setPracticeMode] = useState('level'); // 'level' or 'lesson'
   const [practiceView, setPracticeView] = useState('levels'); // 'levels' | 'classes' | 'game'
   const [bestPracticeScore, setBestPracticeScore] = useState(0);
+
+  // Exam mode state
+  const [examView, setExamView] = useState('levels'); // 'levels' | 'classes' | 'game'
 
   // Per-word timer for practice
   const WORD_TIME_LIMIT = 30;
@@ -494,6 +498,56 @@ const Homework = () => {
     setSessionComplete(false);
   };
 
+  // Exam navigation (student)
+  const selectLevelForExam = async (levelId) => {
+    setSelectedLevelId(levelId);
+    setExamView('classes');
+    // Fetch lessons for this level
+    setLessonsLoading(true);
+    try {
+      const res = await lessonAPI.getAllLessons(levelId);
+      if (res.data.success) {
+        setLevelLessons(res.data.data.lessons);
+      }
+    } catch (error) {
+      console.error('Error fetching lessons:', error);
+    } finally {
+      setLessonsLoading(false);
+    }
+  };
+
+  const selectClassForExam = (lesson) => {
+    setActiveExamLesson({ id: lesson._id, name: lesson.name });
+    setExamView('game');
+    setShowClassExam(true);
+  };
+
+  const goBackToExamLevels = () => {
+    setExamView('levels');
+    setShowClassExam(false);
+    setActiveExamLesson(null);
+  };
+
+  // eslint-disable-next-line no-unused-vars
+  const goBackToExamClasses = () => {
+    setExamView('classes');
+    setShowClassExam(false);
+    setActiveExamLesson(null);
+  };
+
+  // eslint-disable-next-line no-unused-vars
+  const handleExamFinish = () => {
+    setShowClassExam(false);
+    setExamView('classes');
+    setActiveExamLesson(null);
+    // Refresh progress
+    if (isStudent) {
+      lessonAPI.getMyLessonProgress().then(res => {
+        if (res.data.success) setMyProgress(res.data.data.progress);
+      }).catch(() => {});
+    }
+  };
+
   // Start per-word timer when word loads in practice
   useEffect(() => {
     if (activeTab === 'practice' && practiceView === 'game' && currentWord && !feedback) {
@@ -534,6 +588,7 @@ const Homework = () => {
   if (isAdmin) {
     tabs.push(
       { id: 'lessons', label: t('homework.lessons') || 'Lessons' },
+      { id: 'examControl', label: t('homework.examControl') || 'Exam Control' },
       { id: 'progress', label: t('homework.studentProgress') || 'Student Progress' }
     );
   }
@@ -845,87 +900,91 @@ const Homework = () => {
           </div>
         )}
 
-        {/* EXAM MODE - Student: Lesson Selection */}
+        {/* EXAM MODE - Student: Card-based navigation */}
         {activeTab === 'exam' && isStudent && (
-          <div className="exam-lesson-selection">
-            <div className="tier-selectors">
-              <div className="level-selector">
-                <label>{t('homework.language') || 'Language'}:</label>
-                <select
-                  value={selectedLanguageId}
-                  onChange={(e) => setSelectedLanguageId(e.target.value)}
-                  className="level-select"
-                >
-                  {languages.map(lang => (
-                    <option key={lang._id} value={lang._id}>{lang.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="level-selector">
-                <label>{t('homework.level') || 'Level'}:</label>
-                <select
-                  value={selectedLevelId}
-                  onChange={(e) => setSelectedLevelId(e.target.value)}
-                  className="level-select"
-                >
-                  {levelsList.map(lvl => (
-                    <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <h3 className="section-title">{t('homework.selectLessonForExam') || 'Select a Lesson to Start Exam'}</h3>
-
-            {lessonsLoading ? (
-              <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
-            ) : (
-              <div className="exam-lessons-grid">
-                {levelLessons.map(lesson => {
-                  const progress = myProgress.find(p => p.lessonId?._id === lesson._id);
-                  const status = progress?.status || 'locked';
-                  const canTakeExam = status === 'available' || status === 'passed';
-                  return (
-                    <div key={lesson._id} className={`exam-lesson-card ${status}`}>
-                      <div className="exam-lesson-header">
-                        <h4>{lesson.name}</h4>
-                        <span className={`status-badge ${status}`}>
-                          {status === 'locked' ? (t('homework.locked') || 'Locked')
-                            : status === 'available' ? (t('homework.available') || 'Available')
-                            : (t('homework.passed') || 'Passed')
-                          }
-                        </span>
-                      </div>
-                      <div className="exam-lesson-info">
-                        <span>{lesson.wordIds?.length || 0} {t('homework.words') || 'words'}</span>
-                      </div>
-                      {progress?.bestExamScore > 0 && (
-                        <div className="exam-best-score">
-                          {t('homework.bestScore') || 'Best'}: {progress.bestExamScore}%
-                        </div>
-                      )}
-                      <button
-                        className="btn btn-primary btn-full"
-                        disabled={!canTakeExam}
-                        onClick={() => {
-                          setActiveExamLesson({ id: lesson._id, name: lesson.name });
-                          setShowClassExam(true);
-                        }}
-                      >
-                        {status === 'passed'
-                          ? (t('homework.retakeExam') || 'Retake Exam')
-                          : (t('homework.startExam') || 'Start Exam')
-                        }
-                      </button>
+          <div className="game-section">
+            {!showClassExam && examView === 'levels' && (
+              <>
+                <h3 className="practice-section-title">{t('homework.selectLevel') || 'Select a Level'}</h3>
+                <div className="practice-levels-grid">
+                  {levelsList.map(level => (
+                    <div
+                      key={level._id}
+                      className="practice-level-card"
+                      onClick={() => selectLevelForExam(level._id)}
+                    >
+                      <div className="practice-level-icon">📚</div>
+                      <div className="practice-level-name">{level.name}</div>
                     </div>
-                  );
-                })}
-                {levelLessons.length === 0 && (
-                  <div className="no-lessons">
-                    {t('homework.noLessonsYet') || 'No lessons available yet.'}
+                  ))}
+                  {levelsList.length === 0 && (
+                    <div className="no-data">{t('homework.noLevels') || 'No levels available yet.'}</div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {!showClassExam && examView === 'classes' && (
+              <>
+                <div className="practice-back-bar">
+                  <button className="btn btn-small btn-secondary" onClick={goBackToExamLevels}>
+                    ← {t('homework.backToLevels') || 'Back to Levels'}
+                  </button>
+                </div>
+                <h3 className="practice-section-title">
+                  {levelsList.find(l => l._id === selectedLevelId)?.name || ''} — {t('homework.selectClass') || 'Select a Class'}
+                </h3>
+                {lessonsLoading ? (
+                  <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
+                ) : (
+                  <div className="exam-student-grid">
+                    {levelLessons.map(lesson => {
+                      const progress = myProgress.find(p => p.lessonId?._id === lesson._id);
+                      const isUnlocked = lesson.examUnlocked;
+                      const status = progress?.status || 'locked';
+                      const canTake = isUnlocked && (status === 'available' || status === 'passed');
+                      return (
+                        <div
+                          key={lesson._id}
+                          className={`exam-student-card ${isUnlocked ? 'unlocked' : 'locked'} ${status}`}
+                          onClick={() => canTake && selectClassForExam(lesson)}
+                          style={{ cursor: canTake ? 'pointer' : 'not-allowed' }}
+                        >
+                          <div className="exam-student-header">
+                            <span className="exam-student-order">{lesson.order}</span>
+                            <span className="exam-student-name">{lesson.name}</span>
+                          </div>
+                          <div className="exam-student-meta">
+                            {lesson.wordIds?.length || 0} {t('homework.words') || 'words'}
+                          </div>
+                          <div className="exam-student-status">
+                            {!isUnlocked && (
+                              <span className="status-locked">🔒 {t('homework.locked') || 'Locked'}</span>
+                            )}
+                            {isUnlocked && status === 'locked' && (
+                              <span className="status-progress">{t('homework.completePrevious') || 'Complete previous class'}</span>
+                            )}
+                            {isUnlocked && status === 'available' && (
+                              <span className="status-available">✅ {t('homework.available') || 'Available'}</span>
+                            )}
+                            {isUnlocked && status === 'passed' && (
+                              <span className="status-passed">🎓 {t('homework.passed') || 'Passed'}</span>
+                            )}
+                          </div>
+                          {progress?.bestExamScore > 0 && (
+                            <div className="exam-student-best">
+                              {t('homework.bestScore') || 'Best'}: {progress.bestExamScore}%
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {levelLessons.length === 0 && (
+                      <div className="no-data">{t('homework.noLessonsYet') || 'No classes available yet.'}</div>
+                    )}
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         )}
@@ -1096,6 +1155,11 @@ const Homework = () => {
         {/* LESSONS TAB (Admin) */}
         {activeTab === 'lessons' && isAdmin && (
           <LessonsTab t={t} />
+        )}
+
+        {/* EXAM CONTROL TAB (Admin/Staff) */}
+        {activeTab === 'examControl' && isAdmin && (
+          <ExamControl t={t} />
         )}
 
         {/* STUDENT PROGRESS TAB (Admin) */}
