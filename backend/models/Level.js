@@ -33,6 +33,12 @@ const levelSchema = new mongoose.Schema({
     min: 1,
     max: 100
   },
+  // Per-group practice unlock: which ExamGroups can practice this level
+  practiceUnlockedFor: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ExamGroup'
+  }],
+  // DEPRECATED: kept for backward compatibility during migration
   practiceUnlocked: {
     type: Boolean,
     default: false

@@ -44,6 +44,7 @@ import Revenue from './pages/Revenue';
 import AdminEarningsPanel from './pages/AdminEarningsPanel';
 import AdminPayoutPanel from './pages/AdminPayoutPanel';
 import Homework from './pages/Homework';
+import SentencesPage from './pages/SentencesPage';
 import NotFound from './components/NotFound';
 import PrivateRoute from './components/PrivateRoute';
 import './styles/App.css';
@@ -105,6 +106,7 @@ function App() {
             <Route path="/admin/earnings" element={<PrivateRoute><AdminEarningsPanel /></PrivateRoute>} />
             <Route path="/admin/payouts" element={<PrivateRoute><AdminPayoutPanel /></PrivateRoute>} />
             <Route path="/homework" element={<PrivateRoute><Homework /></PrivateRoute>} />
+            <Route path="/sentences" element={<PrivateRoute><SentencesPage /></PrivateRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>

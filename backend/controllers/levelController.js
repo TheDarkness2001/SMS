@@ -1,11 +1,30 @@
 const Level = require('../models/Level');
 const Lesson = require('../models/Lesson');
 const Word = require('../models/Word');
+const ExamGroup = require('../models/ExamGroup');
 
 exports.getLevelsByLanguage = async (req, res) => {
   try {
     const { languageId } = req.params;
-    const levels = await Level.find({ languageId }).sort({ name: 1 });
+    const userRole = req.user?.role;
+    const userId = req.user?._id;
+    const isStudent = req.userType === 'student' || userRole === 'student';
+
+    const levels = await Level.find({ languageId }).sort({ name: 1 }).lean();
+
+    // For students, compute per-level unlock status based on their groups
+    if (isStudent && userId) {
+      const studentGroups = await ExamGroup.find({ students: { $in: [userId, userId.toString()] } }).select('_id');
+      const studentGroupIds = studentGroups.map(g => g._id.toString());
+
+      levels.forEach(level => {
+        const unlockedFor = (level.practiceUnlockedFor || []).map(g => g.toString());
+        // Also check deprecated boolean for backward compatibility
+        level.practiceUnlockedForMe = level.practiceUnlocked === true ||
+          unlockedFor.some(gid => studentGroupIds.includes(gid));
+      });
+    }
+
     res.json({ success: true, count: levels.length, data: { levels } });
   } catch (error) {
     console.error('Get levels error:', error);
@@ -51,15 +70,35 @@ exports.updateLevel = async (req, res) => {
 exports.togglePracticeLock = async (req, res) => {
   try {
     const { id } = req.params;
+    const { groupId } = req.body;
+
+    if (!groupId) {
+      return res.status(400).json({ success: false, message: 'groupId is required' });
+    }
+
     const level = await Level.findById(id);
     if (!level) {
       return res.status(404).json({ success: false, message: 'Level not found' });
     }
-    level.practiceUnlocked = !level.practiceUnlocked;
+
+    // Ensure practiceUnlockedFor is an array
+    if (!level.practiceUnlockedFor) {
+      level.practiceUnlockedFor = [];
+    }
+
+    const groupObjectId = new (require('mongoose').Types.ObjectId)(groupId);
+    const isUnlocked = level.practiceUnlockedFor.some(g => g.toString() === groupId);
+
+    if (isUnlocked) {
+      level.practiceUnlockedFor = level.practiceUnlockedFor.filter(g => g.toString() !== groupId);
+    } else {
+      level.practiceUnlockedFor.push(groupObjectId);
+    }
+
     await level.save();
     res.json({
       success: true,
-      message: `Practice ${level.practiceUnlocked ? 'unlocked' : 'locked'} successfully`,
+      message: `Practice ${isUnlocked ? 'locked' : 'unlocked'} for group`,
       data: { level }
     });
   } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { lessonAPI, levelAPI, languageAPI, examGroupsAPI } from '../../utils/api';
+import { lessonAPI, levelAPI, languageAPI, examGroupsAPI, getImageUrl } from '../../utils/api';
 
 const ExamControl = ({ t }) => {
   // Navigation state: groups -> languages -> levels -> classes
@@ -18,6 +18,24 @@ const ExamControl = ({ t }) => {
 
   const [loading, setLoading] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [togglingPractice, setTogglingPractice] = useState(false);
+
+  const formatSchedule = (group) => {
+    const parts = [];
+    if (group.days?.length) {
+      const shortDays = group.days.map(d => d.slice(0, 3));
+      parts.push(shortDays.join(', '));
+    }
+    if (group.startTime && group.endTime) {
+      parts.push(`${group.startTime}-${group.endTime}`);
+    }
+    return parts.join(' · ');
+  };
+
+  const getTeacherNames = (group) => {
+    if (!group.teachers?.length) return null;
+    return group.teachers.map(t => t.name).join(', ');
+  };
 
   useEffect(() => {
     fetchGroups();
@@ -97,7 +115,7 @@ const ExamControl = ({ t }) => {
     }
   };
 
-  const handleToggle = async (lessonId) => {
+  const handleToggleExam = async (lessonId) => {
     if (!selectedGroup) return;
     setTogglingId(lessonId);
     try {
@@ -108,15 +126,45 @@ const ExamControl = ({ t }) => {
         ));
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Error toggling lock');
+      alert(err.response?.data?.message || 'Error toggling exam lock');
     } finally {
       setTogglingId(null);
     }
   };
 
-  const isUnlockedForGroup = (lesson) => {
+  const handleTogglePractice = async () => {
+    if (!selectedGroup || !selectedLevel) return;
+    setTogglingPractice(true);
+    try {
+      const res = await levelAPI.togglePracticeLock(selectedLevel._id, selectedGroup._id);
+      if (res.data.success) {
+        const updatedPracticeUnlockedFor = res.data.data.level.practiceUnlockedFor || [];
+        setSelectedLevel(prev => ({
+          ...prev,
+          practiceUnlockedFor: updatedPracticeUnlockedFor
+        }));
+        // Also sync the levels array so navigation back/forth stays consistent
+        setLevels(prev => prev.map(l =>
+          l._id === selectedLevel._id ? { ...l, practiceUnlockedFor: updatedPracticeUnlockedFor } : l
+        ));
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error toggling practice lock');
+    } finally {
+      setTogglingPractice(false);
+    }
+  };
+
+  const isExamUnlockedForGroup = (lesson) => {
     if (!selectedGroup) return false;
-    return lesson.examUnlockedFor?.some(g => g.toString() === selectedGroup._id.toString()) || false;
+    const groupId = String(selectedGroup._id);
+    return lesson.examUnlockedFor?.some(g => String(g) === groupId) || false;
+  };
+
+  const isPracticeUnlockedForGroup = () => {
+    if (!selectedGroup || !selectedLevel) return false;
+    const groupId = String(selectedGroup._id);
+    return (selectedLevel.practiceUnlockedFor || []).some(g => String(g) === groupId);
   };
 
   // Breadcrumb
@@ -163,23 +211,68 @@ const ExamControl = ({ t }) => {
           {loading ? (
             <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
           ) : (
-            <div className="practice-levels-grid">
-              {groups.map(group => (
-                <div
-                  key={group._id}
-                  className="practice-level-card"
-                  onClick={() => {
-                    setSelectedGroup(group);
-                    setView('languages');
-                  }}
-                >
-                  <div className="practice-level-icon">👥</div>
-                  <div className="practice-level-name">{group.groupName}</div>
-                  {group.subjectName && (
-                    <div className="practice-level-locked-label">{group.subjectName}</div>
-                  )}
-                </div>
-              ))}
+            <div className="group-cards-grid">
+              {groups.map(group => {
+                const scheduleText = formatSchedule(group);
+                const teacherText = getTeacherNames(group);
+                const visibleStudents = group.students?.slice(0, 4) || [];
+                const overflowCount = (group.students?.length || 0) - visibleStudents.length;
+                return (
+                  <div
+                    key={group._id}
+                    className="group-card-rich"
+                    onClick={() => {
+                      setSelectedGroup(group);
+                      setView('languages');
+                    }}
+                  >
+                    <div className="group-card-header">
+                      <span className="group-card-icon">👥</span>
+                      {group.groupId ? (
+                        <span className="group-card-id">ID: {group.groupId}</span>
+                      ) : (
+                        <span className="group-card-id">ID: {group._id?.slice(-6)}</span>
+                      )}
+                    </div>
+                    <div className="group-card-name">{group.groupName}</div>
+                    {group.subjectName && group.subjectName !== group.groupName && (
+                      <div className="group-card-subject">{group.subjectName}</div>
+                    )}
+                    {scheduleText && (
+                      <div className="group-card-schedule">🕐 {scheduleText}</div>
+                    )}
+                    {teacherText && (
+                      <div className="group-card-teacher">👤 {teacherText}</div>
+                    )}
+                    {visibleStudents.length > 0 && (
+                      <div className="group-card-avatars">
+                        {visibleStudents.map(s => {
+                          const imgUrl = getImageUrl(s.profileImage);
+                          return imgUrl ? (
+                            <img
+                              key={s._id}
+                              src={imgUrl}
+                              alt=""
+                              className="group-avatar"
+                              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                            />
+                          ) : (
+                            <div key={s._id} className="group-avatar group-avatar-placeholder">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="9" r="4" fill="#9ca3af"/>
+                                <path d="M5 21c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"/>
+                              </svg>
+                            </div>
+                          );
+                        })}
+                        {overflowCount > 0 && (
+                          <span className="group-avatar-overflow">+{overflowCount}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {groups.length === 0 && (
                 <div className="no-data">{t('homework.noGroups') || 'No groups available.'}</div>
               )}
@@ -252,16 +345,38 @@ const ExamControl = ({ t }) => {
           <h3 className="practice-section-title">
             {selectedGroup?.groupName} — {selectedLevel.name} — {t('homework.classes') || 'Classes'}
           </h3>
+
+          {/* Level-level practice unlock banner */}
+          <div className={`level-practice-banner ${isPracticeUnlockedForGroup() ? 'unlocked' : 'locked'}`}>
+            <span className="banner-icon">{isPracticeUnlockedForGroup() ? '🔓' : '🔒'}</span>
+            <span className="banner-text">
+              {t('homework.practiceForLevel') || 'Practice'}: {isPracticeUnlockedForGroup() ? (t('homework.unlocked') || 'Unlocked') : (t('homework.locked') || 'Locked')}
+            </span>
+            <button
+              className={`btn btn-small ${isPracticeUnlockedForGroup() ? 'btn-delete' : 'btn-primary'}`}
+              onClick={handleTogglePractice}
+              disabled={togglingPractice}
+            >
+              {togglingPractice
+                ? (t('homework.loading') || '...')
+                : isPracticeUnlockedForGroup()
+                  ? (t('homework.lockPractice') || 'Lock Practice')
+                  : (t('homework.unlockPractice') || 'Unlock Practice')
+              }
+            </button>
+          </div>
+
           {loading ? (
             <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
           ) : (
             <div className="exam-control-grid">
               {lessons.map(lesson => {
-                const unlocked = isUnlockedForGroup(lesson);
+                const examUnlocked = isExamUnlockedForGroup(lesson);
+                const practiceUnlocked = isPracticeUnlockedForGroup();
                 return (
                   <div
                     key={lesson._id}
-                    className={`exam-control-card ${unlocked ? 'unlocked' : 'locked'}`}
+                    className={`exam-control-card ${examUnlocked ? 'unlocked' : 'locked'}`}
                   >
                     <div className="exam-control-header">
                       <span className="exam-control-order">{lesson.order}</span>
@@ -270,21 +385,40 @@ const ExamControl = ({ t }) => {
                     <div className="exam-control-meta">
                       {lesson.wordIds?.length || 0} {t('homework.words') || 'words'}
                     </div>
-                    <div className="exam-control-status">
-                      {unlocked ? '🔓 ' + (t('homework.unlocked') || 'Unlocked') : '🔒 ' + (t('homework.locked') || 'Locked')}
+                    <div className="exam-control-status-row">
+                      <span className={`status-badge ${practiceUnlocked ? 'status-unlocked' : 'status-locked'}`}>
+                        {practiceUnlocked ? '🔓' : '🔒'} {t('homework.practiceShort') || 'Practice'}
+                      </span>
+                      <span className={`status-badge ${examUnlocked ? 'status-unlocked' : 'status-locked'}`}>
+                        {examUnlocked ? '🔓' : '🔒'} {t('homework.examShort') || 'Exam'}
+                      </span>
                     </div>
-                    <button
-                      className={`btn btn-full ${unlocked ? 'btn-delete' : 'btn-primary'}`}
-                      onClick={() => handleToggle(lesson._id)}
-                      disabled={togglingId === lesson._id}
-                    >
-                      {togglingId === lesson._id
-                        ? (t('homework.loading') || 'Loading...')
-                        : unlocked
-                          ? (t('homework.lock') || 'Lock')
-                          : (t('homework.unlock') || 'Unlock')
-                      }
-                    </button>
+                    <div className="exam-control-buttons">
+                      <button
+                        className={`btn btn-full ${practiceUnlocked ? 'btn-delete' : 'btn-primary'}`}
+                        onClick={handleTogglePractice}
+                        disabled={togglingPractice}
+                      >
+                        {togglingPractice
+                          ? (t('homework.loading') || '...')
+                          : practiceUnlocked
+                            ? (t('homework.lockPractice') || 'Lock Practice')
+                            : (t('homework.unlockPractice') || 'Unlock Practice')
+                        }
+                      </button>
+                      <button
+                        className={`btn btn-full ${examUnlocked ? 'btn-delete' : 'btn-primary'}`}
+                        onClick={() => handleToggleExam(lesson._id)}
+                        disabled={togglingId === lesson._id}
+                      >
+                        {togglingId === lesson._id
+                          ? (t('homework.loading') || '...')
+                          : examUnlocked
+                            ? (t('homework.lockExam') || 'Lock Exam')
+                            : (t('homework.unlockExam') || 'Unlock Exam')
+                        }
+                      </button>
+                    </div>
                   </div>
                 );
               })}

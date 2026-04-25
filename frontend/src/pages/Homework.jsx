@@ -37,6 +37,8 @@ const Homework = () => {
   const [adminLoading, setAdminLoading] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({});
 
+  const isStudent = user?.userType === 'student';
+
   const isAdmin = (() => {
     // Check from auth context first, then fall back to sessionStorage
     const role = (user?.role || '').toLowerCase().trim();
@@ -51,7 +53,6 @@ const Homework = () => {
     } catch (e) {}
     return false;
   })();
-  const isStudent = user?.userType === 'student';
 
   // Lesson system state
   const [myProgress, setMyProgress] = useState([]);
@@ -59,6 +60,7 @@ const Homework = () => {
   const [showClassExam, setShowClassExam] = useState(false);
 
   // 3-tier hierarchy state (shared across tabs)
+  // eslint-disable-next-line no-unused-vars
   const [languages, setLanguages] = useState([]);
   const [levelsList, setLevelsList] = useState([]);
   const [selectedLanguageId, setSelectedLanguageId] = useState('');
@@ -371,6 +373,7 @@ const Homework = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const getPerformanceMessage = (acc) => {
     if (acc >= 90) return t('homework.excellent') || 'Excellent! Outstanding performance!';
     if (acc >= 80) return t('homework.great') || 'Great job! Very good performance!';
@@ -643,22 +646,25 @@ const Homework = () => {
               <>
                 <h3 className="practice-section-title">{t('homework.selectLevel') || 'Select a Level'}</h3>
                 <div className="practice-levels-grid">
-                  {levelsList.map(level => (
-                    <div
-                      key={level._id}
-                      className={`practice-level-card ${level.practiceUnlocked ? '' : 'locked'}`}
-                      onClick={() => level.practiceUnlocked && selectLevelForPractice(level._id)}
-                      style={{ cursor: level.practiceUnlocked ? 'pointer' : 'not-allowed' }}
-                    >
-                      <div className="practice-level-icon">{level.practiceUnlocked ? '📚' : '🔒'}</div>
-                      <div className="practice-level-name">{level.name}</div>
-                      {!level.practiceUnlocked && (
-                        <div className="practice-level-locked-label">
-                          {t('homework.practiceLocked') || 'Locked'}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {levelsList.map(level => {
+                    const isUnlocked = isStudent ? (level.practiceUnlockedForMe || false) : true;
+                    return (
+                      <div
+                        key={level._id}
+                        className={`practice-level-card ${isUnlocked ? '' : 'locked'}`}
+                        onClick={() => isUnlocked && selectLevelForPractice(level._id)}
+                        style={{ cursor: isUnlocked ? 'pointer' : 'not-allowed' }}
+                      >
+                        <div className="practice-level-icon">{isUnlocked ? '📚' : '🔒'}</div>
+                        <div className="practice-level-name">{level.name}</div>
+                        {!isUnlocked && (
+                          <div className="practice-level-locked-label">
+                            {t('homework.practiceLocked') || 'Locked'}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   {levelsList.length === 0 && (
                     <div className="no-data">{t('homework.noLevels') || 'No levels available yet.'}</div>
                   )}
@@ -794,16 +800,25 @@ const Homework = () => {
               <>
                 <h3 className="practice-section-title">{t('homework.selectLevel') || 'Select a Level'}</h3>
                 <div className="practice-levels-grid">
-                  {levelsList.map(level => (
-                    <div
-                      key={level._id}
-                      className="practice-level-card"
-                      onClick={() => selectLevelForExam(level._id)}
-                    >
-                      <div className="practice-level-icon">📚</div>
-                      <div className="practice-level-name">{level.name}</div>
-                    </div>
-                  ))}
+                  {levelsList.map(level => {
+                    const isUnlocked = isStudent ? (level.practiceUnlockedForMe || false) : true;
+                    return (
+                      <div
+                        key={level._id}
+                        className={`practice-level-card ${isUnlocked ? '' : 'locked'}`}
+                        onClick={() => isUnlocked && selectLevelForExam(level._id)}
+                        style={{ cursor: isUnlocked ? 'pointer' : 'not-allowed' }}
+                      >
+                        <div className="practice-level-icon">{isUnlocked ? '📚' : '🔒'}</div>
+                        <div className="practice-level-name">{level.name}</div>
+                        {!isUnlocked && (
+                          <div className="practice-level-locked-label">
+                            {t('homework.practiceLocked') || 'Locked'}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   {levelsList.length === 0 && (
                     <div className="no-data">{t('homework.noLevels') || 'No levels available yet.'}</div>
                   )}
@@ -876,165 +891,69 @@ const Homework = () => {
           </div>
         )}
 
-        {/* EXAM MODE - Admin/Teacher: Random word game */}
+        {/* EXAM MODE - Admin/Teacher: Card-based navigation (same as student) */}
         {activeTab === 'exam' && !isStudent && (
           <div className="game-section">
-            <div className="tier-selectors">
-              <div className="level-selector">
-                <label>{t('homework.language') || 'Language'}:</label>
-                <select
-                  value={selectedLanguageId}
-                  onChange={(e) => {
-                    setSelectedLanguageId(e.target.value);
-                    setCurrentWord(null);
-                    setFeedback(null);
-                  }}
-                  className="level-select"
-                >
-                  {languages.map(lang => (
-                    <option key={lang._id} value={lang._id}>{lang.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="level-selector">
-                <label>{t('homework.level') || 'Level'}:</label>
-                <select
-                  value={selectedLevelId}
-                  onChange={(e) => {
-                    setSelectedLevelId(e.target.value);
-                    setCurrentWord(null);
-                    setFeedback(null);
-                    setSessionStats({
-                      totalAttempts: 0,
-                      correctAnswers: 0,
-                      enToUzCorrect: 0,
-                      enToUzTotal: 0,
-                      uzToEnCorrect: 0,
-                      uzToEnTotal: 0
-                    });
-                    setSessionComplete(false);
-                  }}
-                  className="level-select"
-                >
-                  {levelsList.map(lvl => (
-                    <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="exam-stats-bar">
-              <div className="progress-info">
-                <span>{t('homework.question') || 'Question'} {Math.min(sessionStats.totalAttempts + 1, SESSION_LIMIT)} {t('homework.of') || 'of'} {SESSION_LIMIT}</span>
-                <span>{accuracy}% {t('homework.accuracy') || 'Accuracy'}</span>
-              </div>
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${((sessionStats.totalAttempts) / SESSION_LIMIT) * 100}%` }}
-                ></div>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
-            ) : currentWord ? (
-              <div className="word-card">
-                <div className="direction-label">{getDirectionLabel()}</div>
-                <div className="word-display">{getDisplayText()}</div>
-
-                <div className="answer-section">
-                  <input
-                    type="text"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={getPlaceholder()}
-                    disabled={isChecking || feedback !== null}
-                    className="answer-input"
-                    autoFocus
-                  />
-
-                  {!feedback ? (
-                    <button
-                      onClick={handleCheckAnswer}
-                      disabled={!userAnswer.trim() || isChecking}
-                      className="btn btn-primary"
+            {!showClassExam && examView === 'levels' && (
+              <>
+                <h3 className="practice-section-title">{t('homework.selectLevel') || 'Select a Level'}</h3>
+                <div className="practice-levels-grid">
+                  {levelsList.map(level => (
+                    <div
+                      key={level._id}
+                      className="practice-level-card"
+                      onClick={() => selectLevelForExam(level._id)}
                     >
-                      {isChecking ? (t('homework.checking') || 'Checking...') : (t('homework.checkAnswer') || 'Check Answer')}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleNext}
-                      className="btn btn-primary"
-                    >
-                      {sessionStats.totalAttempts >= SESSION_LIMIT
-                        ? (t('homework.finish') || 'Finish')
-                        : (t('homework.next') || 'Next')
-                      }
-                    </button>
+                      <div className="practice-level-icon">📚</div>
+                      <div className="practice-level-name">{level.name}</div>
+                    </div>
+                  ))}
+                  {levelsList.length === 0 && (
+                    <div className="no-data">{t('homework.noLevels') || 'No levels available yet.'}</div>
                   )}
                 </div>
+              </>
+            )}
 
-                {feedback && (
-                  <div className={`feedback ${feedback.isCorrect ? 'correct' : 'incorrect'}`}>
-                    {feedback.isCorrect ? (
-                      <>
-                        <div className="feedback-title">{t('homework.correct') || 'Correct!'}</div>
-                        <p>{t('homework.greatJob') || 'Great job! Your answer is correct.'}</p>
-                      </>
-                    ) : (
-                      <>
-                        <div className="feedback-title">{t('homework.incorrect') || 'Incorrect'}</div>
-                        <p>{t('homework.yourAnswer') || 'Your answer'}: <strong>{feedback.userAnswer}</strong></p>
-                        <p>{t('homework.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
-                      </>
+            {!showClassExam && examView === 'classes' && (
+              <>
+                <div className="practice-back-bar">
+                  <button className="btn btn-small btn-secondary" onClick={goBackToExamLevels}>
+                    ← {t('homework.backToLevels') || 'Back to Levels'}
+                  </button>
+                </div>
+                <h3 className="practice-section-title">
+                  {levelsList.find(l => l._id === selectedLevelId)?.name || ''} — {t('homework.selectClass') || 'Select a Class'}
+                </h3>
+                {lessonsLoading ? (
+                  <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
+                ) : (
+                  <div className="exam-student-grid">
+                    {levelLessons.map(lesson => (
+                      <div
+                        key={lesson._id}
+                        className="exam-student-card unlocked available"
+                        onClick={() => selectClassForExam(lesson)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="exam-student-header">
+                          <span className="exam-student-order">{lesson.order}</span>
+                          <span className="exam-student-name">{lesson.name}</span>
+                        </div>
+                        <div className="exam-student-meta">
+                          {lesson.wordIds?.length || 0} {t('homework.words') || 'words'}
+                        </div>
+                        <div className="exam-student-status">
+                          <span className="status-available">✅ {t('homework.available') || 'Available'}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {levelLessons.length === 0 && (
+                      <div className="no-data">{t('homework.noLessonsYet') || 'No classes available yet.'}</div>
                     )}
                   </div>
                 )}
-              </div>
-            ) : (
-              <div className="no-words">
-                {t('homework.noWords') || 'No words available. Please contact admin to add words.'}
-              </div>
-            )}
-
-            {sessionComplete && (
-              <div className="session-complete-overlay">
-                <div className="session-complete-card">
-                  <h2>{t('homework.sessionComplete') || 'Session Complete!'}</h2>
-                  <div className="session-stats">
-                    <div className="stat-box">
-                      <span className="stat-number">{sessionStats.correctAnswers}/{sessionStats.totalAttempts}</span>
-                      <span className="stat-label">{t('homework.correctAnswers') || 'Correct Answers'}</span>
-                    </div>
-                    <div className="stat-box">
-                      <span className="stat-number">{accuracy}%</span>
-                      <span className="stat-label">{t('homework.accuracy') || 'Accuracy'}</span>
-                    </div>
-                  </div>
-                  <p className="performance-msg">{getPerformanceMessage(accuracy)}</p>
-                  <button
-                    onClick={() => {
-                      setSessionComplete(false);
-                      setSessionStats({
-                        totalAttempts: 0,
-                        correctAnswers: 0,
-                        enToUzCorrect: 0,
-                        enToUzTotal: 0,
-                        uzToEnCorrect: 0,
-                        uzToEnTotal: 0
-                      });
-                      setCurrentWord(null);
-                      setFeedback(null);
-                      fetchRandomWord();
-                    }}
-                    className="btn btn-primary btn-large"
-                  >
-                    {t('homework.tryAgain') || 'Try Again'}
-                  </button>
-                </div>
-              </div>
+              </>
             )}
           </div>
         )}

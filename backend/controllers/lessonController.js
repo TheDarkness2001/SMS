@@ -96,7 +96,7 @@ exports.getLesson = async (req, res) => {
 // Create lesson
 exports.createLesson = async (req, res) => {
   try {
-    const { name, levelId, order, examTimeLimit, minPassScore } = req.body;
+    const { name, levelId, order, examTimeLimit, minPassScore, maxWords } = req.body;
 
     if (!name || !levelId) {
       return res.status(400).json({
@@ -111,6 +111,7 @@ exports.createLesson = async (req, res) => {
       order: order || 1,
       examTimeLimit: examTimeLimit || 300,
       minPassScore: minPassScore || 70,
+      maxWords: maxWords || 20,
       wordIds: []
     });
 
@@ -135,7 +136,7 @@ exports.createLesson = async (req, res) => {
 exports.updateLesson = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, levelId, order, examTimeLimit, minPassScore } = req.body;
+    const { name, levelId, order, examTimeLimit, minPassScore, maxWords } = req.body;
 
     const lesson = await Lesson.findById(id);
     if (!lesson) {
@@ -150,6 +151,7 @@ exports.updateLesson = async (req, res) => {
     if (order !== undefined) lesson.order = order;
     if (examTimeLimit !== undefined) lesson.examTimeLimit = examTimeLimit;
     if (minPassScore !== undefined) lesson.minPassScore = minPassScore;
+    if (maxWords !== undefined) lesson.maxWords = maxWords;
 
     await lesson.save();
 
@@ -547,8 +549,15 @@ exports.getStudentProgress = async (req, res) => {
     const studentGroupIds = studentGroups.map(g => g._id.toString());
 
     // Get all levels for practiceUnlocked info
-    const allLevels = await Level.find().select('_id practiceUnlocked');
-    const levelMap = new Map(allLevels.map(l => [l._id.toString(), l]));
+    const allLevels = await Level.find().select('_id practiceUnlocked practiceUnlockedFor');
+    const levelMap = new Map(allLevels.map(l => {
+      const levelData = l.toObject ? l.toObject() : l;
+      // Compute effective practice unlock for this student
+      const unlockedFor = (levelData.practiceUnlockedFor || []).map(g => g.toString());
+      levelData.isPracticeUnlocked = levelData.practiceUnlocked === true ||
+        unlockedFor.some(gid => studentGroupIds.includes(gid));
+      return [l._id.toString(), levelData];
+    }));
 
     // Get all lessons and existing progress
     const allLessons = await Lesson.find().sort({ levelId: 1, order: 1 });
@@ -571,7 +580,7 @@ exports.getStudentProgress = async (req, res) => {
           lastExamDate: existing.lastExamDate,
           unlockedAt: existing.unlockedAt,
           examUnlocked,
-          practiceUnlocked: level?.practiceUnlocked || false
+          practiceUnlocked: level?.isPracticeUnlocked || false
         };
       }
       return {
@@ -584,7 +593,7 @@ exports.getStudentProgress = async (req, res) => {
         lastExamDate: null,
         unlockedAt: null,
         examUnlocked,
-        practiceUnlocked: level?.practiceUnlocked || false
+        practiceUnlocked: level?.isPracticeUnlocked || false
       };
     });
 

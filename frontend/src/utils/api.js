@@ -292,6 +292,20 @@ export const homeworkAPI = {
   resetStudentProgress: (id) => api.post(`/homework/students/${id}/reset-progress`)
 };
 
+// Sentence API
+export const sentenceAPI = {
+  getAll: () => api.get('/sentences'),
+  getCategories: () => api.get('/sentences/categories'),
+  create: (data) => api.post('/sentences', data),
+  update: (id, data) => api.put(`/sentences/${id}`, data),
+  delete: (id) => api.delete(`/sentences/${id}`),
+  getRandom: (category) => api.get('/sentences/random', { params: category ? { category } : {} }),
+  checkAnswer: (data) => api.post('/sentences/check', data),
+  getProgress: () => api.get('/sentences/progress'),
+  submitResult: (sessionStats) => api.post('/sentences/submit-result', { sessionStats }),
+  getLeaderboard: () => api.get('/sentences/leaderboard')
+};
+
 // Language API
 export const languageAPI = {
   getAll: () => api.get('/homework/languages'),
@@ -303,7 +317,7 @@ export const languageAPI = {
 // Level API
 export const levelAPI = {
   getByLanguage: (languageId) => api.get(`/homework/levels/language/${languageId}`),
-  togglePracticeLock: (id) => api.post(`/homework/levels/${id}/toggle-practice-lock`),
+  togglePracticeLock: (id, groupId) => api.post(`/homework/levels/${id}/toggle-practice-lock`, { groupId }),
   create: (data) => api.post('/homework/levels', data),
   update: (id, data) => api.put(`/homework/levels/${id}`, data),
   delete: (id) => api.delete(`/homework/levels/${id}`)

@@ -24,14 +24,13 @@ const LessonsTab = ({ t }) => {
     wordsPerClass: 20,
     minPassScore: 70
   });
-  const [lessonForm, setLessonForm] = useState({ name: '', order: 1, minPassScore: 70 });
+  const [lessonForm, setLessonForm] = useState({ name: '', order: 1, minPassScore: 70, maxWords: 20 });
   const [editingLesson, setEditingLesson] = useState(null);
   const [newWord, setNewWord] = useState({ english: '', uzbek: '' });
   const [editingWord, setEditingWord] = useState(null);
   const [editWordForm, setEditWordForm] = useState({ english: '', uzbek: '' });
   const [generating, setGenerating] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
-  const [togglingPracticeId, setTogglingPracticeId] = useState(null);
 
   useEffect(() => {
     fetchLanguages();
@@ -144,22 +143,6 @@ const LessonsTab = ({ t }) => {
     }
   };
 
-  const handleTogglePracticeLock = async (id) => {
-    setTogglingPracticeId(id);
-    try {
-      const res = await levelAPI.togglePracticeLock(id);
-      if (res.data.success) {
-        setLevels(prev => prev.map(l =>
-          l._id === id ? { ...l, practiceUnlocked: res.data.data.level.practiceUnlocked } : l
-        ));
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error toggling practice lock');
-    } finally {
-      setTogglingPracticeId(null);
-    }
-  };
-
   const selectLevel = (lvl) => {
     setSelectedLevel(lvl);
     fetchLessons(lvl._id);
@@ -175,9 +158,10 @@ const LessonsTab = ({ t }) => {
         name: lessonForm.name.trim(),
         levelId: selectedLevel._id,
         order: lessonForm.order,
-        minPassScore: lessonForm.minPassScore
+        minPassScore: lessonForm.minPassScore,
+        maxWords: lessonForm.maxWords
       });
-      setLessonForm({ name: '', order: 1, minPassScore: 70 });
+      setLessonForm({ name: '', order: 1, minPassScore: 70, maxWords: 20 });
       fetchLessons(selectedLevel._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating lesson');
@@ -191,10 +175,11 @@ const LessonsTab = ({ t }) => {
       await lessonAPI.updateLesson(editingLesson._id, {
         name: lessonForm.name.trim(),
         order: lessonForm.order,
-        minPassScore: lessonForm.minPassScore
+        minPassScore: lessonForm.minPassScore,
+        maxWords: lessonForm.maxWords
       });
       setEditingLesson(null);
-      setLessonForm({ name: '', order: 1, minPassScore: 70 });
+      setLessonForm({ name: '', order: 1, minPassScore: 70, maxWords: 20 });
       fetchLessons(selectedLevel._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error updating lesson');
@@ -216,7 +201,8 @@ const LessonsTab = ({ t }) => {
     setLessonForm({
       name: lesson.name,
       order: lesson.order,
-      minPassScore: lesson.minPassScore
+      minPassScore: lesson.minPassScore,
+      maxWords: lesson.maxWords || 20
     });
   };
 
@@ -470,19 +456,6 @@ const LessonsTab = ({ t }) => {
                     </div>
                     <div className="hierarchy-actions">
                       <button
-                        className={`btn btn-small ${lvl.practiceUnlocked ? 'btn-delete' : 'btn-primary'}`}
-                        onClick={(e) => { e.stopPropagation(); handleTogglePracticeLock(lvl._id); }}
-                        disabled={togglingPracticeId === lvl._id}
-                        title={lvl.practiceUnlocked ? (t('homework.lockPractice') || 'Lock Practice') : (t('homework.unlockPractice') || 'Unlock Practice')}
-                      >
-                        {togglingPracticeId === lvl._id
-                          ? (t('homework.loading') || '...')
-                          : lvl.practiceUnlocked
-                            ? (t('homework.lockPractice') || 'Lock Practice')
-                            : (t('homework.unlockPractice') || 'Unlock Practice')
-                        }
-                      </button>
-                      <button
                         className="btn btn-small btn-delete"
                         onClick={(e) => { e.stopPropagation(); handleDeleteLevel(lvl._id); }}
                       >
@@ -519,45 +492,68 @@ const LessonsTab = ({ t }) => {
 
           <form onSubmit={editingLesson ? handleUpdateLesson : handleCreateLesson} className="word-form">
             <h3>{editingLesson ? (t('homework.editLesson') || 'Edit Lesson') : (t('homework.addNewLesson') || 'Add New Lesson')}</h3>
-            <div className="form-row">
-              <input
-                type="text"
-                placeholder={t('homework.lessonName') || 'Lesson Name'}
-                value={lessonForm.name}
-                onChange={(e) => setLessonForm({ ...lessonForm, name: e.target.value })}
-                className="form-input"
-                required
-              />
-              <input
-                type="number"
-                placeholder={t('homework.order') || 'Order'}
-                value={lessonForm.order}
-                onChange={(e) => setLessonForm({ ...lessonForm, order: parseInt(e.target.value) || 1 })}
-                className="form-input"
-                min="1"
-                style={{ maxWidth: '80px' }}
-              />
-              <input
-                type="number"
-                placeholder={t('homework.passScore') || 'Pass %'}
-                value={lessonForm.minPassScore}
-                onChange={(e) => setLessonForm({ ...lessonForm, minPassScore: parseInt(e.target.value) || 70 })}
-                className="form-input"
-                min="1"
-                max="100"
-                style={{ maxWidth: '80px' }}
-              />
-              <button type="submit" className="btn btn-primary">
-                {editingLesson ? (t('homework.update') || 'Update') : (t('homework.add') || 'Add')}
-              </button>
-              {editingLesson && (
-                <button type="button" className="btn btn-secondary" onClick={() => {
-                  setEditingLesson(null);
-                  setLessonForm({ name: '', order: 1, minPassScore: 70 });
-                }}>
-                  {t('homework.cancel') || 'Cancel'}
+            <div className="form-row lesson-form-row">
+              <div className="form-field">
+                <label className="form-label">{t('homework.lessonName') || 'Lesson Name'}</label>
+                <input
+                  type="text"
+                  placeholder={t('homework.lessonName') || 'e.g., Class 1'}
+                  value={lessonForm.name}
+                  onChange={(e) => setLessonForm({ ...lessonForm, name: e.target.value })}
+                  className="form-input"
+                  required
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">{t('homework.order') || 'Order'}</label>
+                <input
+                  type="number"
+                  placeholder="1"
+                  value={lessonForm.order}
+                  onChange={(e) => setLessonForm({ ...lessonForm, order: parseInt(e.target.value) || 1 })}
+                  className="form-input"
+                  min="1"
+                  style={{ maxWidth: '80px' }}
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">{t('homework.maxWords') || 'Max Words'}</label>
+                <input
+                  type="number"
+                  placeholder="20"
+                  value={lessonForm.maxWords}
+                  onChange={(e) => setLessonForm({ ...lessonForm, maxWords: parseInt(e.target.value) || 20 })}
+                  className="form-input"
+                  min="1"
+                  style={{ maxWidth: '90px' }}
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">{t('homework.passScore') || 'Pass %'}</label>
+                <input
+                  type="number"
+                  placeholder="70"
+                  value={lessonForm.minPassScore}
+                  onChange={(e) => setLessonForm({ ...lessonForm, minPassScore: parseInt(e.target.value) || 70 })}
+                  className="form-input"
+                  min="1"
+                  max="100"
+                  style={{ maxWidth: '80px' }}
+                />
+              </div>
+              <div className="form-field form-field-actions">
+                <button type="submit" className="btn btn-primary">
+                  {editingLesson ? (t('homework.update') || 'Update') : (t('homework.add') || 'Add')}
                 </button>
-              )}
+                {editingLesson && (
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    setEditingLesson(null);
+                    setLessonForm({ name: '', order: 1, minPassScore: 70, maxWords: 20 });
+                  }}>
+                    {t('homework.cancel') || 'Cancel'}
+                  </button>
+                )}
+              </div>
             </div>
           </form>
 
@@ -574,7 +570,7 @@ const LessonsTab = ({ t }) => {
                       <div className="lesson-main" onClick={() => selectLesson(lesson)} style={{ cursor: 'pointer' }}>
                         <span className="lesson-order">{lesson.order}</span>
                         <span className="lesson-name">{lesson.name}</span>
-                        <span className="lesson-meta">{lesson.wordIds?.length || 0} {t('homework.words') || 'words'} · {lesson.minPassScore}%</span>
+                        <span className="lesson-meta">{lesson.wordIds?.length || 0}/{lesson.maxWords || 20} {t('homework.words') || 'words'} · {lesson.minPassScore}%</span>
                       </div>
                       <div className="lesson-actions">
                         <button className="btn btn-small btn-edit" onClick={() => startEditLesson(lesson)}>

@@ -17,7 +17,8 @@ import {
   AiOutlineBarChart,
   AiOutlineAppstore,
   AiOutlineCluster,
-  AiOutlineBook
+  AiOutlineBook,
+  AiOutlineEdit
 } from 'react-icons/ai';
 import { IoSchoolOutline } from 'react-icons/io5';
 import './Sidebar.css';
@@ -158,6 +159,16 @@ const Sidebar = ({ user, isOpen, onClose }) => {
             <Link to="/homework">
               <span className="icon"><AiOutlineBook size={20} /></span>
               <span>{t('sidebar.homework') || 'Homework'}</span>
+            </Link>
+          </li>
+        )}
+
+        {/* 📝 SENTENCES (All users) */}
+        {!isParent && (
+          <li className={isActive('/sentences')}>
+            <Link to="/sentences">
+              <span className="icon"><AiOutlineEdit size={20} /></span>
+              <span>{t('sidebar.sentences') || 'Sentences'}</span>
             </Link>
           </li>
         )}
