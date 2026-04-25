@@ -27,6 +27,20 @@ exports.getGroups = async (req, res) => {
       query.branchId = branchId;
     }
 
+    // For students, show only groups they are enrolled in
+    if (req.userType === 'student' || userRole === 'student') {
+      query.students = { $in: [userId, userId.toString()] };
+      const groups = await ExamGroup.find(query)
+        .populate('subject', 'name code')
+        .select('groupName subjectName subject');
+      return res.status(200).json({
+        success: true,
+        count: groups.length,
+        data: groups,
+        filter: 'student-enrolled'
+      });
+    }
+
     // For teachers, show only groups they are assigned to
     if (userRole === 'teacher') {
       console.log('[ExamGroupController] Teacher userId:', userId, 'type:', typeof userId);

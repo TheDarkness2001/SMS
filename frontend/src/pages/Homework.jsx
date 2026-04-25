@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { homeworkAPI, lessonAPI, languageAPI, levelAPI } from '../utils/api';
+import { homeworkAPI, lessonAPI, languageAPI, levelAPI, examGroupsAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import LessonsTab from '../components/homework/LessonsTab';
@@ -97,15 +97,40 @@ const Homework = () => {
     fetchMyProgress();
   }, [isStudent]);
 
-  // Fetch languages for all users
+  // Fetch languages for all users (students see only their subject language)
   useEffect(() => {
     const fetchLanguages = async () => {
       try {
         const res = await languageAPI.getAll();
         if (res.data.success) {
-          setLanguages(res.data.data.languages);
-          if (res.data.data.languages.length > 0) {
-            setSelectedLanguageId(res.data.data.languages[0]._id);
+          let allLanguages = res.data.data.languages || [];
+
+          // For students, filter languages by their group subjects
+          if (isStudent) {
+            try {
+              const groupsRes = await examGroupsAPI.getAll();
+              if (groupsRes.data.success) {
+                const studentGroups = groupsRes.data.data || [];
+                const subjectNames = studentGroups
+                  .map(g => g.subjectName || g.subject?.name)
+                  .filter(Boolean)
+                  .map(s => s.toLowerCase().trim());
+                const uniqueSubjects = [...new Set(subjectNames)];
+
+                if (uniqueSubjects.length > 0) {
+                  allLanguages = allLanguages.filter(lang =>
+                    uniqueSubjects.some(sub => sub === lang.name.toLowerCase().trim())
+                  );
+                }
+              }
+            } catch (err) {
+              console.error('Error fetching student groups:', err);
+            }
+          }
+
+          setLanguages(allLanguages);
+          if (allLanguages.length > 0) {
+            setSelectedLanguageId(allLanguages[0]._id);
           }
         }
       } catch (error) {
@@ -113,7 +138,7 @@ const Homework = () => {
       }
     };
     fetchLanguages();
-  }, []);
+  }, [isStudent]);
 
   // Fetch levels when language selected
   useEffect(() => {

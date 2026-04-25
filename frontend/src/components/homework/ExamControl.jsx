@@ -46,7 +46,7 @@ const ExamControl = ({ t }) => {
     try {
       const res = await examGroupsAPI.getAll();
       if (res.data.success) {
-        setGroups(res.data.data.groups || []);
+        setGroups(res.data.data || []);
       }
     } catch (err) {
       console.error('Error fetching groups:', err);
