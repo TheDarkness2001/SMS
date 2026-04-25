@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { sentenceAPI } from '../utils/api';
+
 import SentencePractice from '../components/sentences/SentencePractice';
 import SentenceLeaderboard from '../components/sentences/SentenceLeaderboard';
 import SentenceManager from '../components/sentences/SentenceManager';
@@ -8,17 +8,15 @@ import SentenceManager from '../components/sentences/SentenceManager';
 const SentencesPage = () => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('practice');
-  const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     try {
       const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
-      setUser(stored);
       const role = (stored.role || '').toLowerCase().trim();
       setIsAdmin(role === 'founder' || stored.permissions?.canManageHomework === true);
     } catch (e) {
-      setUser({});
+      setIsAdmin(false);
     }
   }, []);
 

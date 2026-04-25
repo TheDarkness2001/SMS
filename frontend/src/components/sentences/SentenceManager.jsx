@@ -3,7 +3,8 @@ import { sentenceAPI } from '../../utils/api';
 
 const SentenceManager = ({ t }) => {
   const [sentences, setSentences] = useState([]);
-  const [categories, setCategories] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [_categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ english: '', uzbek: '', category: 'General', difficulty: 'medium' });
   const [editingId, setEditingId] = useState(null);
