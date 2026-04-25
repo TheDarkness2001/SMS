@@ -31,6 +31,7 @@ const LessonsTab = ({ t }) => {
   const [editWordForm, setEditWordForm] = useState({ english: '', uzbek: '' });
   const [generating, setGenerating] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [togglingPracticeId, setTogglingPracticeId] = useState(null);
 
   useEffect(() => {
     fetchLanguages();
@@ -140,6 +141,22 @@ const LessonsTab = ({ t }) => {
       fetchLevels(selectedLanguage._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting level');
+    }
+  };
+
+  const handleTogglePracticeLock = async (id) => {
+    setTogglingPracticeId(id);
+    try {
+      const res = await levelAPI.togglePracticeLock(id);
+      if (res.data.success) {
+        setLevels(prev => prev.map(l =>
+          l._id === id ? { ...l, practiceUnlocked: res.data.data.level.practiceUnlocked } : l
+        ));
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error toggling practice lock');
+    } finally {
+      setTogglingPracticeId(null);
     }
   };
 
@@ -451,12 +468,27 @@ const LessonsTab = ({ t }) => {
                         {lvl.minPassScore || 70}%
                       </span>
                     </div>
-                    <button
-                      className="btn btn-small btn-delete"
-                      onClick={(e) => { e.stopPropagation(); handleDeleteLevel(lvl._id); }}
-                    >
-                      {t('homework.delete') || 'Delete'}
-                    </button>
+                    <div className="hierarchy-actions">
+                      <button
+                        className={`btn btn-small ${lvl.practiceUnlocked ? 'btn-delete' : 'btn-primary'}`}
+                        onClick={(e) => { e.stopPropagation(); handleTogglePracticeLock(lvl._id); }}
+                        disabled={togglingPracticeId === lvl._id}
+                        title={lvl.practiceUnlocked ? (t('homework.lockPractice') || 'Lock Practice') : (t('homework.unlockPractice') || 'Unlock Practice')}
+                      >
+                        {togglingPracticeId === lvl._id
+                          ? (t('homework.loading') || '...')
+                          : lvl.practiceUnlocked
+                            ? (t('homework.lockPractice') || 'Lock Practice')
+                            : (t('homework.unlockPractice') || 'Unlock Practice')
+                        }
+                      </button>
+                      <button
+                        className="btn btn-small btn-delete"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteLevel(lvl._id); }}
+                      >
+                        {t('homework.delete') || 'Delete'}
+                      </button>
+                    </div>
                   </div>
                 ))
               )}

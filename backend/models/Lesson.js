@@ -33,10 +33,10 @@ const lessonSchema = new mongoose.Schema({
     type: Number,
     default: 70
   },
-  examUnlocked: {
-    type: Boolean,
-    default: false
-  },
+  examUnlockedFor: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ExamGroup'
+  }],
   createdAt: {
     type: Date,
     default: Date.now

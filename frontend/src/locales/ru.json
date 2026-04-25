@@ -231,7 +231,19 @@
     "examControl": "Управление Экзаменами",
     "lock": "Заблокировать",
     "unlock": "Разблокировать",
-    "completePrevious": "Пройдите предыдущий класс"
+    "completePrevious": "Пройдите предыдущий класс",
+    "practiceLocked": "Заблокировано",
+    "practiceUnlocked": "Разблокировано",
+    "lockPractice": "Заблокировать практику",
+    "unlockPractice": "Разблокировать практику",
+    "selectGroup": "Выберите группу",
+    "noGroups": "Группы недоступны.",
+    "unassignedStudents": "Неназначенные студенты",
+    "groups": "Группы",
+    "students": "студентов",
+    "avgAccuracy": "средняя точность",
+    "examAttempts": "Попытки экзамена",
+    "noStudentsInGroup": "В этой группе нет студентов."
   },
   "teachers": {
     "title": "Учителя",

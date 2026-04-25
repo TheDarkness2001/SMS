@@ -231,7 +231,19 @@
     "examControl": "Imtihon Boshqaruvi",
     "lock": "Bloklash",
     "unlock": "Blokdan chiqarish",
-    "completePrevious": "Avvalgi sinfni tugating"
+    "completePrevious": "Avvalgi sinfni tugating",
+    "practiceLocked": "Bloklangan",
+    "practiceUnlocked": "Blokdan chiqarilgan",
+    "lockPractice": "Mashqni bloklash",
+    "unlockPractice": "Mashqni ochish",
+    "selectGroup": "Guruh tanlang",
+    "noGroups": "Guruhlar mavjud emas.",
+    "unassignedStudents": "Tayinlanmagan o'quvchilar",
+    "groups": "Guruhlar",
+    "students": "o'quvchilar",
+    "avgAccuracy": "o'rtacha aniqlik",
+    "examAttempts": "Imtihon urinishlari",
+    "noStudentsInGroup": "Bu guruhda o'quvchilar yo'q."
   },
   "teachers": {
     "title": "O'qituvchilar",

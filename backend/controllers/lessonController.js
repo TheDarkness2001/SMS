@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Lesson = require('../models/Lesson');
 const Level = require('../models/Level');
 const Language = require('../models/Language');
@@ -5,6 +6,7 @@ const Word = require('../models/Word');
 const StudentVocabProgress = require('../models/StudentVocabProgress');
 const Student = require('../models/Student');
 const ClassSchedule = require('../models/ClassSchedule');
+const ExamGroup = require('../models/ExamGroup');
 
 // Helper: Check if current time is within class hours (Uzbekistan UTC+5)
 const isWithinClassHours = async (studentId) => {
@@ -166,10 +168,18 @@ exports.updateLesson = async (req, res) => {
   }
 };
 
-// Toggle exam lock for a lesson (staff only)
+// Toggle exam lock for a lesson per group (staff only)
 exports.toggleExamLock = async (req, res) => {
   try {
     const { id } = req.params;
+    const { groupId } = req.body;
+    if (!groupId) {
+      return res.status(400).json({
+        success: false,
+        message: 'groupId is required'
+      });
+    }
+
     const lesson = await Lesson.findById(id);
     if (!lesson) {
       return res.status(404).json({
@@ -178,12 +188,20 @@ exports.toggleExamLock = async (req, res) => {
       });
     }
 
-    lesson.examUnlocked = !lesson.examUnlocked;
+    const groupObjectId = new mongoose.Types.ObjectId(groupId);
+    const isUnlocked = lesson.examUnlockedFor.some(g => g.toString() === groupId);
+
+    if (isUnlocked) {
+      lesson.examUnlockedFor = lesson.examUnlockedFor.filter(g => g.toString() !== groupId);
+    } else {
+      lesson.examUnlockedFor.push(groupObjectId);
+    }
+
     await lesson.save();
 
     res.json({
       success: true,
-      message: `Exam ${lesson.examUnlocked ? 'unlocked' : 'locked'} successfully`,
+      message: `Exam ${isUnlocked ? 'locked' : 'unlocked'} for group successfully`,
       data: { lesson }
     });
   } catch (error) {
@@ -337,8 +355,12 @@ exports.getExamWords = async (req, res) => {
       });
     }
 
-    // Check if exam is unlocked by teacher
-    if (!lesson.examUnlocked) {
+    // Check if exam is unlocked for any of the student's groups
+    const studentGroups = await ExamGroup.find({ students: studentId }).select('_id');
+    const studentGroupIds = studentGroups.map(g => g._id.toString());
+    const isUnlockedForStudent = lesson.examUnlockedFor.some(g => studentGroupIds.includes(g.toString()));
+
+    if (!isUnlockedForStudent) {
       return res.status(403).json({
         success: false,
         message: 'This exam is currently locked by your teacher.',
@@ -520,6 +542,14 @@ exports.getStudentProgress = async (req, res) => {
   try {
     const studentId = req.user.id;
 
+    // Get student's groups for exam unlock checking
+    const studentGroups = await ExamGroup.find({ students: studentId }).select('_id');
+    const studentGroupIds = studentGroups.map(g => g._id.toString());
+
+    // Get all levels for practiceUnlocked info
+    const allLevels = await Level.find().select('_id practiceUnlocked');
+    const levelMap = new Map(allLevels.map(l => [l._id.toString(), l]));
+
     // Get all lessons and existing progress
     const allLessons = await Lesson.find().sort({ levelId: 1, order: 1 });
     const progressRecords = await StudentVocabProgress.find({ studentId });
@@ -528,6 +558,8 @@ exports.getStudentProgress = async (req, res) => {
     // Merge: all lessons must appear, default to locked if no progress
     const progress = allLessons.map(lesson => {
       const existing = progressMap.get(lesson._id.toString());
+      const examUnlocked = lesson.examUnlockedFor.some(g => studentGroupIds.includes(g.toString()));
+      const level = levelMap.get(lesson.levelId.toString());
       if (existing) {
         return {
           _id: existing._id,
@@ -538,7 +570,8 @@ exports.getStudentProgress = async (req, res) => {
           bestExamScore: existing.bestExamScore,
           lastExamDate: existing.lastExamDate,
           unlockedAt: existing.unlockedAt,
-          examUnlocked: lesson.examUnlocked
+          examUnlocked,
+          practiceUnlocked: level?.practiceUnlocked || false
         };
       }
       return {
@@ -550,7 +583,8 @@ exports.getStudentProgress = async (req, res) => {
         bestExamScore: 0,
         lastExamDate: null,
         unlockedAt: null,
-        examUnlocked: lesson.examUnlocked
+        examUnlocked,
+        practiceUnlocked: level?.practiceUnlocked || false
       };
     });
 
@@ -611,13 +645,54 @@ exports.initStudentProgress = async (req, res) => {
   }
 };
 
-// Get all student progress (admin)
+// Get all student progress grouped by ExamGroup (admin)
 exports.getAllStudentProgress = async (req, res) => {
   try {
-    const students = await Student.find().select('-password').sort({ name: 1 });
+    // Fetch all active exam groups with populated students
+    const examGroups = await ExamGroup.find({ status: 'active' })
+      .populate('students', '-password')
+      .sort({ groupName: 1 });
 
-    const result = await Promise.all(
-      students.map(async (student) => {
+    // Build a set of all students already in groups
+    const groupedStudentIds = new Set();
+    const groupsData = await Promise.all(
+      examGroups.map(async (group) => {
+        const studentsWithProgress = await Promise.all(
+          (group.students || []).map(async (student) => {
+            groupedStudentIds.add(student._id.toString());
+            const progress = await StudentVocabProgress.find({ studentId: student._id })
+              .populate('lessonId', 'name levelId order');
+            return {
+              ...student.toObject(),
+              progress
+            };
+          })
+        );
+
+        const totalAttempts = studentsWithProgress.reduce((sum, s) =>
+          sum + (s.progress?.reduce((pSum, p) => pSum + (p.examAttempts || 0), 0) || 0), 0);
+        const totalCorrect = studentsWithProgress.reduce((sum, s) =>
+          sum + (s.progress?.reduce((pSum, p) => pSum + (p.wordsMemorized || 0), 0) || 0), 0);
+        const avgAccuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+
+        return {
+          groupId: group._id,
+          groupName: group.groupName,
+          subjectName: group.subjectName || '',
+          studentCount: studentsWithProgress.length,
+          avgAccuracy,
+          students: studentsWithProgress
+        };
+      })
+    );
+
+    // Find unassigned students (not in any active group)
+    const unassignedStudents = await Student.find({
+      _id: { $nin: Array.from(groupedStudentIds).map(id => new mongoose.Types.ObjectId(id)) }
+    }).select('-password').sort({ name: 1 });
+
+    const unassignedWithProgress = await Promise.all(
+      unassignedStudents.map(async (student) => {
         const progress = await StudentVocabProgress.find({ studentId: student._id })
           .populate('lessonId', 'name levelId order');
         return {
@@ -627,9 +702,18 @@ exports.getAllStudentProgress = async (req, res) => {
       })
     );
 
+    const result = {
+      groups: groupsData,
+      unassigned: {
+        groupName: 'Unassigned',
+        studentCount: unassignedWithProgress.length,
+        students: unassignedWithProgress
+      }
+    };
+
     res.json({
       success: true,
-      data: { students: result }
+      data: result
     });
   } catch (error) {
     console.error('Get all student progress error:', error);

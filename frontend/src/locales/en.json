@@ -236,7 +236,19 @@
     "examControl": "Exam Control",
     "lock": "Lock",
     "unlock": "Unlock",
-    "completePrevious": "Complete previous class"
+    "completePrevious": "Complete previous class",
+    "practiceLocked": "Locked",
+    "practiceUnlocked": "Unlocked",
+    "lockPractice": "Lock Practice",
+    "unlockPractice": "Unlock Practice",
+    "selectGroup": "Select a Group",
+    "noGroups": "No groups available.",
+    "unassignedStudents": "Unassigned Students",
+    "groups": "Groups",
+    "students": "students",
+    "avgAccuracy": "avg accuracy",
+    "examAttempts": "Exam Attempts",
+    "noStudentsInGroup": "No students in this group."
   },
   "teachers": {
     "title": "Teachers",

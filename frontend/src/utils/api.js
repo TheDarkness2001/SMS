@@ -303,6 +303,7 @@ export const languageAPI = {
 // Level API
 export const levelAPI = {
   getByLanguage: (languageId) => api.get(`/homework/levels/language/${languageId}`),
+  togglePracticeLock: (id) => api.post(`/homework/levels/${id}/toggle-practice-lock`),
   create: (data) => api.post('/homework/levels', data),
   update: (id, data) => api.put(`/homework/levels/${id}`, data),
   delete: (id) => api.delete(`/homework/levels/${id}`)
@@ -318,7 +319,7 @@ export const lessonAPI = {
   deleteLesson: (id) => api.delete(`/homework/lessons/${id}`),
   autoGenerateClasses: (id, data) => api.post(`/homework/lessons/${id}/auto-generate`, data),
   removeWordFromLesson: (id, wordId) => api.delete(`/homework/lessons/${id}/words/${wordId}`),
-  toggleExamLock: (id) => api.post(`/homework/lessons/${id}/toggle-exam-lock`),
+  toggleExamLock: (id, groupId) => api.post(`/homework/lessons/${id}/toggle-exam-lock`, { groupId }),
   getAllStudentLessonProgress: () => api.get('/homework/lessons/students/progress'),
   // Student
   getExamWords: (id) => api.get(`/homework/lessons/${id}/exam`),

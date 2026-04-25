@@ -6,6 +6,7 @@ const { protect, authorizeHomework } = require('../middleware/auth');
 router.get('/language/:languageId', protect, levelController.getLevelsByLanguage);
 router.post('/', protect, authorizeHomework(), levelController.createLevel);
 router.put('/:id', protect, authorizeHomework(), levelController.updateLevel);
+router.post('/:id/toggle-practice-lock', protect, authorizeHomework(), levelController.togglePracticeLock);
 router.delete('/:id', protect, authorizeHomework(), levelController.deleteLevel);
 
 module.exports = router;

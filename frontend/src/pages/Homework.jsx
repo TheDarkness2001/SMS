@@ -35,6 +35,7 @@ const Homework = () => {
   // Admin state
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState({});
 
   const isAdmin = (() => {
     // Check from auth context first, then fall back to sessionStorage
@@ -54,7 +55,6 @@ const Homework = () => {
 
   // Lesson system state
   const [myProgress, setMyProgress] = useState([]);
-  const [aggregatedProgress, setAggregatedProgress] = useState([]);
   const [activeExamLesson, setActiveExamLesson] = useState(null);
   const [showClassExam, setShowClassExam] = useState(false);
 
@@ -94,18 +94,7 @@ const Homework = () => {
         console.error('Error fetching lesson progress:', error);
       }
     };
-    const fetchAggregated = async () => {
-      try {
-        const res = await lessonAPI.getMyAggregatedProgress();
-        if (res.data.success) {
-          setAggregatedProgress(res.data.data.progress);
-        }
-      } catch (error) {
-        console.error('Error fetching aggregated progress:', error);
-      }
-    };
     fetchMyProgress();
-    fetchAggregated();
   }, [isStudent]);
 
   // Fetch languages for all users
@@ -334,13 +323,17 @@ const Homework = () => {
     try {
       const response = await homeworkAPI.getAllStudentProgress();
       if (response.data.success) {
-        setStudentsProgress(response.data.data.students);
+        setStudentsProgress(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching student progress:', error);
     } finally {
       setAdminLoading(false);
     }
+  };
+
+  const toggleGroupExpanded = (groupId) => {
+    setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
   const handleResetProgress = async (id) => {
@@ -574,7 +567,6 @@ const Homework = () => {
 
   if (isStudent) {
     tabs.push(
-      { id: 'myLessons', label: t('homework.myLessons') || 'My Lessons' },
       { id: 'practice', label: t('homework.practice') || 'Practice' },
       { id: 'exam', label: t('homework.exam') || 'Exam' }
     );
@@ -618,142 +610,6 @@ const Homework = () => {
       </div>
 
       <div className="tab-content">
-        {/* MY LESSONS TAB (Student) - Aggregated Progress */}
-        {activeTab === 'myLessons' && isStudent && (
-          <div className="my-lessons-section">
-            <div className="tier-selectors">
-              <div className="level-selector">
-                <label>{t('homework.language') || 'Language'}:</label>
-                <select
-                  value={selectedLanguageId}
-                  onChange={(e) => setSelectedLanguageId(e.target.value)}
-                  className="level-select"
-                >
-                  {languages.map(lang => (
-                    <option key={lang._id} value={lang._id}>{lang.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="level-selector">
-                <label>{t('homework.level') || 'Level'}:</label>
-                <select
-                  value={selectedLevelId}
-                  onChange={(e) => setSelectedLevelId(e.target.value)}
-                  className="level-select"
-                >
-                  {levelsList.map(lvl => (
-                    <option key={lvl._id} value={lvl._id}>{lvl.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Level Summary */}
-            {(() => {
-              const langData = aggregatedProgress.find(l => l.languageId === selectedLanguageId);
-              const levelData = langData?.levels?.find(l => l.levelId === selectedLevelId);
-              if (!levelData) return (
-                <div className="no-lessons">
-                  {t('homework.noLessonsYet') || 'No lessons available yet.'}
-                </div>
-              );
-              return (
-                <>
-                  <div className="level-summary">
-                    <div className="summary-stat">
-                      <span className="summary-number">{levelData.memorizationPercent}%</span>
-                      <span className="summary-label">{t('homework.memorization') || 'Memorized'}</span>
-                    </div>
-                    <div className="summary-stat">
-                      <span className="summary-number">{levelData.passedClasses}/{levelData.totalClasses}</span>
-                      <span className="summary-label">{t('homework.classesPassed') || 'Classes Passed'}</span>
-                    </div>
-                    <div className="summary-stat">
-                      <span className="summary-number">{levelData.totalWords}</span>
-                      <span className="summary-label">{t('homework.totalWords') || 'Total Words'}</span>
-                    </div>
-                    <div className="summary-stat">
-                      <span className="summary-number">{levelData.memorizedWords}</span>
-                      <span className="summary-label">{t('homework.wordsMemorized') || 'Words Memorized'}</span>
-                    </div>
-                  </div>
-
-                  <div className="lessons-progress-list">
-                    {levelData.classes
-                      .sort((a, b) => (a.lessonId?.order || 0) - (b.lessonId?.order || 0))
-                      .map(cls => {
-                        const status = cls.status;
-                        const lesson = cls.lessonId;
-                        return (
-                          <div key={cls.lessonId?._id || cls.lessonId} className={`lesson-card ${status}`}>
-                            <div className="lesson-info">
-                              <h4>{lesson?.name || 'Class'}</h4>
-                              <div className="lesson-meta-row">
-                                <span className={`status-badge ${status}`}>
-                                  {status === 'locked' ? (t('homework.locked') || 'Locked')
-                                    : status === 'available' ? (t('homework.available') || 'Available')
-                                    : (t('homework.passed') || 'Passed')
-                                  }
-                                </span>
-                                {cls.wordsTotal > 0 && (
-                                  <span className="memorization-badge">
-                                    {cls.wordsMemorized}/{cls.wordsTotal} {t('homework.words') || 'words'}
-                                  </span>
-                                )}
-                                {cls.bestExamScore > 0 && (
-                                  <span className="best-score">{t('homework.bestScore') || 'Best'}: {cls.bestExamScore}%</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="lesson-actions">
-                              {status === 'available' && (
-                                <button
-                                  className="btn btn-primary"
-                                  onClick={() => {
-                                    setActiveExamLesson({ id: lesson?._id, name: lesson?.name });
-                                    setShowClassExam(true);
-                                  }}
-                                >
-                                  {t('homework.takeClassExam') || 'Take Class Exam'}
-                                </button>
-                              )}
-                              {status === 'passed' && (
-                                <>
-                                  <button
-                                    className="btn btn-secondary"
-                                    onClick={() => {
-                                      setActiveExamLesson({ id: lesson?._id, name: lesson?.name });
-                                      setShowClassExam(true);
-                                    }}
-                                  >
-                                    {t('homework.retakeExam') || 'Retake Exam'}
-                                  </button>
-                                  <button
-                                    className="btn btn-primary"
-                                    onClick={() => {
-                                      setSelectedPracticeLessonId(lesson?._id);
-                                      setPracticeMode('lesson');
-                                      setActiveTab('practice');
-                                    }}
-                                  >
-                                    {t('homework.practice') || 'Practice'}
-                                  </button>
-                                </>
-                              )}
-                              {status === 'locked' && (
-                                <span className="locked-text">{t('homework.completePrevious') || 'Complete previous class'}</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        )}
-
         {/* PRACTICE MODE */}
         {activeTab === 'practice' && (
           <div className="game-section">
@@ -765,11 +621,17 @@ const Homework = () => {
                   {levelsList.map(level => (
                     <div
                       key={level._id}
-                      className="practice-level-card"
-                      onClick={() => selectLevelForPractice(level._id)}
+                      className={`practice-level-card ${level.practiceUnlocked ? '' : 'locked'}`}
+                      onClick={() => level.practiceUnlocked && selectLevelForPractice(level._id)}
+                      style={{ cursor: level.practiceUnlocked ? 'pointer' : 'not-allowed' }}
                     >
-                      <div className="practice-level-icon">📚</div>
+                      <div className="practice-level-icon">{level.practiceUnlocked ? '📚' : '🔒'}</div>
                       <div className="practice-level-name">{level.name}</div>
+                      {!level.practiceUnlocked && (
+                        <div className="practice-level-locked-label">
+                          {t('homework.practiceLocked') || 'Locked'}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {levelsList.length === 0 && (
@@ -940,7 +802,7 @@ const Homework = () => {
                   <div className="exam-student-grid">
                     {levelLessons.map(lesson => {
                       const progress = myProgress.find(p => p.lessonId?._id === lesson._id);
-                      const isUnlocked = lesson.examUnlocked;
+                      const isUnlocked = progress?.examUnlocked || false;
                       const status = progress?.status || 'locked';
                       const canTake = isUnlocked && (status === 'available' || status === 'passed');
                       return (
@@ -1168,37 +1030,131 @@ const Homework = () => {
             {adminLoading ? (
               <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
             ) : (
-              <div className="progress-table-container">
-                <table className="progress-table">
-                  <thead>
-                    <tr>
-                      <th>{t('homework.studentName') || 'Student Name'}</th>
-                      <th>{t('homework.totalAttempts') || 'Total Attempts'}</th>
-                      <th>{t('homework.correctAnswers') || 'Correct'}</th>
-                      <th>{t('homework.accuracy') || 'Accuracy'}</th>
-                      <th>{t('homework.actions') || 'Actions'}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {studentsProgress.map(student => (
-                      <tr key={student._id}>
-                        <td>{student.name || student.studentId || 'Unknown'}</td>
-                        <td>{student.progress?.totalAttempts || 0}</td>
-                        <td>{student.progress?.correctAnswers || 0}</td>
-                        <td>{student.progress?.accuracy || 0}%</td>
-                        <td className="actions">
-                          <button
-                            onClick={() => handleResetProgress(student._id)}
-                            className="btn btn-small btn-delete"
-                          >
-                            {t('homework.reset') || 'Reset'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {studentsProgress.length === 0 && (
+              <div className="progress-groups-container">
+                {/* Groups */}
+                {(studentsProgress.groups || []).map(group => (
+                  <div key={group.groupId} className="progress-group-card">
+                    <div
+                      className="progress-group-header"
+                      onClick={() => toggleGroupExpanded(group.groupId)}
+                    >
+                      <div className="progress-group-title">
+                        <span className="progress-group-icon">{expandedGroups[group.groupId] ? '📂' : '📁'}</span>
+                        <span className="progress-group-name">{group.groupName}</span>
+                        {group.subjectName && (
+                          <span className="progress-group-subject">({group.subjectName})</span>
+                        )}
+                      </div>
+                      <div className="progress-group-stats">
+                        <span>{group.studentCount} {t('homework.students') || 'students'}</span>
+                        <span>{group.avgAccuracy}% {t('homework.avgAccuracy') || 'avg accuracy'}</span>
+                        <span className="expand-icon">{expandedGroups[group.groupId] ? '▲' : '▼'}</span>
+                      </div>
+                    </div>
+                    {expandedGroups[group.groupId] && (
+                      <div className="progress-group-body">
+                        {group.students.length === 0 ? (
+                          <div className="no-data">{t('homework.noStudentsInGroup') || 'No students in this group.'}</div>
+                        ) : (
+                          <table className="progress-table">
+                            <thead>
+                              <tr>
+                                <th>{t('homework.studentName') || 'Student Name'}</th>
+                                <th>{t('homework.examAttempts') || 'Exam Attempts'}</th>
+                                <th>{t('homework.bestScore') || 'Best Score'}</th>
+                                <th>{t('homework.classesPassed') || 'Classes Passed'}</th>
+                                <th>{t('homework.actions') || 'Actions'}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.students.map(student => {
+                                const passedCount = student.progress?.filter(p => p.status === 'passed').length || 0;
+                                const bestScore = student.progress?.reduce((max, p) => Math.max(max, p.bestExamScore || 0), 0) || 0;
+                                const totalAttempts = student.progress?.reduce((sum, p) => sum + (p.examAttempts || 0), 0) || 0;
+                                return (
+                                  <tr key={student._id}>
+                                    <td>{student.name || 'Unknown'}</td>
+                                    <td>{totalAttempts}</td>
+                                    <td>{bestScore}%</td>
+                                    <td>{passedCount}</td>
+                                    <td className="actions">
+                                      <button
+                                        onClick={() => handleResetProgress(student._id)}
+                                        className="btn btn-small btn-delete"
+                                      >
+                                        {t('homework.reset') || 'Reset'}
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Unassigned */}
+                {studentsProgress.unassigned && studentsProgress.unassigned.students.length > 0 && (
+                  <div className="progress-group-card unassigned">
+                    <div
+                      className="progress-group-header"
+                      onClick={() => toggleGroupExpanded('unassigned')}
+                    >
+                      <div className="progress-group-title">
+                        <span className="progress-group-icon">{expandedGroups['unassigned'] ? '📂' : '📁'}</span>
+                        <span className="progress-group-name">{t('homework.unassignedStudents') || 'Unassigned Students'}</span>
+                      </div>
+                      <div className="progress-group-stats">
+                        <span>{studentsProgress.unassigned.studentCount} {t('homework.students') || 'students'}</span>
+                        <span className="expand-icon">{expandedGroups['unassigned'] ? '▲' : '▼'}</span>
+                      </div>
+                    </div>
+                    {expandedGroups['unassigned'] && (
+                      <div className="progress-group-body">
+                        <table className="progress-table">
+                          <thead>
+                            <tr>
+                              <th>{t('homework.studentName') || 'Student Name'}</th>
+                              <th>{t('homework.examAttempts') || 'Exam Attempts'}</th>
+                              <th>{t('homework.bestScore') || 'Best Score'}</th>
+                              <th>{t('homework.classesPassed') || 'Classes Passed'}</th>
+                              <th>{t('homework.actions') || 'Actions'}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {studentsProgress.unassigned.students.map(student => {
+                              const passedCount = student.progress?.filter(p => p.status === 'passed').length || 0;
+                              const bestScore = student.progress?.reduce((max, p) => Math.max(max, p.bestExamScore || 0), 0) || 0;
+                              const totalAttempts = student.progress?.reduce((sum, p) => sum + (p.examAttempts || 0), 0) || 0;
+                              return (
+                                <tr key={student._id}>
+                                  <td>{student.name || 'Unknown'}</td>
+                                  <td>{totalAttempts}</td>
+                                  <td>{bestScore}%</td>
+                                  <td>{passedCount}</td>
+                                  <td className="actions">
+                                    <button
+                                      onClick={() => handleResetProgress(student._id)}
+                                      className="btn btn-small btn-delete"
+                                    >
+                                      {t('homework.reset') || 'Reset'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(!studentsProgress.groups || studentsProgress.groups.length === 0) &&
+                  (!studentsProgress.unassigned || studentsProgress.unassigned.students.length === 0) && (
                   <div className="no-data">{t('homework.noStudentsYet') || 'No students found.'}</div>
                 )}
               </div>
@@ -1220,9 +1176,6 @@ const Homework = () => {
               if (isStudent) {
                 lessonAPI.getMyLessonProgress().then(res => {
                   if (res.data.success) setMyProgress(res.data.data.progress);
-                });
-                lessonAPI.getMyAggregatedProgress().then(res => {
-                  if (res.data.success) setAggregatedProgress(res.data.data.progress);
                 });
               }
             }}

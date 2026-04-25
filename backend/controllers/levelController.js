@@ -48,6 +48,26 @@ exports.updateLevel = async (req, res) => {
   }
 };
 
+exports.togglePracticeLock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const level = await Level.findById(id);
+    if (!level) {
+      return res.status(404).json({ success: false, message: 'Level not found' });
+    }
+    level.practiceUnlocked = !level.practiceUnlocked;
+    await level.save();
+    res.json({
+      success: true,
+      message: `Practice ${level.practiceUnlocked ? 'unlocked' : 'locked'} successfully`,
+      data: { level }
+    });
+  } catch (error) {
+    console.error('Toggle practice lock error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 exports.deleteLevel = async (req, res) => {
   try {
     const { id } = req.params;

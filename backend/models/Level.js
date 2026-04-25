@@ -33,6 +33,10 @@ const levelSchema = new mongoose.Schema({
     min: 1,
     max: 100
   },
+  practiceUnlocked: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
