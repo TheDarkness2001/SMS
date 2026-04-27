@@ -1,13 +1,26 @@
 const Sentence = require('../models/Sentence');
 const StudentSentenceProgress = require('../models/StudentSentenceProgress');
 const Student = require('../models/Student');
+const Lesson = require('../models/Lesson');
 
-// Get all sentences (optionally filtered by category)
+// Get all sentences (filtered by lessonId or levelId)
 exports.getAllSentences = async (req, res) => {
   try {
-    const { category } = req.query;
-    const filter = category ? { category } : {};
-    const sentences = await Sentence.find(filter).sort({ category: 1, createdAt: 1 });
+    const { lessonId, levelId } = req.query;
+    const filter = {};
+
+    if (lessonId) {
+      filter.lessonId = lessonId;
+    } else if (levelId) {
+      // Find all lessons under this level, then get sentences for those lessons
+      const lessons = await Lesson.find({ levelId }).select('_id');
+      const lessonIds = lessons.map(l => l._id);
+      filter.lessonId = { $in: lessonIds };
+    }
+
+    const sentences = await Sentence.find(filter)
+      .populate('lessonId', 'name levelId')
+      .sort({ createdAt: 1 });
     res.json({ success: true, count: sentences.length, data: { sentences } });
   } catch (error) {
     console.error('Get sentences error:', error);
@@ -15,13 +28,29 @@ exports.getAllSentences = async (req, res) => {
   }
 };
 
-// Get sentence categories
-exports.getCategories = async (req, res) => {
+// Get random sentence for practice
+exports.getRandomSentence = async (req, res) => {
   try {
-    const categories = await Sentence.distinct('category');
-    res.json({ success: true, data: { categories: categories.sort() } });
+    const { lessonId, levelId } = req.query;
+    const filter = {};
+
+    if (lessonId) {
+      filter.lessonId = lessonId;
+    } else if (levelId) {
+      const lessons = await Lesson.find({ levelId }).select('_id');
+      const lessonIds = lessons.map(l => l._id);
+      filter.lessonId = { $in: lessonIds };
+    }
+
+    const count = await Sentence.countDocuments(filter);
+    if (count === 0) {
+      return res.status(404).json({ success: false, message: 'No sentences available' });
+    }
+    const random = Math.floor(Math.random() * count);
+    const sentence = await Sentence.findOne(filter).skip(random);
+    res.json({ success: true, data: { sentence } });
   } catch (error) {
-    console.error('Get categories error:', error);
+    console.error('Get random sentence error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
@@ -29,15 +58,17 @@ exports.getCategories = async (req, res) => {
 // Create sentence
 exports.createSentence = async (req, res) => {
   try {
-    const { english, uzbek, category, difficulty } = req.body;
+    const { english, uzbek, lessonId } = req.body;
     if (!english?.trim() || !uzbek?.trim()) {
       return res.status(400).json({ success: false, message: 'English and Uzbek sentences are required' });
+    }
+    if (!lessonId) {
+      return res.status(400).json({ success: false, message: 'Lesson ID is required' });
     }
     const sentence = new Sentence({
       english: english.trim(),
       uzbek: uzbek.trim(),
-      category: category?.trim() || 'General',
-      difficulty: difficulty || 'medium'
+      lessonId
     });
     await sentence.save();
     res.status(201).json({ success: true, message: 'Sentence created', data: { sentence } });
@@ -50,17 +81,16 @@ exports.createSentence = async (req, res) => {
 // Update sentence
 exports.updateSentence = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { english, uzbek, category, difficulty } = req.body;
-    const sentence = await Sentence.findById(id);
-    if (!sentence) return res.status(404).json({ success: false, message: 'Sentence not found' });
+    const { english, uzbek, lessonId } = req.body;
+    const updateData = {};
+    if (english?.trim()) updateData.english = english.trim();
+    if (uzbek?.trim()) updateData.uzbek = uzbek.trim();
+    if (lessonId) updateData.lessonId = lessonId;
 
-    if (english) sentence.english = english.trim();
-    if (uzbek) sentence.uzbek = uzbek.trim();
-    if (category) sentence.category = category.trim();
-    if (difficulty) sentence.difficulty = difficulty;
-
-    await sentence.save();
+    const sentence = await Sentence.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!sentence) {
+      return res.status(404).json({ success: false, message: 'Sentence not found' });
+    }
     res.json({ success: true, message: 'Sentence updated', data: { sentence } });
   } catch (error) {
     console.error('Update sentence error:', error);
@@ -71,34 +101,15 @@ exports.updateSentence = async (req, res) => {
 // Delete sentence
 exports.deleteSentence = async (req, res) => {
   try {
-    const { id } = req.params;
-    const sentence = await Sentence.findById(id);
-    if (!sentence) return res.status(404).json({ success: false, message: 'Sentence not found' });
-
-    await StudentSentenceProgress.deleteMany({ sentenceId: id });
-    await Sentence.findByIdAndDelete(id);
-
+    const sentence = await Sentence.findByIdAndDelete(req.params.id);
+    if (!sentence) {
+      return res.status(404).json({ success: false, message: 'Sentence not found' });
+    }
+    // Also delete related progress
+    await StudentSentenceProgress.deleteMany({ sentenceId: req.params.id });
     res.json({ success: true, message: 'Sentence and related progress deleted' });
   } catch (error) {
     console.error('Delete sentence error:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
-  }
-};
-
-// Get random sentence for practice
-exports.getRandomSentence = async (req, res) => {
-  try {
-    const { category } = req.query;
-    const filter = category ? { category } : {};
-    const count = await Sentence.countDocuments(filter);
-    if (count === 0) {
-      return res.status(404).json({ success: false, message: 'No sentences available' });
-    }
-    const random = Math.floor(Math.random() * count);
-    const sentence = await Sentence.findOne(filter).skip(random);
-    res.json({ success: true, data: { sentence } });
-  } catch (error) {
-    console.error('Get random sentence error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

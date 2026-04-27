@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { sentenceAPI } from '../../utils/api';
 
-const SentenceManager = ({ t }) => {
+const SentenceManager = ({ t, lessonId }) => {
   const [sentences, setSentences] = useState([]);
-  // eslint-disable-next-line no-unused-vars
-  const [_categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ english: '', uzbek: '', category: 'General', difficulty: 'medium' });
+  const [form, setForm] = useState({ english: '', uzbek: '' });
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    fetchSentences();
-    fetchCategories();
-  }, []);
+    if (lessonId) fetchSentences();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonId]);
 
   const fetchSentences = async () => {
     setLoading(true);
     try {
-      const res = await sentenceAPI.getAll();
+      const res = await sentenceAPI.getAll({ lessonId });
       if (res.data.success) setSentences(res.data.data.sentences || []);
     } catch (err) {
       console.error('Error fetching sentences:', err);
@@ -26,28 +24,18 @@ const SentenceManager = ({ t }) => {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const res = await sentenceAPI.getCategories();
-      if (res.data.success) setCategories(res.data.data.categories || []);
-    } catch (err) {
-      console.error('Error fetching categories:', err);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.english.trim() || !form.uzbek.trim()) return;
     try {
       if (editingId) {
-        await sentenceAPI.update(editingId, form);
+        await sentenceAPI.update(editingId, { ...form, lessonId });
       } else {
-        await sentenceAPI.create(form);
+        await sentenceAPI.create({ ...form, lessonId });
       }
-      setForm({ english: '', uzbek: '', category: 'General', difficulty: 'medium' });
+      setForm({ english: '', uzbek: '' });
       setEditingId(null);
       fetchSentences();
-      fetchCategories();
     } catch (err) {
       alert(err.response?.data?.message || 'Error saving sentence');
     }
@@ -57,9 +45,7 @@ const SentenceManager = ({ t }) => {
     setEditingId(sentence._id);
     setForm({
       english: sentence.english,
-      uzbek: sentence.uzbek,
-      category: sentence.category || 'General',
-      difficulty: sentence.difficulty || 'medium'
+      uzbek: sentence.uzbek
     });
   };
 
@@ -75,7 +61,7 @@ const SentenceManager = ({ t }) => {
 
   const handleCancel = () => {
     setEditingId(null);
-    setForm({ english: '', uzbek: '', category: 'General', difficulty: 'medium' });
+    setForm({ english: '', uzbek: '' });
   };
 
   return (
@@ -105,29 +91,6 @@ const SentenceManager = ({ t }) => {
               required
             />
           </div>
-          <div className="form-field">
-            <label className="form-label">{t('sentences.category') || 'Category'}</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="General"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-field">
-            <label className="form-label">{t('sentences.difficulty') || 'Difficulty'}</label>
-            <select
-              className="form-input"
-              value={form.difficulty}
-              onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
-            >
-              <option value="easy">{t('sentences.easy') || 'Easy'}</option>
-              <option value="medium">{t('sentences.medium') || 'Medium'}</option>
-              <option value="hard">{t('sentences.hard') || 'Hard'}</option>
-            </select>
-          </div>
           <div className="form-field form-field-actions">
             <button type="submit" className="btn btn-primary">
               {editingId ? (t('homework.update') || 'Update') : (t('homework.add') || 'Add')}
@@ -152,10 +115,6 @@ const SentenceManager = ({ t }) => {
               <div className="sentence-content">
                 <div className="sentence-english">{sentence.english}</div>
                 <div className="sentence-uzbek">{sentence.uzbek}</div>
-                <div className="sentence-meta">
-                  <span className="sentence-category">{sentence.category}</span>
-                  <span className={`sentence-difficulty ${sentence.difficulty}`}>{sentence.difficulty}</span>
-                </div>
               </div>
               <div className="sentence-actions">
                 <button className="btn btn-small btn-edit" onClick={() => handleEdit(sentence)}>

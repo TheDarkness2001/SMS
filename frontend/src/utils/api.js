@@ -294,12 +294,11 @@ export const homeworkAPI = {
 
 // Sentence API
 export const sentenceAPI = {
-  getAll: () => api.get('/sentences'),
-  getCategories: () => api.get('/sentences/categories'),
+  getAll: (params) => api.get('/sentences', { params: params || {} }),
   create: (data) => api.post('/sentences', data),
   update: (id, data) => api.put(`/sentences/${id}`, data),
   delete: (id) => api.delete(`/sentences/${id}`),
-  getRandom: (category) => api.get('/sentences/random', { params: category ? { category } : {} }),
+  getRandom: (params) => api.get('/sentences/random', { params: params || {} }),
   checkAnswer: (data) => api.post('/sentences/check', data),
   getProgress: () => api.get('/sentences/progress'),
   submitResult: (sessionStats) => api.post('/sentences/submit-result', { sessionStats }),

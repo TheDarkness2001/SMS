@@ -11,15 +11,10 @@ const sentenceSchema = new mongoose.Schema({
     required: [true, 'Uzbek translation is required'],
     trim: true
   },
-  category: {
-    type: String,
-    default: 'General',
-    trim: true
-  },
-  difficulty: {
-    type: String,
-    enum: ['easy', 'medium', 'hard'],
-    default: 'medium'
+  lessonId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson',
+    required: [true, 'Lesson ID is required']
   },
   createdAt: {
     type: Date,
@@ -27,6 +22,6 @@ const sentenceSchema = new mongoose.Schema({
   }
 });
 
-sentenceSchema.index({ category: 1 });
+sentenceSchema.index({ lessonId: 1 });
 
 module.exports = mongoose.model('Sentence', sentenceSchema);

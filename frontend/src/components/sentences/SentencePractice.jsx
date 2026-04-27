@@ -1,37 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { sentenceAPI } from '../../utils/api';
 
-const SentencePractice = ({ t }) => {
+const SentencePractice = ({ t, lessonId, levelId }) => {
   const [sentence, setSentence] = useState(null);
   const [answer, setAnswer] = useState('');
-  const [direction, setDirection] = useState('enToUz'); // enToUz or uzToEn
+  const [direction, setDirection] = useState('enToUz');
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sessionStats, setSessionStats] = useState({ total: 0, correct: 0 });
-  const [category, setCategory] = useState('');
-  const [categories, setCategories] = useState([]);
-
-  useEffect(() => {
-    fetchCategories();
-    fetchSentence();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const res = await sentenceAPI.getCategories();
-      if (res.data.success) setCategories(res.data.data.categories || []);
-    } catch (err) {
-      console.error('Error fetching categories:', err);
-    }
-  };
 
   const fetchSentence = async () => {
     setLoading(true);
     setFeedback(null);
     setAnswer('');
     try {
-      const res = await sentenceAPI.getRandom(category || undefined);
+      const params = {};
+      if (lessonId) params.lessonId = lessonId;
+      else if (levelId) params.levelId = levelId;
+      const res = await sentenceAPI.getRandom(params);
       if (res.data.success) {
         setSentence(res.data.data.sentence);
       }
@@ -41,6 +27,11 @@ const SentencePractice = ({ t }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSentence();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonId, levelId]);
 
   const handleCheck = async () => {
     if (!answer.trim() || !sentence) return;
@@ -109,19 +100,6 @@ const SentencePractice = ({ t }) => {
           >
             UZ → EN
           </button>
-        </div>
-
-        <div className="category-filter">
-          <select
-            value={category}
-            onChange={(e) => { setCategory(e.target.value); setFeedback(null); }}
-            className="form-select"
-          >
-            <option value="">{t('sentences.allCategories') || 'All Categories'}</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
         </div>
       </div>
 
