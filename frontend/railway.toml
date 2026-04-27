@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [build.env]
-NODE_ENV = "production"
+NIXPACKS_BUILD_CMD = "npm run build"
 
 [deploy]
 startCommand = "npx serve -s build -l 3000 --single"
