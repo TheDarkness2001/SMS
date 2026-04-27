@@ -1,10 +1,4 @@
-[build]
-builder = "NIXPACKS"
-
-[build.env]
-NIXPACKS_BUILD_CMD = "npm run build"
-
 [deploy]
-startCommand = "npx serve -s build -l 3000 --single"
+startCommand = "serve -s build -l 3000 --single"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
