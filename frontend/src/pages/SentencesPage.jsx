@@ -481,7 +481,7 @@ const SentencesPage = () => {
   if (isAdmin) {
     tabs.push(
       { id: 'lessons', label: t('sentences.lessons') || 'Lessons' },
-      { id: 'examControl', label: t('sentences.examControl') || 'Exam Control' },
+      { id: 'permissions', label: t('sentences.permissions') || 'Permissions' },
       { id: 'progress', label: t('sentences.studentProgress') || 'Student Progress' }
     );
   }
@@ -676,9 +676,9 @@ const SentencesPage = () => {
           <LessonsTab t={t} mode="sentences" />
         )}
 
-        {/* EXAM CONTROL TAB (Admin/Staff) */}
-        {activeTab === 'examControl' && isAdmin && (
-          <ExamControl t={t} />
+        {/* PERMISSIONS TAB (Admin/Staff) */}
+        {activeTab === 'permissions' && isAdmin && (
+          <ExamControl t={t} noExam />
         )}
 
         {/* STUDENT PROGRESS TAB (Admin) */}

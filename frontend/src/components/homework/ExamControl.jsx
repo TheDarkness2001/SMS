@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { lessonAPI, levelAPI, languageAPI, examGroupsAPI, getImageUrl } from '../../utils/api';
 
-const ExamControl = ({ t }) => {
+const ExamControl = ({ t, noExam = false }) => {
   // Navigation state: groups -> languages -> levels -> classes
   const [view, setView] = useState('groups');
 
@@ -376,7 +376,7 @@ const ExamControl = ({ t }) => {
                 return (
                   <div
                     key={lesson._id}
-                    className={`exam-control-card ${examUnlocked ? 'unlocked' : 'locked'}`}
+                    className={`exam-control-card ${noExam ? (practiceUnlocked ? 'unlocked' : 'locked') : (examUnlocked ? 'unlocked' : 'locked')}`}
                   >
                     <div className="exam-control-header">
                       <span className="exam-control-order">{lesson.order}</span>
@@ -389,9 +389,11 @@ const ExamControl = ({ t }) => {
                       <span className={`status-badge ${practiceUnlocked ? 'status-unlocked' : 'status-locked'}`}>
                         {practiceUnlocked ? '🔓' : '🔒'} {t('homework.practiceShort') || 'Practice'}
                       </span>
-                      <span className={`status-badge ${examUnlocked ? 'status-unlocked' : 'status-locked'}`}>
-                        {examUnlocked ? '🔓' : '🔒'} {t('homework.examShort') || 'Exam'}
-                      </span>
+                      {!noExam && (
+                        <span className={`status-badge ${examUnlocked ? 'status-unlocked' : 'status-locked'}`}>
+                          {examUnlocked ? '🔓' : '🔒'} {t('homework.examShort') || 'Exam'}
+                        </span>
+                      )}
                     </div>
                     <div className="exam-control-buttons">
                       <button
@@ -406,18 +408,20 @@ const ExamControl = ({ t }) => {
                             : (t('homework.unlockPractice') || 'Unlock Practice')
                         }
                       </button>
-                      <button
-                        className={`btn btn-full ${examUnlocked ? 'btn-delete' : 'btn-primary'}`}
-                        onClick={() => handleToggleExam(lesson._id)}
-                        disabled={togglingId === lesson._id}
-                      >
-                        {togglingId === lesson._id
-                          ? (t('homework.loading') || '...')
-                          : examUnlocked
-                            ? (t('homework.lockExam') || 'Lock Exam')
-                            : (t('homework.unlockExam') || 'Unlock Exam')
-                        }
-                      </button>
+                      {!noExam && (
+                        <button
+                          className={`btn btn-full ${examUnlocked ? 'btn-delete' : 'btn-primary'}`}
+                          onClick={() => handleToggleExam(lesson._id)}
+                          disabled={togglingId === lesson._id}
+                        >
+                          {togglingId === lesson._id
+                            ? (t('homework.loading') || '...')
+                            : examUnlocked
+                              ? (t('homework.lockExam') || 'Lock Exam')
+                              : (t('homework.unlockExam') || 'Unlock Exam')
+                          }
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
