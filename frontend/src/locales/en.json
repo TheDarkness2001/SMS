@@ -93,7 +93,12 @@
     "homework": "Homework",
     "words": "Words",
     "sentences": "Sentences",
-    "learning": "Learning"
+    "learning": "Learning",
+    "penalties": "Penalties",
+    "presentations": "Presentations",
+    "bonuses": "Bonuses",
+    "myPenalties": "My Penalties",
+    "myPresentations": "My Presentations"
   },
   "homework": {
     "title": "Words",
@@ -1629,5 +1634,42 @@
       "deleted": "Group deleted",
       "error": "Failed to save. Please try again."
     }
+  },
+  "penalties": {
+    "title": "Penalties",
+    "myPenalties": "My Penalties",
+    "spokenUzbek": "Uzbek Word",
+    "missedPresentation": "Missed Presentation",
+    "missedHomework": "Missed Homework",
+    "missedMemorization": "Missed Memorization",
+    "bonus": "Bonus",
+    "total": "Total",
+    "noPenalties": "No penalties this month",
+    "uzbekWord": "Uzbek Word"
+  },
+  "presentations": {
+    "title": "Presentations",
+    "myPresentations": "My Presentations",
+    "score": "Score",
+    "notes": "Notes",
+    "saved": "Scores saved successfully",
+    "noScores": "No scores entered",
+    "avgScore": "Average Score",
+    "count": "Total Presentations",
+    "noPresentations": "No presentations this month",
+    "evaluator": "Evaluator"
+  },
+  "bonuses": {
+    "title": "Bonus Dashboard",
+    "totalPenalties": "Total Penalties",
+    "firstPlace": "1st Place (40%)",
+    "secondPlace": "2nd Place (30%)",
+    "educationCenter": "Education Center (30%)",
+    "topPresenters": "Top Presenters",
+    "distribute": "Finalize & Distribute",
+    "distributed": "Bonuses distributed successfully",
+    "notEnough": "Not enough presenters to distribute",
+    "confirmDistribute": "Finalize and distribute bonuses?",
+    "history": "History"
   }
 }

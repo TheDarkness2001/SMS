@@ -88,7 +88,12 @@
     "homework": "Uy vazifasi",
     "words": "So'zlar",
     "sentences": "Gaplar",
-    "learning": "O'rganish"
+    "learning": "O'rganish",
+    "penalties": "Jarimalar",
+    "presentations": "Taqdimotlar",
+    "bonuses": "Bonuslar",
+    "myPenalties": "Mening jarimalarim",
+    "myPresentations": "Mening taqdimotlarim"
   },
   "homework": {
     "title": "So'zlar",
@@ -1580,5 +1585,42 @@
       "deleted": "Guruh o'chirildi",
       "error": "Saqlash amalga oshmadi. Iltimos, qaytadan urinib ko'ring."
     }
+  },
+  "penalties": {
+    "title": "Jarimalar",
+    "myPenalties": "Mening jarimalarim",
+    "spokenUzbek": "O'zbekcha so'z",
+    "missedPresentation": "O'tkazib yuborilgan taqdimot",
+    "missedHomework": "O'tkazib yuborilgan uy vazifasi",
+    "missedMemorization": "O'tkazib yuborilgan yodlash",
+    "bonus": "Bonus",
+    "total": "Jami",
+    "noPenalties": "Bu oyda jarima yo'q",
+    "uzbekWord": "O'zbekcha so'z"
+  },
+  "presentations": {
+    "title": "Taqdimotlar",
+    "myPresentations": "Mening taqdimotlarim",
+    "score": "Ball",
+    "notes": "Izohlar",
+    "saved": "Ballar saqlandi",
+    "noScores": "Ballar kiritilmagan",
+    "avgScore": "O'rtacha ball",
+    "count": "Jami taqdimotlar",
+    "noPresentations": "Bu oyda taqdimot yo'q",
+    "evaluator": "Baholovchi"
+  },
+  "bonuses": {
+    "title": "Bonus paneli",
+    "totalPenalties": "Jami jarimalar",
+    "firstPlace": "1-o'rin (40%)",
+    "secondPlace": "2-o'rin (30%)",
+    "educationCenter": "O'quv markazi (30%)",
+    "topPresenters": "Eng yaxshi taqdimotchilar",
+    "distribute": "Yakunlash va taqsimlash",
+    "distributed": "Bonuslar taqsimlandi",
+    "notEnough": "Taqsimlash uchun yetarli taqdimotchi yo'q",
+    "confirmDistribute": "Bonuslarni yakunlash va taqsimlashmi?",
+    "history": "Tarix"
   }
 }

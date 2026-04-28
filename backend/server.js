@@ -95,6 +95,9 @@ app.use('/api/homework/levels', require('./routes/levelRoutes'));
 app.use('/api/homework/lessons', require('./routes/lessonRoutes'));
 app.use('/api/homework/config', require('./routes/systemConfigRoutes'));
 app.use('/api', require('./routes/sentenceRoutes'));
+app.use('/api/penalties', require('./routes/penaltyRoutes'));
+app.use('/api/presentations', require('./routes/presentationRoutes'));
+app.use('/api/bonuses', require('./routes/bonusRoutes'));
 
 // Initialize system defaults
 const { initDefaults } = require('./controllers/systemConfigController');

@@ -344,6 +344,30 @@ export const lessonAPI = {
   updatePracticeStats: (data) => api.post('/homework/lessons/student/practice-stats', data)
 };
 
+// Penalty API
+export const penaltyAPI = {
+  create: (data) => api.post('/penalties', data),
+  getStudentPenalties: (studentId, params) => api.get(`/penalties/student/${studentId}`, { params }),
+  getGroupPenalties: (groupId, params) => api.get(`/penalties/group/${groupId}`, { params }),
+  getMonthly: (params) => api.get('/penalties/monthly', { params }),
+  revert: (id) => api.patch(`/penalties/${id}/revert`)
+};
+
+// Presentation API
+export const presentationAPI = {
+  record: (data) => api.post('/presentations', data),
+  getStudentPresentations: (studentId, params) => api.get(`/presentations/student/${studentId}`, { params }),
+  getMonthly: (params) => api.get('/presentations/monthly', { params }),
+  getTop: (params) => api.get('/presentations/top', { params })
+};
+
+// Bonus API
+export const bonusAPI = {
+  calculate: (params) => api.get('/bonuses/calculate', { params }),
+  distribute: (data) => api.post('/bonuses/distribute', data),
+  getHistory: (params) => api.get('/bonuses/history', { params })
+};
+
 // System Config API
 export const configAPI = {
   getAll: () => api.get('/homework/config'),

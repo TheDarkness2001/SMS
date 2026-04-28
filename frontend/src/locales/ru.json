@@ -88,7 +88,12 @@
     "homework": "Домашнее задание",
     "words": "Слова",
     "sentences": "Предложения",
-    "learning": "Обучение"
+    "learning": "Обучение",
+    "penalties": "Штрафы",
+    "presentations": "Презентации",
+    "bonuses": "Бонусы",
+    "myPenalties": "Мои штрафы",
+    "myPresentations": "Мои презентации"
   },
   "homework": {
     "title": "Слова",
@@ -1531,5 +1536,42 @@
       "deleted": "Группа удалена",
       "error": "Не удалось сохранить. Пожалуйста, попробуйте снова."
     }
+  },
+  "penalties": {
+    "title": "Штрафы",
+    "myPenalties": "Мои штрафы",
+    "spokenUzbek": "Узбекское слово",
+    "missedPresentation": "Пропущенная презентация",
+    "missedHomework": "Пропущенное задание",
+    "missedMemorization": "Пропущенное заучивание",
+    "bonus": "Бонус",
+    "total": "Итого",
+    "noPenalties": "Нет штрафов в этом месяце",
+    "uzbekWord": "Узбекское слово"
+  },
+  "presentations": {
+    "title": "Презентации",
+    "myPresentations": "Мои презентации",
+    "score": "Оценка",
+    "notes": "Примечания",
+    "saved": "Оценки сохранены",
+    "noScores": "Оценки не введены",
+    "avgScore": "Средняя оценка",
+    "count": "Всего презентаций",
+    "noPresentations": "Нет презентаций в этом месяце",
+    "evaluator": "Оценщик"
+  },
+  "bonuses": {
+    "title": "Панель бонусов",
+    "totalPenalties": "Всего штрафов",
+    "firstPlace": "1-е место (40%)",
+    "secondPlace": "2-е место (30%)",
+    "educationCenter": "Учебный центр (30%)",
+    "topPresenters": "Лучшие докладчики",
+    "distribute": "Завершить и распределить",
+    "distributed": "Бонусы распределены",
+    "notEnough": "Недостаточно докладчиков для распределения",
+    "confirmDistribute": "Завершить и распределить бонусы?",
+    "history": "История"
   }
 }

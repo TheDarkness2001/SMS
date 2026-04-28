@@ -18,7 +18,10 @@ import {
   AiOutlineAppstore,
   AiOutlineCluster,
   AiOutlineBook,
-  AiOutlineEdit
+  AiOutlineEdit,
+  AiOutlineWarning,
+  AiOutlineStar,
+  AiOutlineTrophy
 } from 'react-icons/ai';
 import { IoSchoolOutline } from 'react-icons/io5';
 import './Sidebar.css';
@@ -183,6 +186,36 @@ const Sidebar = ({ user, isOpen, onClose }) => {
                 </li>
               </ul>
             )}
+          </li>
+        )}
+
+        {/* ⚠️ PENALTIES (Teachers/Admin) */}
+        {!isParent && (
+          <li className={isActive('/penalties')}>
+            <Link to="/penalties">
+              <span className="icon"><AiOutlineWarning size={20} /></span>
+              <span>{t('sidebar.penalties') || 'Penalties'}</span>
+            </Link>
+          </li>
+        )}
+
+        {/* ⭐ PRESENTATIONS (Teachers/Admin) */}
+        {!isParent && (
+          <li className={isActive('/presentations')}>
+            <Link to="/presentations">
+              <span className="icon"><AiOutlineStar size={20} /></span>
+              <span>{t('sidebar.presentations') || 'Presentations'}</span>
+            </Link>
+          </li>
+        )}
+
+        {/* 🏆 BONUSES (Admin only) */}
+        {isAdmin && (
+          <li className={isActive('/bonuses')}>
+            <Link to="/bonuses">
+              <span className="icon"><AiOutlineTrophy size={20} /></span>
+              <span>{t('sidebar.bonuses') || 'Bonuses'}</span>
+            </Link>
           </li>
         )}
 
