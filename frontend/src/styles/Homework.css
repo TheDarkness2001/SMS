@@ -2473,7 +2473,8 @@
 .filters-bar {
   display: flex;
   align-items: flex-end;
-  gap: 16px;
+  justify-content: center;
+  gap: 24px;
   padding: 12px 16px;
   background: white;
   border-radius: 10px;
@@ -2590,6 +2591,35 @@
 
 .progress-flat-table td.actions {
   white-space: nowrap;
+}
+
+/* Student avatar in progress tables */
+.student-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.student-avatar-placeholder-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 /* Responsive flat table */

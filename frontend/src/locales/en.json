@@ -166,6 +166,7 @@
     "students": "students",
     "reset": "Reset",
     "clear": "Clear",
+    "unassigned": "Unassigned",
     "confirmReset": "Reset this student's progress?",
     "noStudentsYet": "No students found.",
     "level": "Level",

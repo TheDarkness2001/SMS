@@ -161,6 +161,7 @@
     "students": "o'quvchilar",
     "reset": "Qayta boshlash",
     "clear": "Tozalash",
+    "unassigned": "Tayinlanmagan",
     "confirmReset": "Bu talabaning jarayonini qayta boshlash?",
     "noStudentsYet": "Talabalar topilmadi.",
     "level": "Daraja",

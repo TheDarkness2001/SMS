@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { homeworkAPI, lessonAPI, languageAPI, levelAPI, examGroupsAPI } from '../utils/api';
+import { homeworkAPI, lessonAPI, languageAPI, levelAPI, examGroupsAPI, getImageUrl } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import LessonsTab from '../components/homework/LessonsTab';
@@ -1083,7 +1083,16 @@ const Homework = () => {
                               <tbody>
                                 {group.students.map(student => (
                                   <tr key={student._id}>
-                                    <td>{student.name || 'Unknown'}</td>
+                                    <td>
+                                                                          <div className="student-name-cell">
+                                                                            {student.profileImage ? (
+                                                                              <img src={getImageUrl(student.profileImage)} alt={student.name} className="student-avatar-small" />
+                                                                            ) : (
+                                                                              <div className="student-avatar-placeholder-small">{student.name?.charAt(0) || '?'}</div>
+                                                                            )}
+                                                                            <span>{student.name || 'Unknown'}</span>
+                                                                          </div>
+                                                                        </td>
                                     <td>
                                       <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
                                         {student.wordPracticeAccuracy}%
@@ -1141,7 +1150,16 @@ const Homework = () => {
                               <tbody>
                                 {unassignedStudents.map(student => (
                                   <tr key={student._id}>
-                                    <td>{student.name || 'Unknown'}</td>
+                                    <td>
+                                                                          <div className="student-name-cell">
+                                                                            {student.profileImage ? (
+                                                                              <img src={getImageUrl(student.profileImage)} alt={student.name} className="student-avatar-small" />
+                                                                            ) : (
+                                                                              <div className="student-avatar-placeholder-small">{student.name?.charAt(0) || '?'}</div>
+                                                                            )}
+                                                                            <span>{student.name || 'Unknown'}</span>
+                                                                          </div>
+                                                                        </td>
                                     <td>
                                       <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
                                         {student.wordPracticeAccuracy}%
