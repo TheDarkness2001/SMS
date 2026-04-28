@@ -348,7 +348,7 @@ const Homework = () => {
   const fetchStudentProgress = async () => {
     setAdminLoading(true);
     try {
-      const response = await homeworkAPI.getAllStudentProgress();
+      const response = await homeworkAPI.getGroupStudentProgress();
       if (response.data.success) {
         setStudentsProgress(response.data.data);
       }
@@ -1004,34 +1004,41 @@ const Homework = () => {
                             <thead>
                               <tr>
                                 <th>{t('homework.studentName') || 'Student Name'}</th>
-                                <th>{t('homework.examAttempts') || 'Exam Attempts'}</th>
-                                <th>{t('homework.bestScore') || 'Best Score'}</th>
-                                <th>{t('homework.classesPassed') || 'Classes Passed'}</th>
+                                <th>{t('homework.wordPractice') || 'Word Practice'}</th>
+                                <th>{t('homework.wordExam') || 'Word Exam'}</th>
+                                <th>{t('homework.sentencePractice') || 'Sentence Practice'}</th>
                                 <th>{t('homework.actions') || 'Actions'}</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {group.students.map(student => {
-                                const passedCount = student.progress?.filter(p => p.status === 'passed').length || 0;
-                                const bestScore = student.progress?.reduce((max, p) => Math.max(max, p.bestExamScore || 0), 0) || 0;
-                                const totalAttempts = student.progress?.reduce((sum, p) => sum + (p.examAttempts || 0), 0) || 0;
-                                return (
-                                  <tr key={student._id}>
-                                    <td>{student.name || 'Unknown'}</td>
-                                    <td>{totalAttempts}</td>
-                                    <td>{bestScore}%</td>
-                                    <td>{passedCount}</td>
-                                    <td className="actions">
-                                      <button
-                                        onClick={() => handleResetProgress(student._id)}
-                                        className="btn btn-small btn-delete"
-                                      >
-                                        {t('homework.reset') || 'Reset'}
-                                      </button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
+                              {group.students.map(student => (
+                                <tr key={student._id}>
+                                  <td>{student.name || 'Unknown'}</td>
+                                  <td>
+                                    <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                      {student.wordPracticeAccuracy}%
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                      {student.wordExamAccuracy}%
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                      {student.sentencePracticeAccuracy}%
+                                    </span>
+                                  </td>
+                                  <td className="actions">
+                                    <button
+                                      onClick={() => handleResetProgress(student._id)}
+                                      className="btn btn-small btn-delete"
+                                    >
+                                      {t('homework.reset') || 'Reset'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
                             </tbody>
                           </table>
                         )}
@@ -1062,34 +1069,41 @@ const Homework = () => {
                           <thead>
                             <tr>
                               <th>{t('homework.studentName') || 'Student Name'}</th>
-                              <th>{t('homework.examAttempts') || 'Exam Attempts'}</th>
-                              <th>{t('homework.bestScore') || 'Best Score'}</th>
-                              <th>{t('homework.classesPassed') || 'Classes Passed'}</th>
+                              <th>{t('homework.wordPractice') || 'Word Practice'}</th>
+                              <th>{t('homework.wordExam') || 'Word Exam'}</th>
+                              <th>{t('homework.sentencePractice') || 'Sentence Practice'}</th>
                               <th>{t('homework.actions') || 'Actions'}</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {studentsProgress.unassigned.students.map(student => {
-                              const passedCount = student.progress?.filter(p => p.status === 'passed').length || 0;
-                              const bestScore = student.progress?.reduce((max, p) => Math.max(max, p.bestExamScore || 0), 0) || 0;
-                              const totalAttempts = student.progress?.reduce((sum, p) => sum + (p.examAttempts || 0), 0) || 0;
-                              return (
-                                <tr key={student._id}>
-                                  <td>{student.name || 'Unknown'}</td>
-                                  <td>{totalAttempts}</td>
-                                  <td>{bestScore}%</td>
-                                  <td>{passedCount}</td>
-                                  <td className="actions">
-                                    <button
-                                      onClick={() => handleResetProgress(student._id)}
-                                      className="btn btn-small btn-delete"
-                                    >
-                                      {t('homework.reset') || 'Reset'}
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                            {studentsProgress.unassigned.students.map(student => (
+                              <tr key={student._id}>
+                                <td>{student.name || 'Unknown'}</td>
+                                <td>
+                                  <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                    {student.wordPracticeAccuracy}%
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                    {student.wordExamAccuracy}%
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                    {student.sentencePracticeAccuracy}%
+                                  </span>
+                                </td>
+                                <td className="actions">
+                                  <button
+                                    onClick={() => handleResetProgress(student._id)}
+                                    className="btn btn-small btn-delete"
+                                  >
+                                    {t('homework.reset') || 'Reset'}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>

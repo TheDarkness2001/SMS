@@ -2437,6 +2437,32 @@
   border-top: 1px solid #f3f4f6;
 }
 
+.progress-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 52px;
+}
+
+.progress-badge.good {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.progress-badge.medium {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.progress-badge.low {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .practice-game-bar {

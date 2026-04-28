@@ -288,6 +288,7 @@ export const homeworkAPI = {
   deleteWord: (id) => api.delete(`/homework/words/${id}`),
   // Student progress (admin)
   getAllStudentProgress: () => api.get('/homework/students/progress'),
+  getGroupStudentProgress: () => api.get('/homework/students/group-progress'),
   getStudentProgress: (id) => api.get(`/homework/students/${id}/progress`),
   resetStudentProgress: (id) => api.post(`/homework/students/${id}/reset-progress`)
 };

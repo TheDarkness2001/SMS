@@ -20,6 +20,7 @@ router.delete('/words/:id', protect, authorizeHomework(), homeworkController.del
 
 // Admin student progress (founder only + users with canManageHomework permission)
 router.get('/students/progress', protect, authorizeHomework(), homeworkController.getAllStudentProgress);
+router.get('/students/group-progress', protect, authorizeHomework(), homeworkController.getGroupStudentProgress);
 router.get('/students/:id/progress', protect, authorizeHomework(), homeworkController.getStudentProgress);
 router.post('/students/:id/reset-progress', protect, authorizeHomework(), homeworkController.resetStudentProgress);
 

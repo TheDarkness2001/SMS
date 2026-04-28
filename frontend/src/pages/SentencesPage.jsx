@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { languageAPI, levelAPI, lessonAPI, examGroupsAPI, sentenceAPI } from '../utils/api';
+import { languageAPI, levelAPI, lessonAPI, examGroupsAPI, sentenceAPI, homeworkAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import SentenceLeaderboard from '../components/sentences/SentenceLeaderboard';
@@ -448,7 +448,7 @@ const SentencesPage = () => {
   const fetchStudentProgress = async () => {
     setAdminLoading(true);
     try {
-      const response = await sentenceAPI.getProgress();
+      const response = await homeworkAPI.getGroupStudentProgress();
       if (response.data.success) {
         setStudentsProgress(response.data.data);
       }
@@ -466,8 +466,6 @@ const SentencesPage = () => {
   const handleResetProgress = async (id) => {
     if (!window.confirm(t('sentences.confirmReset') || 'Reset this student\'s progress?')) return;
     try {
-      // Note: sentence API may not have reset endpoint yet, use homework's for now
-      const { homeworkAPI } = require('../utils/api');
       await homeworkAPI.resetStudentProgress(id);
       fetchStudentProgress();
     } catch (error) {
@@ -722,34 +720,41 @@ const SentencesPage = () => {
                             <thead>
                               <tr>
                                 <th>{t('sentences.studentName') || 'Student Name'}</th>
-                                <th>{t('sentences.examAttempts') || 'Attempts'}</th>
-                                <th>{t('sentences.bestScore') || 'Best Score'}</th>
-                                <th>{t('sentences.classesPassed') || 'Classes Passed'}</th>
+                                <th>{t('sentences.wordPractice') || 'Word Practice'}</th>
+                                <th>{t('sentences.wordExam') || 'Word Exam'}</th>
+                                <th>{t('sentences.sentencePractice') || 'Sentence Practice'}</th>
                                 <th>{t('sentences.actions') || 'Actions'}</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {group.students.map(student => {
-                                const passedCount = student.progress?.filter(p => p.status === 'passed').length || 0;
-                                const bestScore = student.progress?.reduce((max, p) => Math.max(max, p.bestExamScore || 0), 0) || 0;
-                                const totalAttempts = student.progress?.reduce((sum, p) => sum + (p.examAttempts || 0), 0) || 0;
-                                return (
-                                  <tr key={student._id}>
-                                    <td>{student.name || 'Unknown'}</td>
-                                    <td>{totalAttempts}</td>
-                                    <td>{bestScore}%</td>
-                                    <td>{passedCount}</td>
-                                    <td className="actions">
-                                      <button
-                                        onClick={() => handleResetProgress(student._id)}
-                                        className="btn btn-small btn-delete"
-                                      >
-                                        {t('sentences.reset') || 'Reset'}
-                                      </button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
+                              {group.students.map(student => (
+                                <tr key={student._id}>
+                                  <td>{student.name || 'Unknown'}</td>
+                                  <td>
+                                    <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                      {student.wordPracticeAccuracy}%
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                      {student.wordExamAccuracy}%
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                      {student.sentencePracticeAccuracy}%
+                                    </span>
+                                  </td>
+                                  <td className="actions">
+                                    <button
+                                      onClick={() => handleResetProgress(student._id)}
+                                      className="btn btn-small btn-delete"
+                                    >
+                                      {t('sentences.reset') || 'Reset'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
                             </tbody>
                           </table>
                         )}
@@ -780,34 +785,41 @@ const SentencesPage = () => {
                           <thead>
                             <tr>
                               <th>{t('sentences.studentName') || 'Student Name'}</th>
-                              <th>{t('sentences.examAttempts') || 'Attempts'}</th>
-                              <th>{t('sentences.bestScore') || 'Best Score'}</th>
-                              <th>{t('sentences.classesPassed') || 'Classes Passed'}</th>
+                              <th>{t('sentences.wordPractice') || 'Word Practice'}</th>
+                              <th>{t('sentences.wordExam') || 'Word Exam'}</th>
+                              <th>{t('sentences.sentencePractice') || 'Sentence Practice'}</th>
                               <th>{t('sentences.actions') || 'Actions'}</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {studentsProgress.unassigned.students.map(student => {
-                              const passedCount = student.progress?.filter(p => p.status === 'passed').length || 0;
-                              const bestScore = student.progress?.reduce((max, p) => Math.max(max, p.bestExamScore || 0), 0) || 0;
-                              const totalAttempts = student.progress?.reduce((sum, p) => sum + (p.examAttempts || 0), 0) || 0;
-                              return (
-                                <tr key={student._id}>
-                                  <td>{student.name || 'Unknown'}</td>
-                                  <td>{totalAttempts}</td>
-                                  <td>{bestScore}%</td>
-                                  <td>{passedCount}</td>
-                                  <td className="actions">
-                                    <button
-                                      onClick={() => handleResetProgress(student._id)}
-                                      className="btn btn-small btn-delete"
-                                    >
-                                      {t('sentences.reset') || 'Reset'}
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                            {studentsProgress.unassigned.students.map(student => (
+                              <tr key={student._id}>
+                                <td>{student.name || 'Unknown'}</td>
+                                <td>
+                                  <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                    {student.wordPracticeAccuracy}%
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                    {student.wordExamAccuracy}%
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                    {student.sentencePracticeAccuracy}%
+                                  </span>
+                                </td>
+                                <td className="actions">
+                                  <button
+                                    onClick={() => handleResetProgress(student._id)}
+                                    className="btn btn-small btn-delete"
+                                  >
+                                    {t('sentences.reset') || 'Reset'}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>

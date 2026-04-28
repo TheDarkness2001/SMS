@@ -4,6 +4,9 @@ const Lesson = require('../models/Lesson');
 const Level = require('../models/Level');
 const HomeworkProgress = require('../models/HomeworkProgress');
 const Student = require('../models/Student');
+const ExamGroup = require('../models/ExamGroup');
+const StudentVocabProgress = require('../models/StudentVocabProgress');
+const StudentSentenceProgress = require('../models/StudentSentenceProgress');
 
 // Get random word for practice
 exports.getRandomWord = async (req, res) => {
@@ -539,6 +542,120 @@ exports.resetStudentProgress = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while resetting progress',
+      error: error.message
+    });
+  }
+};
+
+// Get all student progress grouped by exam group
+exports.getGroupStudentProgress = async (req, res) => {
+  try {
+    // Get all exam groups with students populated
+    const groups = await ExamGroup.find()
+      .populate('students', '_id name studentId profileImage')
+      .select('_id groupId groupName subjectName students')
+      .sort({ groupName: 1 });
+
+    // Get all progress data in parallel
+    const [homeworkProgresses, vocabProgresses, sentenceProgresses] = await Promise.all([
+      HomeworkProgress.find().lean(),
+      StudentVocabProgress.find().lean(),
+      StudentSentenceProgress.find().lean()
+    ]);
+
+    // Build lookup maps
+    const hwMap = new Map(homeworkProgresses.map(p => [p.studentId.toString(), p]));
+    const vocabMap = new Map();
+    for (const p of vocabProgresses) {
+      const sid = p.studentId.toString();
+      if (!vocabMap.has(sid)) vocabMap.set(sid, []);
+      vocabMap.get(sid).push(p);
+    }
+    const sentenceMap = new Map();
+    for (const p of sentenceProgresses) {
+      const sid = p.studentId.toString();
+      if (!sentenceMap.has(sid)) sentenceMap.set(sid, []);
+      sentenceMap.get(sid).push(p);
+    }
+
+    // Helper to compute stats for a student
+    const computeStudentStats = (student) => {
+      const sid = student._id.toString();
+      const hw = hwMap.get(sid);
+      const vocab = vocabMap.get(sid) || [];
+      const sentences = sentenceMap.get(sid) || [];
+
+      // Word practice accuracy from HomeworkProgress
+      const wordPracticeAccuracy = hw ? hw.getAccuracy() : 0;
+
+      // Word exam accuracy: average bestExamScore across all lessons
+      const wordExamScores = vocab
+        .filter(p => p.bestExamScore > 0)
+        .map(p => p.bestExamScore);
+      const wordExamAccuracy = wordExamScores.length > 0
+        ? Math.round(wordExamScores.reduce((a, b) => a + b, 0) / wordExamScores.length)
+        : 0;
+
+      // Sentence practice accuracy: aggregate from StudentSentenceProgress
+      const sentenceTotalAttempts = sentences.reduce((sum, p) => sum + (p.attempts || 0), 0);
+      const sentenceTotalCorrect = sentences.reduce((sum, p) => sum + (p.correctCount || 0), 0);
+      const sentencePracticeAccuracy = sentenceTotalAttempts > 0
+        ? Math.round((sentenceTotalCorrect / sentenceTotalAttempts) * 100)
+        : 0;
+
+      return {
+        _id: student._id,
+        name: student.name,
+        studentId: student.studentId,
+        profileImage: student.profileImage,
+        wordPracticeAccuracy,
+        wordExamAccuracy,
+        sentencePracticeAccuracy
+      };
+    };
+
+    // Build group-based response
+    const groupsData = groups.map(group => {
+      const students = (group.students || []).map(computeStudentStats);
+      const avgAccuracy = students.length > 0
+        ? Math.round(students.reduce((sum, s) => sum + s.wordPracticeAccuracy + s.wordExamAccuracy + s.sentencePracticeAccuracy, 0) / (students.length * 3))
+        : 0;
+
+      return {
+        groupId: group._id,
+        groupName: group.groupName,
+        subjectName: group.subjectName,
+        studentCount: students.length,
+        avgAccuracy,
+        students
+      };
+    });
+
+    // Get unassigned students (students not in any group)
+    const allGroupStudentIds = new Set();
+    groups.forEach(g => g.students.forEach(s => allGroupStudentIds.add(s._id.toString())));
+
+    const unassignedStudents = await Student.find({
+      _id: { $nin: Array.from(allGroupStudentIds).map(id => new mongoose.Types.ObjectId(id)) }
+    }).select('_id name studentId profileImage').sort({ name: 1 });
+
+    const unassignedData = {
+      studentCount: unassignedStudents.length,
+      students: unassignedStudents.map(computeStudentStats)
+    };
+
+    res.json({
+      success: true,
+      data: {
+        groups: groupsData,
+        unassigned: unassignedData
+      }
+    });
+  } catch (error) {
+    console.error('Get group student progress error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching group student progress',
       error: error.message
     });
   }
