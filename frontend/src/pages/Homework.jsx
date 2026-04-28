@@ -35,7 +35,7 @@ const Homework = () => {
   // Admin state
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState({});
+  const [subjectFilter, setSubjectFilter] = useState('all');
 
   const isStudent = user?.userType === 'student';
 
@@ -357,10 +357,6 @@ const Homework = () => {
     } finally {
       setAdminLoading(false);
     }
-  };
-
-  const toggleGroupExpanded = (groupId) => {
-    setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
   const handleResetProgress = async (id) => {
@@ -974,147 +970,105 @@ const Homework = () => {
             {adminLoading ? (
               <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
             ) : (
-              <div className="progress-groups-container">
-                {/* Groups */}
-                {(studentsProgress.groups || []).map(group => (
-                  <div key={group.groupId} className="progress-group-card">
-                    <div
-                      className="progress-group-header"
-                      onClick={() => toggleGroupExpanded(group.groupId)}
-                    >
-                      <div className="progress-group-title">
-                        <span className="progress-group-icon">{expandedGroups[group.groupId] ? '📂' : '📁'}</span>
-                        <span className="progress-group-name">{group.groupName}</span>
-                        {group.subjectName && (
-                          <span className="progress-group-subject">({group.subjectName})</span>
-                        )}
-                      </div>
-                      <div className="progress-group-stats">
-                        <span>{group.studentCount} {t('homework.students') || 'students'}</span>
-                        <span>{group.avgAccuracy}% {t('homework.avgAccuracy') || 'avg accuracy'}</span>
-                        <span className="expand-icon">{expandedGroups[group.groupId] ? '▲' : '▼'}</span>
-                      </div>
+              <div className="progress-flat-container">
+                {/* Subject Filter */}
+                {(() => {
+                  const subjects = ['all'];
+                  (studentsProgress.groups || []).forEach(g => {
+                    if (g.subjectName && !subjects.includes(g.subjectName)) {
+                      subjects.push(g.subjectName);
+                    }
+                  });
+                  if (subjects.length <= 1) return null;
+                  return (
+                    <div className="subject-filter-bar">
+                      <label>{t('homework.filterBySubject') || 'Subject:'}</label>
+                      <select
+                        value={subjectFilter}
+                        onChange={(e) => setSubjectFilter(e.target.value)}
+                        className="subject-filter-select"
+                      >
+                        <option value="all">{t('homework.allSubjects') || 'All Subjects'}</option>
+                        {subjects.filter(s => s !== 'all').map(subject => (
+                          <option key={subject} value={subject}>{subject}</option>
+                        ))}
+                      </select>
                     </div>
-                    {expandedGroups[group.groupId] && (
-                      <div className="progress-group-body">
-                        {group.students.length === 0 ? (
-                          <div className="no-data">{t('homework.noStudentsInGroup') || 'No students in this group.'}</div>
-                        ) : (
-                          <table className="progress-table">
-                            <thead>
-                              <tr>
-                                <th>{t('homework.studentName') || 'Student Name'}</th>
-                                <th>{t('homework.wordPractice') || 'Word Practice'}</th>
-                                <th>{t('homework.wordExam') || 'Word Exam'}</th>
-                                <th>{t('homework.sentencePractice') || 'Sentence Practice'}</th>
-                                <th>{t('homework.actions') || 'Actions'}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {group.students.map(student => (
-                                <tr key={student._id}>
-                                  <td>{student.name || 'Unknown'}</td>
-                                  <td>
-                                    <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                      {student.wordPracticeAccuracy}%
-                                    </span>
-                                  </td>
-                                  <td>
-                                    <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                      {student.wordExamAccuracy}%
-                                    </span>
-                                  </td>
-                                  <td>
-                                    <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                      {student.sentencePracticeAccuracy}%
-                                    </span>
-                                  </td>
-                                  <td className="actions">
-                                    <button
-                                      onClick={() => handleResetProgress(student._id)}
-                                      className="btn btn-small btn-delete"
-                                    >
-                                      {t('homework.reset') || 'Reset'}
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })()}
 
-                {/* Unassigned */}
-                {studentsProgress.unassigned && studentsProgress.unassigned.students.length > 0 && (
-                  <div className="progress-group-card unassigned">
-                    <div
-                      className="progress-group-header"
-                      onClick={() => toggleGroupExpanded('unassigned')}
-                    >
-                      <div className="progress-group-title">
-                        <span className="progress-group-icon">{expandedGroups['unassigned'] ? '📂' : '📁'}</span>
-                        <span className="progress-group-name">{t('homework.unassignedStudents') || 'Unassigned Students'}</span>
-                      </div>
-                      <div className="progress-group-stats">
-                        <span>{studentsProgress.unassigned.studentCount} {t('homework.students') || 'students'}</span>
-                        <span className="expand-icon">{expandedGroups['unassigned'] ? '▲' : '▼'}</span>
-                      </div>
-                    </div>
-                    {expandedGroups['unassigned'] && (
-                      <div className="progress-group-body">
-                        <table className="progress-table">
-                          <thead>
-                            <tr>
-                              <th>{t('homework.studentName') || 'Student Name'}</th>
-                              <th>{t('homework.wordPractice') || 'Word Practice'}</th>
-                              <th>{t('homework.wordExam') || 'Word Exam'}</th>
-                              <th>{t('homework.sentencePractice') || 'Sentence Practice'}</th>
-                              <th>{t('homework.actions') || 'Actions'}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {studentsProgress.unassigned.students.map(student => (
-                              <tr key={student._id}>
-                                <td>{student.name || 'Unknown'}</td>
-                                <td>
-                                  <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                    {student.wordPracticeAccuracy}%
-                                  </span>
-                                </td>
-                                <td>
-                                  <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                    {student.wordExamAccuracy}%
-                                  </span>
-                                </td>
-                                <td>
-                                  <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                    {student.sentencePracticeAccuracy}%
-                                  </span>
-                                </td>
-                                <td className="actions">
-                                  <button
-                                    onClick={() => handleResetProgress(student._id)}
-                                    className="btn btn-small btn-delete"
-                                  >
-                                    {t('homework.reset') || 'Reset'}
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Flat Table */}
+                {(() => {
+                  const filteredGroups = subjectFilter === 'all'
+                    ? (studentsProgress.groups || [])
+                    : (studentsProgress.groups || []).filter(g => g.subjectName === subjectFilter);
 
-                {(!studentsProgress.groups || studentsProgress.groups.length === 0) &&
-                  (!studentsProgress.unassigned || studentsProgress.unassigned.students.length === 0) && (
-                  <div className="no-data">{t('homework.noStudentsYet') || 'No students found.'}</div>
-                )}
+                  const allRows = [];
+                  filteredGroups.forEach(group => {
+                    group.students.forEach(student => {
+                      allRows.push({ ...student, groupName: group.groupName, subjectName: group.subjectName });
+                    });
+                  });
+
+                  // Add unassigned if no filter or always show at bottom
+                  if (studentsProgress.unassigned && studentsProgress.unassigned.students) {
+                    studentsProgress.unassigned.students.forEach(student => {
+                      allRows.push({ ...student, groupName: t('homework.unassigned') || 'Unassigned', subjectName: '-' });
+                    });
+                  }
+
+                  if (allRows.length === 0) {
+                    return <div className="no-data">{t('homework.noStudentsYet') || 'No students found.'}</div>;
+                  }
+
+                  return (
+                    <table className="progress-table progress-flat-table">
+                      <thead>
+                        <tr>
+                          <th>{t('homework.group') || 'Group'}</th>
+                          <th>{t('homework.subject') || 'Subject'}</th>
+                          <th>{t('homework.studentName') || 'Student Name'}</th>
+                          <th>{t('homework.wordPractice') || 'Word Practice'}</th>
+                          <th>{t('homework.wordExam') || 'Word Exam'}</th>
+                          <th>{t('homework.sentencePractice') || 'Sentence Practice'}</th>
+                          <th>{t('homework.actions') || 'Actions'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allRows.map((student, idx) => (
+                          <tr key={`${student._id}-${idx}`}>
+                            <td>{student.groupName}</td>
+                            <td>{student.subjectName}</td>
+                            <td>{student.name || 'Unknown'}</td>
+                            <td>
+                              <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                {student.wordPracticeAccuracy}%
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                {student.wordExamAccuracy}%
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                {student.sentencePracticeAccuracy}%
+                              </span>
+                            </td>
+                            <td className="actions">
+                              <button
+                                onClick={() => handleResetProgress(student._id)}
+                                className="btn btn-small btn-delete"
+                              >
+                                {t('homework.reset') || 'Reset'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  );
+                })()}
               </div>
             )}
           </div>
