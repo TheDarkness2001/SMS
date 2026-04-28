@@ -63,7 +63,7 @@ const SentencesPage = () => {
   // Practice mode state
   const [selectedPracticeLessonId, setSelectedPracticeLessonId] = useState('');
   const [practiceMode, setPracticeMode] = useState('level'); // 'level' or 'lesson'
-  const [practiceView, setPracticeView] = useState('levels'); // 'levels' | 'classes' | 'game'
+  const [practiceView, setPracticeView] = useState('languages'); // 'languages' | 'levels' | 'classes' | 'game'
   const [bestPracticeScore, setBestPracticeScore] = useState(0);
 
   // Per-sentence timer for practice
@@ -345,6 +345,11 @@ const SentencesPage = () => {
   };
 
   // Practice navigation
+  const selectLanguageForPractice = (languageId) => {
+    setSelectedLanguageId(languageId);
+    setPracticeView('levels');
+  };
+
   const selectLevelForPractice = async (levelId) => {
     setSelectedLevelId(levelId);
     setPracticeView('classes');
@@ -382,6 +387,15 @@ const SentencesPage = () => {
     setUserAnswer('');
     setSentenceTimeLeft(SENTENCE_TIME_LIMIT);
     stopSentenceTimer();
+  };
+
+  const goBackToPracticeLanguages = () => {
+    stopSentenceTimer();
+    setPracticeView('languages');
+    setCurrentSentence(null);
+    setFeedback(null);
+    setUserAnswer('');
+    setSessionComplete(false);
   };
 
   const goBackToPracticeLevels = () => {
@@ -514,9 +528,37 @@ const SentencesPage = () => {
         {/* PRACTICE MODE */}
         {activeTab === 'practice' && (
           <div className="game-section">
+            {/* LANGUAGES VIEW */}
+            {practiceView === 'languages' && (
+              <>
+                <h3 className="practice-section-title">{t('sentences.selectLanguage') || 'Select a Language'}</h3>
+                <div className="practice-levels-grid">
+                  {languages.map(lang => (
+                    <div
+                      key={lang._id}
+                      className="practice-level-card"
+                      onClick={() => selectLanguageForPractice(lang._id)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="practice-level-icon">🌐</div>
+                      <div className="practice-level-name">{lang.name}</div>
+                    </div>
+                  ))}
+                  {languages.length === 0 && (
+                    <div className="no-data">{t('sentences.noLanguages') || 'No languages available yet.'}</div>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* LEVELS VIEW */}
             {practiceView === 'levels' && (
               <>
+                <div className="practice-back-bar">
+                  <button className="btn btn-small btn-secondary" onClick={goBackToPracticeLanguages}>
+                    ← {t('sentences.backToLanguages') || 'Back to Languages'}
+                  </button>
+                </div>
                 <h3 className="practice-section-title">{t('sentences.selectLevel') || 'Select a Level'}</h3>
                 <div className="practice-levels-grid">
                   {levelsList.map(level => {
