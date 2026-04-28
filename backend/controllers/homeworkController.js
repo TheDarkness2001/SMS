@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Word = require('../models/Word');
 const Lesson = require('../models/Lesson');
 const Level = require('../models/Level');
+const Language = require('../models/Language');
 const HomeworkProgress = require('../models/HomeworkProgress');
 const Student = require('../models/Student');
 const ExamGroup = require('../models/ExamGroup');
@@ -550,11 +551,22 @@ exports.resetStudentProgress = async (req, res) => {
 // Get all student progress grouped by exam group
 exports.getGroupStudentProgress = async (req, res) => {
   try {
-    // Get all exam groups with students populated
+    // Get all language names to filter only language-learning groups
+    const languages = await Language.find().select('name').lean();
+    const languageNames = new Set(languages.map(l => l.name.toLowerCase().trim()));
+
+    // Get all exam groups with students and subject populated
     const groups = await ExamGroup.find()
-      .populate('students', '_id name studentId profileImage')
-      .select('_id groupId groupName subjectName students')
+      .populate('students', '_id name studentId profileImage status')
+      .populate('subject', 'name')
+      .select('_id groupId groupName subjectName subject students')
       .sort({ groupName: 1 });
+
+    // Filter groups to only those whose subject is a language
+    const languageGroups = groups.filter(group => {
+      const subjName = group.subject?.name || group.subjectName || '';
+      return languageNames.has(subjName.toLowerCase().trim());
+    });
 
     // Get all progress data in parallel
     const [homeworkProgresses, vocabProgresses, sentenceProgresses] = await Promise.all([
@@ -603,6 +615,20 @@ exports.getGroupStudentProgress = async (req, res) => {
         ? Math.round((sentenceTotalCorrect / sentenceTotalAttempts) * 100)
         : 0;
 
+      // Compute last activity date (most recent across all progress types)
+      const dates = [];
+      if (hw?.lastUpdated) dates.push(new Date(hw.lastUpdated));
+      vocab.forEach(p => {
+        if (p.lastPracticeDate) dates.push(new Date(p.lastPracticeDate));
+        if (p.lastExamDate) dates.push(new Date(p.lastExamDate));
+      });
+      sentences.forEach(p => {
+        if (p.lastPracticeDate) dates.push(new Date(p.lastPracticeDate));
+      });
+      const lastActivityDate = dates.length > 0
+        ? new Date(Math.max(...dates))
+        : null;
+
       return {
         _id: student._id,
         name: student.name,
@@ -610,34 +636,38 @@ exports.getGroupStudentProgress = async (req, res) => {
         profileImage: student.profileImage,
         wordPracticeAccuracy,
         wordExamAccuracy,
-        sentencePracticeAccuracy
+        sentencePracticeAccuracy,
+        lastActivityDate: lastActivityDate ? lastActivityDate.toISOString() : null
       };
     };
 
-    // Build group-based response
-    const groupsData = groups.map(group => {
-      const students = (group.students || []).map(computeStudentStats);
-      const avgAccuracy = students.length > 0
-        ? Math.round(students.reduce((sum, s) => sum + s.wordPracticeAccuracy + s.wordExamAccuracy + s.sentencePracticeAccuracy, 0) / (students.length * 3))
+    // Build group-based response (only active students)
+    const groupsData = languageGroups.map(group => {
+      const activeStudents = (group.students || [])
+        .filter(s => s.status === 'active')
+        .map(computeStudentStats);
+      const avgAccuracy = activeStudents.length > 0
+        ? Math.round(activeStudents.reduce((sum, s) => sum + s.wordPracticeAccuracy + s.wordExamAccuracy + s.sentencePracticeAccuracy, 0) / (activeStudents.length * 3))
         : 0;
 
       return {
         groupId: group._id,
         groupName: group.groupName,
-        subjectName: group.subjectName,
-        studentCount: students.length,
+        subjectName: group.subject?.name || group.subjectName || '',
+        studentCount: activeStudents.length,
         avgAccuracy,
-        students
+        students: activeStudents
       };
-    });
+    }).filter(g => g.studentCount > 0); // Only include groups with active students
 
-    // Get unassigned students (students not in any group)
+    // Get unassigned active students (students not in any language group)
     const allGroupStudentIds = new Set();
-    groups.forEach(g => g.students.forEach(s => allGroupStudentIds.add(s._id.toString())));
+    languageGroups.forEach(g => g.students.forEach(s => allGroupStudentIds.add(s._id.toString())));
 
     const unassignedStudents = await Student.find({
-      _id: { $nin: Array.from(allGroupStudentIds).map(id => new mongoose.Types.ObjectId(id)) }
-    }).select('_id name studentId profileImage').sort({ name: 1 });
+      _id: { $nin: Array.from(allGroupStudentIds).map(id => new mongoose.Types.ObjectId(id)) },
+      status: 'active'
+    }).select('_id name studentId profileImage status').sort({ name: 1 });
 
     const unassignedData = {
       studentCount: unassignedStudents.length,
