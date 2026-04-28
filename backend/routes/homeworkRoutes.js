@@ -24,4 +24,7 @@ router.get('/students/group-progress', protect, authorizeHomework(), homeworkCon
 router.get('/students/:id/progress', protect, authorizeHomework(), homeworkController.getStudentProgress);
 router.post('/students/:id/reset-progress', protect, authorizeHomework(), homeworkController.resetStudentProgress);
 
+// Leaderboard
+router.get('/leaderboard', protect, homeworkController.getLeaderboard);
+
 module.exports = router;

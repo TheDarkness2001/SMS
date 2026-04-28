@@ -290,7 +290,9 @@ export const homeworkAPI = {
   getAllStudentProgress: () => api.get('/homework/students/progress'),
   getGroupStudentProgress: () => api.get('/homework/students/group-progress'),
   getStudentProgress: (id) => api.get(`/homework/students/${id}/progress`),
-  resetStudentProgress: (id) => api.post(`/homework/students/${id}/reset-progress`)
+  resetStudentProgress: (id) => api.post(`/homework/students/${id}/reset-progress`),
+  // Leaderboard
+  getLeaderboard: () => api.get('/homework/leaderboard')
 };
 
 // Sentence API

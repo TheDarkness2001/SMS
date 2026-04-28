@@ -1,20 +1,22 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { studentsAPI, studentAttendanceAPI, examsAPI, paymentsAPI, feedbackAPI } from '../utils/api';
+// import { useNavigate } from 'react-router-dom';
+import { studentsAPI, studentAttendanceAPI, examsAPI, paymentsAPI, feedbackAPI, homeworkAPI, sentenceAPI, presentationAPI } from '../utils/api';
 import { useLanguage } from '../context/LanguageContext';
 import {
-  AiOutlineCheckCircle,
-  AiOutlineFileText,
-  AiOutlineDollar,
   AiOutlineWarning,
-  AiOutlineTrophy
+  AiOutlineTrophy,
+  AiOutlineArrowLeft,
+  AiOutlineArrowRight,
+  AiOutlineStar,
+  AiOutlineBook,
+  AiOutlineMessage
 } from 'react-icons/ai';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ParentNotificationModal from '../components/ParentNotificationModal';
 import '../styles/StudentDashboard.css';
 
 const StudentDashboard = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [user] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
@@ -29,6 +31,16 @@ const StudentDashboard = () => {
   });
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [feedbackRecords, setFeedbackRecords] = useState([]);
+
+  // Leaderboards
+  const [wordsLeaderboard, setWordsLeaderboard] = useState([]);
+  const [sentencesLeaderboard, setSentencesLeaderboard] = useState([]);
+  const [presentationsLeaderboard, setPresentationsLeaderboard] = useState([]);
+
+  // Other students pagination
+  const [allStudents, setAllStudents] = useState([]);
+  const [otherStudentsPage, setOtherStudentsPage] = useState(1);
+  const otherStudentsPerPage = 10;
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -109,6 +121,38 @@ const StudentDashboard = () => {
         totalPaidAmount,
         totalPendingAmount
       });
+
+      // Fetch leaderboards
+      try {
+        const [wordsRes, sentencesRes, allStudentsRes] = await Promise.all([
+          homeworkAPI.getLeaderboard(),
+          sentenceAPI.getLeaderboard(),
+          studentsAPI.getAll()
+        ]);
+        setWordsLeaderboard(wordsRes.data.data?.leaderboard || []);
+        setSentencesLeaderboard(sentencesRes.data.data?.leaderboard || []);
+        const studentsList = allStudentsRes.data.data || [];
+        setAllStudents(studentsList.filter(s => s._id !== user.id && s._id !== user._id));
+      } catch (leaderboardError) {
+        console.error('[StudentDashboard] Leaderboard fetch error:', leaderboardError);
+      }
+
+      // Fetch top presentations (current month)
+      try {
+        const now = new Date();
+        const branchId = freshStudentData?.branchId || user.branchId;
+        if (branchId) {
+          const presRes = await presentationAPI.getTop({
+            year: now.getFullYear(),
+            month: now.getMonth() + 1,
+            branchId,
+            limit: 10
+          });
+          setPresentationsLeaderboard(presRes.data.data || []);
+        }
+      } catch (presError) {
+        console.error('[StudentDashboard] Presentations fetch error:', presError);
+      }
       
     } catch (error) {
       console.error('[StudentDashboard] Error fetching dashboard data:', error);
@@ -270,81 +314,74 @@ const StudentDashboard = () => {
         <p className="welcome-subtitle">{t('dashboard.studentId')} {user.studentId}</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="stats-grid">
-        {/* Attendance Card */}
-        <div className="stat-card sd-attendance-card">
-          <div className="stat-icon">
-            <AiOutlineCheckCircle size={32} />
-          </div>
-          <div className="stat-content">
-            <h3 className="stat-title">{t('dashboard.attendance')}</h3>
-            <div className="stat-value">{stats.attendancePercentage}%</div>
-            <div className="stat-details">
-              <span className="stat-detail-item present">
-                {stats.totalPresent} {t('dashboard.present')}
-              </span>
-              <span className="stat-detail-item absent">
-                {stats.totalAbsent} {t('dashboard.absent')}
-              </span>
+      {/* Leaderboards Grid */}
+      <div className="leaderboards-grid">
+        {/* Top 10 Words */}
+        <div className="leaderboard-card">
+          <div className="leaderboard-header">
+            <div className="leaderboard-icon words-icon">
+              <AiOutlineBook size={22} />
             </div>
-            <button 
-              className="stat-action-btn"
-              onClick={() => navigate('/student/attendance')}
-            >
-              {t('dashboard.viewDetails')}
-            </button>
+            <h3 className="leaderboard-title">{t('dashboard.top10Words')}</h3>
           </div>
-        </div>
-
-        {/* Exams Card */}
-        <div className="stat-card sd-exams-card">
-          <div className="stat-icon">
-            <AiOutlineFileText size={32} />
-          </div>
-          <div className="stat-content">
-            <h3 className="stat-title">{t('dashboard.upcomingExams')}</h3>
-            <div className="stat-value">{stats.upcomingExams}</div>
-            <p className="stat-description">
-              {stats.upcomingExams > 0 
-                ? t('dashboard.upcomingExamsScheduled')
-                : t('dashboard.noUpcomingExams')}
-            </p>
-            <button 
-              className="stat-action-btn"
-              onClick={() => navigate('/student/exams')}
-            >
-              {t('dashboard.viewExams')}
-            </button>
-          </div>
-        </div>
-
-        {/* Payments Card */}
-        <div className="stat-card sd-payments-card">
-          <div className="stat-icon">
-            <AiOutlineDollar size={32} />
-          </div>
-          <div className="stat-content">
-            <h3 className="stat-title">{t('dashboard.payments')}</h3>
-            <div className="stat-value" style={{ fontSize: '20px' }}>
-              {stats.totalPaidAmount > 0 ? `${stats.totalPaidAmount.toLocaleString()} UZS` : '0 UZS'}
-            </div>
-            {stats.totalPendingAmount > 0 && (
-              <div className="stat-subvalue" style={{ fontSize: '14px', color: '#ef4444', fontWeight: '600', marginTop: '4px' }}>
-                {stats.totalPendingAmount.toLocaleString()} UZS {t('dashboard.pending')}
-              </div>
+          <div className="leaderboard-list">
+            {wordsLeaderboard.length === 0 ? (
+              <p className="leaderboard-empty">{t('common.noData')}</p>
+            ) : (
+              wordsLeaderboard.map((student, index) => (
+                <div key={student.studentId} className="leaderboard-item">
+                  <span className={`leaderboard-rank rank-${index + 1}`}>{index + 1}</span>
+                  <span className="leaderboard-name">{student.name}</span>
+                  <span className="leaderboard-score">{student.accuracy}%</span>
+                </div>
+              ))
             )}
-            <p className="stat-description">
-              {stats.totalPendingAmount > 0 
-                ? `${stats.pendingCount} ${t('dashboard.pendingPayments')}`
-                : t('dashboard.allPaymentsUpToDate')}
-            </p>
-            <button 
-              className="stat-action-btn"
-              onClick={() => navigate('/student/payments')}
-            >
-              {t('dashboard.viewPayments')}
-            </button>
+          </div>
+        </div>
+
+        {/* Top 10 Sentences */}
+        <div className="leaderboard-card">
+          <div className="leaderboard-header">
+            <div className="leaderboard-icon sentences-icon">
+              <AiOutlineMessage size={22} />
+            </div>
+            <h3 className="leaderboard-title">{t('dashboard.top10Sentences')}</h3>
+          </div>
+          <div className="leaderboard-list">
+            {sentencesLeaderboard.length === 0 ? (
+              <p className="leaderboard-empty">{t('common.noData')}</p>
+            ) : (
+              sentencesLeaderboard.map((student, index) => (
+                <div key={student.studentId} className="leaderboard-item">
+                  <span className={`leaderboard-rank rank-${index + 1}`}>{index + 1}</span>
+                  <span className="leaderboard-name">{student.name}</span>
+                  <span className="leaderboard-score">{student.accuracy}%</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Best 10 Presentations */}
+        <div className="leaderboard-card">
+          <div className="leaderboard-header">
+            <div className="leaderboard-icon presentations-icon">
+              <AiOutlineStar size={22} />
+            </div>
+            <h3 className="leaderboard-title">{t('dashboard.best10Presentations')}</h3>
+          </div>
+          <div className="leaderboard-list">
+            {presentationsLeaderboard.length === 0 ? (
+              <p className="leaderboard-empty">{t('common.noData')}</p>
+            ) : (
+              presentationsLeaderboard.map((item, index) => (
+                <div key={item._id || index} className="leaderboard-item">
+                  <span className={`leaderboard-rank rank-${index + 1}`}>{index + 1}</span>
+                  <span className="leaderboard-name">{item._id?.name || item.name || 'Unknown'}</span>
+                  <span className="leaderboard-score">{Number(item.avgScore).toFixed(1)}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -360,6 +397,55 @@ const StudentDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Other Students Section */}
+      <div className="other-students-section">
+        <h2 className="section-title">{t('dashboard.otherStudents')}</h2>
+        {allStudents.length === 0 ? (
+          <p className="leaderboard-empty">{t('common.noData')}</p>
+        ) : (
+          <>
+            <div className="other-students-grid">
+              {allStudents
+                .slice((otherStudentsPage - 1) * otherStudentsPerPage, otherStudentsPage * otherStudentsPerPage)
+                .map((student) => (
+                  <div key={student._id} className="other-student-card">
+                    <div className="other-student-avatar">
+                      {student.profileImage ? (
+                        <img src={student.profileImage} alt={student.name} />
+                      ) : (
+                        <div className="avatar-placeholder">{student.name?.charAt(0) || '?'}</div>
+                      )}
+                    </div>
+                    <div className="other-student-info">
+                      <span className="other-student-name">{student.name}</span>
+                      <span className="other-student-id">{student.studentId}</span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            <div className="pagination-controls">
+              <button
+                className="pagination-btn"
+                onClick={() => setOtherStudentsPage(p => Math.max(1, p - 1))}
+                disabled={otherStudentsPage === 1}
+              >
+                <AiOutlineArrowLeft /> {t('dashboard.prev')}
+              </button>
+              <span className="pagination-page">
+                {otherStudentsPage} / {Math.ceil(allStudents.length / otherStudentsPerPage)}
+              </span>
+              <button
+                className="pagination-btn"
+                onClick={() => setOtherStudentsPage(p => Math.min(Math.ceil(allStudents.length / otherStudentsPerPage), p + 1))}
+                disabled={otherStudentsPage >= Math.ceil(allStudents.length / otherStudentsPerPage)}
+              >
+                {t('dashboard.next')} <AiOutlineArrowRight />
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Student Info Section */}
       <div className="student-info-section">

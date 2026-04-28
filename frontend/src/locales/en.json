@@ -64,7 +64,13 @@
     "configureSystem": "Configure system preferences and manage user permissions.",
     "grade": "Grade",
     "pending": "pending",
-    "pendingPayments": "pending payments"
+    "pendingPayments": "pending payments",
+    "top10Words": "Top 10 Words",
+    "top10Sentences": "Top 10 Sentences",
+    "best10Presentations": "Best 10 Presentations",
+    "otherStudents": "Other Students",
+    "prev": "Prev",
+    "next": "Next"
   },
   "sidebar": {
     "dashboard": "Dashboard",

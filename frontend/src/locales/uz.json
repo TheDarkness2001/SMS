@@ -60,7 +60,13 @@
     "checkTodaysAttendance": "Bugungi davomatni, bo'lib'chasi imtihonlarini va kutilmoqda bo'lgan to'lovlarni tekshiring.",
     "reports": "Hisobotlar",
     "generateReports": "Talabalar samaradorligi, to'lovlar va davomat haqida batafsil hisobotlar tuzing.",
-    "configureSystem": "Tizim sozlamalarini moslashtiring va foydalanuvchi ruxsatlarini boshqaring."
+    "configureSystem": "Tizim sozlamalarini moslashtiring va foydalanuvchi ruxsatlarini boshqaring.",
+    "top10Words": "Top 10 So'zlar",
+    "top10Sentences": "Top 10 Gaplar",
+    "best10Presentations": "Eng yaxshi 10 Taqdimotlar",
+    "otherStudents": "Boshqa Talabalar",
+    "prev": "Oldingi",
+    "next": "Keyingi"
   },
   "sidebar": {
     "dashboard": "Bosh sahifa",

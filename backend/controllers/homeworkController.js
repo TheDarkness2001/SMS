@@ -690,3 +690,33 @@ exports.getGroupStudentProgress = async (req, res) => {
     });
   }
 };
+
+// Get top 10 words leaderboard
+exports.getLeaderboard = async (req, res) => {
+  try {
+    const progressRecords = await HomeworkProgress.find().lean();
+
+    const studentIds = progressRecords.map(p => p.studentId.toString());
+    const students = await Student.find({ _id: { $in: studentIds } }).select('name studentId profileImage');
+    const studentInfoMap = new Map(students.map(s => [s._id.toString(), s]));
+
+    const leaderboard = progressRecords
+      .map(p => ({
+        studentId: p.studentId.toString(),
+        name: studentInfoMap.get(p.studentId.toString())?.name || 'Unknown',
+        studentRoll: studentInfoMap.get(p.studentId.toString())?.studentId || '',
+        profileImage: studentInfoMap.get(p.studentId.toString())?.profileImage || null,
+        totalAttempts: p.totalAttempts,
+        correctAnswers: p.correctAnswers,
+        accuracy: p.totalAttempts > 0 ? Math.round((p.correctAnswers / p.totalAttempts) * 100) : 0
+      }))
+      .filter(s => s.totalAttempts > 0)
+      .sort((a, b) => b.accuracy - a.accuracy || b.correctAnswers - a.correctAnswers)
+      .slice(0, 10);
+
+    res.json({ success: true, data: { leaderboard } });
+  } catch (error) {
+    console.error('Get words leaderboard error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
