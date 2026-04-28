@@ -678,7 +678,7 @@ const SentencesPage = () => {
 
         {/* LESSONS TAB (Admin) */}
         {activeTab === 'lessons' && isAdmin && (
-          <LessonsTab t={t} />
+          <LessonsTab t={t} mode="sentences" />
         )}
 
         {/* EXAM CONTROL TAB (Admin/Staff) */}

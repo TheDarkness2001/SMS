@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { languageAPI, levelAPI, lessonAPI, homeworkAPI } from '../../utils/api';
+import { languageAPI, levelAPI, lessonAPI, homeworkAPI, sentenceAPI } from '../../utils/api';
 
-const LessonsTab = ({ t }) => {
+const LessonsTab = ({ t, mode = 'words' }) => {
+  const isSentences = mode === 'sentences';
+  const itemLabel = isSentences ? 'sentences' : 'words';
   const [view, setView] = useState('languages');
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +16,7 @@ const LessonsTab = ({ t }) => {
   const [languages, setLanguages] = useState([]);
   const [levels, setLevels] = useState([]);
   const [lessons, setLessons] = useState([]);
-  const [lessonWords, setLessonWords] = useState([]);
+  const [lessonItems, setLessonItems] = useState([]);
 
   // Form states
   const [newLanguage, setNewLanguage] = useState('');
@@ -26,9 +28,9 @@ const LessonsTab = ({ t }) => {
   });
   const [lessonForm, setLessonForm] = useState({ name: '', order: 1, minPassScore: 70, maxWords: 20 });
   const [editingLesson, setEditingLesson] = useState(null);
-  const [newWord, setNewWord] = useState({ english: '', uzbek: '' });
-  const [editingWord, setEditingWord] = useState(null);
-  const [editWordForm, setEditWordForm] = useState({ english: '', uzbek: '' });
+  const [newItem, setNewItem] = useState({ english: '', uzbek: '' });
+  const [editingItem, setEditingItem] = useState(null);
+  const [editItemForm, setEditItemForm] = useState({ english: '', uzbek: '' });
   const [generating, setGenerating] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
 
@@ -72,13 +74,18 @@ const LessonsTab = ({ t }) => {
     }
   };
 
-  const fetchLessonWords = async (lessonId) => {
+  const fetchLessonItems = async (lessonId) => {
     setLoading(true);
     try {
-      const res = await lessonAPI.getLesson(lessonId);
-      if (res.data.success) setLessonWords(res.data.data.words || []);
+      if (isSentences) {
+        const res = await sentenceAPI.getAll({ lessonId });
+        if (res.data.success) setLessonItems(res.data.data.sentences || []);
+      } else {
+        const res = await lessonAPI.getLesson(lessonId);
+        if (res.data.success) setLessonItems(res.data.data.words || []);
+      }
     } catch (err) {
-      console.error('Error fetching words:', err);
+      console.error(`Error fetching ${itemLabel}:`, err);
     } finally {
       setLoading(false);
     }
@@ -208,8 +215,8 @@ const LessonsTab = ({ t }) => {
 
   const selectLesson = (lesson) => {
     setSelectedLesson(lesson);
-    fetchLessonWords(lesson._id);
-    setView('words');
+    fetchLessonItems(lesson._id);
+    setView('items');
   };
 
   // Auto-generate classes
@@ -232,20 +239,29 @@ const LessonsTab = ({ t }) => {
     }
   };
 
-  // Word handlers
-  const handleAddWord = async (e) => {
+  // Item handlers (words or sentences)
+  const handleAddItem = async (e) => {
     e.preventDefault();
-    if (!newWord.english.trim() || !newWord.uzbek.trim() || !selectedLesson) return;
+    if (!newItem.english.trim() || !newItem.uzbek.trim() || !selectedLesson) return;
     setDuplicateWarning(null);
     try {
-      const createRes = await homeworkAPI.addWord({
-        english: newWord.english.trim(),
-        uzbek: newWord.uzbek.trim(),
-        lessonId: selectedLesson._id
-      });
+      let createRes;
+      if (isSentences) {
+        createRes = await sentenceAPI.create({
+          english: newItem.english.trim(),
+          uzbek: newItem.uzbek.trim(),
+          lessonId: selectedLesson._id
+        });
+      } else {
+        createRes = await homeworkAPI.addWord({
+          english: newItem.english.trim(),
+          uzbek: newItem.uzbek.trim(),
+          lessonId: selectedLesson._id
+        });
+      }
       if (createRes.data.success) {
-        setNewWord({ english: '', uzbek: '' });
-        fetchLessonWords(selectedLesson._id);
+        setNewItem({ english: '', uzbek: '' });
+        fetchLessonItems(selectedLesson._id);
         fetchLessons(selectedLevel._id);
       }
     } catch (err) {
@@ -259,46 +275,57 @@ const LessonsTab = ({ t }) => {
           location: data.duplicate.location
         });
       } else {
-        alert(data?.message || 'Error adding word');
+        alert(data?.message || `Error adding ${itemLabel}`);
       }
     }
   };
 
-  const handleDeleteWord = async (wordId) => {
+  const handleDeleteItem = async (itemId) => {
     if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
     try {
-      await lessonAPI.removeWordFromLesson(selectedLesson._id, wordId);
-      fetchLessonWords(selectedLesson._id);
+      if (isSentences) {
+        await sentenceAPI.delete(itemId);
+      } else {
+        await lessonAPI.removeWordFromLesson(selectedLesson._id, itemId);
+      }
+      fetchLessonItems(selectedLesson._id);
       fetchLessons(selectedLevel._id);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error deleting word');
+      alert(err.response?.data?.message || `Error deleting ${itemLabel}`);
     }
   };
 
-  const startEditWord = (word) => {
-    setEditingWord(word._id);
-    setEditWordForm({ english: word.english, uzbek: word.uzbek });
+  const startEditItem = (item) => {
+    setEditingItem(item._id);
+    setEditItemForm({ english: item.english, uzbek: item.uzbek });
   };
 
-  const handleUpdateWord = async (e) => {
+  const handleUpdateItem = async (e) => {
     e.preventDefault();
-    if (!editWordForm.english.trim() || !editWordForm.uzbek.trim()) return;
+    if (!editItemForm.english.trim() || !editItemForm.uzbek.trim()) return;
     try {
-      await homeworkAPI.updateWord(editingWord, {
-        english: editWordForm.english.trim(),
-        uzbek: editWordForm.uzbek.trim()
-      });
-      setEditingWord(null);
-      setEditWordForm({ english: '', uzbek: '' });
-      fetchLessonWords(selectedLesson._id);
+      if (isSentences) {
+        await sentenceAPI.update(editingItem, {
+          english: editItemForm.english.trim(),
+          uzbek: editItemForm.uzbek.trim()
+        });
+      } else {
+        await homeworkAPI.updateWord(editingItem, {
+          english: editItemForm.english.trim(),
+          uzbek: editItemForm.uzbek.trim()
+        });
+      }
+      setEditingItem(null);
+      setEditItemForm({ english: '', uzbek: '' });
+      fetchLessonItems(selectedLesson._id);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error updating word');
+      alert(err.response?.data?.message || `Error updating ${itemLabel}`);
     }
   };
 
-  const cancelEditWord = () => {
-    setEditingWord(null);
-    setEditWordForm({ english: '', uzbek: '' });
+  const cancelEditItem = () => {
+    setEditingItem(null);
+    setEditItemForm({ english: '', uzbek: '' });
   };
 
   // Breadcrumb
@@ -317,7 +344,7 @@ const LessonsTab = ({ t }) => {
         </button>
       );
     }
-    if (selectedLevel && (view === 'lessons' || view === 'words')) {
+    if (selectedLevel && (view === 'lessons' || view === 'items')) {
       items.push(
         <span key="sep2" className="breadcrumb-sep">/</span>,
         <button key="les" className="breadcrumb-item" onClick={() => setView('lessons')}>
@@ -325,7 +352,7 @@ const LessonsTab = ({ t }) => {
         </button>
       );
     }
-    if (selectedLesson && view === 'words') {
+    if (selectedLesson && view === 'items') {
       items.push(
         <span key="sep3" className="breadcrumb-sep">/</span>,
         <span key="word" className="breadcrumb-item active">{selectedLesson.name}</span>
@@ -570,14 +597,19 @@ const LessonsTab = ({ t }) => {
                       <div className="lesson-main" onClick={() => selectLesson(lesson)} style={{ cursor: 'pointer' }}>
                         <span className="lesson-order">{lesson.order}</span>
                         <span className="lesson-name">{lesson.name}</span>
-                        <span className="lesson-meta">{lesson.wordIds?.length || 0}/{lesson.maxWords || 20} {t('homework.words') || 'words'} · {lesson.minPassScore}%</span>
+                        <span className="lesson-meta">
+                          {isSentences
+                            ? `${lesson.sentenceCount || 0} ${t('sentences.title') || 'Sentences'} · ${lesson.minPassScore}%`
+                            : `${lesson.wordIds?.length || 0}/${lesson.maxWords || 20} ${t('homework.words') || 'words'} · ${lesson.minPassScore}%`
+                          }
+                        </span>
                       </div>
                       <div className="lesson-actions">
                         <button className="btn btn-small btn-edit" onClick={() => startEditLesson(lesson)}>
                           {t('homework.edit') || 'Edit'}
                         </button>
                         <button className="btn btn-small btn-primary" onClick={() => selectLesson(lesson)}>
-                          {t('homework.words') || 'Words'}
+                          {isSentences ? (t('sentences.title') || 'Sentences') : (t('homework.words') || 'Words')}
                         </button>
                         <button className="btn btn-small btn-delete" onClick={() => handleDeleteLesson(lesson._id)}>
                           {t('homework.delete') || 'Delete'}
@@ -592,25 +624,25 @@ const LessonsTab = ({ t }) => {
         </>
       )}
 
-      {/* WORDS VIEW */}
-      {view === 'words' && selectedLesson && (
+      {/* ITEMS VIEW (Words or Sentences) */}
+      {view === 'items' && selectedLesson && (
         <>
-          <form onSubmit={handleAddWord} className="word-form">
-            <h3>{t('homework.addNewWord') || 'Add New Word'}</h3>
+          <form onSubmit={handleAddItem} className="word-form">
+            <h3>{isSentences ? (t('sentences.addSentence') || 'Add New Sentence') : (t('homework.addNewWord') || 'Add New Word')}</h3>
             <div className="form-row">
               <input
                 type="text"
-                placeholder={t('homework.englishWord') || 'English word'}
-                value={newWord.english}
-                onChange={(e) => { setNewWord({ ...newWord, english: e.target.value }); setDuplicateWarning(null); }}
+                placeholder={isSentences ? (t('sentences.englishPlaceholder') || 'English sentence') : (t('homework.englishWord') || 'English word')}
+                value={newItem.english}
+                onChange={(e) => { setNewItem({ ...newItem, english: e.target.value }); setDuplicateWarning(null); }}
                 className="form-input"
                 required
               />
               <input
                 type="text"
-                placeholder={t('homework.uzbekWord') || 'Uzbek word'}
-                value={newWord.uzbek}
-                onChange={(e) => { setNewWord({ ...newWord, uzbek: e.target.value }); setDuplicateWarning(null); }}
+                placeholder={isSentences ? (t('sentences.uzbekPlaceholder') || 'Uzbek translation') : (t('homework.uzbekWord') || 'Uzbek word')}
+                value={newItem.uzbek}
+                onChange={(e) => { setNewItem({ ...newItem, uzbek: e.target.value }); setDuplicateWarning(null); }}
                 className="form-input"
                 required
               />
@@ -646,16 +678,16 @@ const LessonsTab = ({ t }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {lessonWords.map((word, idx) => (
-                    <tr key={word._id}>
-                      {editingWord === word._id ? (
+                  {lessonItems.map((item, idx) => (
+                    <tr key={item._id}>
+                      {editingItem === item._id ? (
                         <>
                           <td className="num-col">{idx + 1}</td>
                           <td>
                             <input
                               type="text"
-                              value={editWordForm.english}
-                              onChange={(e) => setEditWordForm({ ...editWordForm, english: e.target.value })}
+                              value={editItemForm.english}
+                              onChange={(e) => setEditItemForm({ ...editItemForm, english: e.target.value })}
                               className="form-input"
                               style={{ width: '100%', padding: '4px 8px' }}
                             />
@@ -663,17 +695,17 @@ const LessonsTab = ({ t }) => {
                           <td>
                             <input
                               type="text"
-                              value={editWordForm.uzbek}
-                              onChange={(e) => setEditWordForm({ ...editWordForm, uzbek: e.target.value })}
+                              value={editItemForm.uzbek}
+                              onChange={(e) => setEditItemForm({ ...editItemForm, uzbek: e.target.value })}
                               className="form-input"
                               style={{ width: '100%', padding: '4px 8px' }}
                             />
                           </td>
                           <td className="actions">
-                            <button className="btn btn-small btn-primary" onClick={handleUpdateWord}>
+                            <button className="btn btn-small btn-primary" onClick={handleUpdateItem}>
                               {t('homework.save') || 'Save'}
                             </button>
-                            <button className="btn btn-small btn-secondary" onClick={cancelEditWord}>
+                            <button className="btn btn-small btn-secondary" onClick={cancelEditItem}>
                               {t('homework.cancel') || 'Cancel'}
                             </button>
                           </td>
@@ -681,13 +713,13 @@ const LessonsTab = ({ t }) => {
                       ) : (
                         <>
                           <td className="num-col">{idx + 1}</td>
-                          <td>{word.english}</td>
-                          <td>{word.uzbek}</td>
+                          <td>{item.english}</td>
+                          <td>{item.uzbek}</td>
                           <td className="actions">
-                            <button className="btn btn-small btn-edit" onClick={() => startEditWord(word)}>
+                            <button className="btn btn-small btn-edit" onClick={() => startEditItem(item)}>
                               {t('homework.edit') || 'Edit'}
                             </button>
-                            <button className="btn btn-small btn-delete" onClick={() => handleDeleteWord(word._id)}>
+                            <button className="btn btn-small btn-delete" onClick={() => handleDeleteItem(item._id)}>
                               {t('homework.delete') || 'Delete'}
                             </button>
                           </td>
@@ -697,8 +729,8 @@ const LessonsTab = ({ t }) => {
                   ))}
                 </tbody>
               </table>
-              {lessonWords.length === 0 && (
-                <div className="no-data">{t('homework.noWordsInLesson') || 'No words in this lesson yet.'}</div>
+              {lessonItems.length === 0 && (
+                <div className="no-data">{isSentences ? (t('sentences.noSentences') || 'No sentences in this lesson yet.') : (t('homework.noWordsInLesson') || 'No words in this lesson yet.')}</div>
               )}
             </div>
           )}
