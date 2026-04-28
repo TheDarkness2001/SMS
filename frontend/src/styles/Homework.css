@@ -497,41 +497,45 @@
 .lesson-form-row {
   display: flex;
   gap: 12px;
-  align-items: flex-end;
+  align-items: center !important;
   flex-wrap: wrap;
 }
 
 .lesson-form-row .form-field {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .lesson-form-row .form-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .lesson-form-row .form-input {
-  padding: 10px 14px;
+  padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
   min-width: 70px;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .lesson-form-row .form-field-actions {
   display: flex;
   flex-direction: row;
   gap: 8px;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .lesson-form-row .form-field-actions .btn {
-  height: 40px;
+  height: 36px;
+  padding: 6px 16px;
+  font-size: 14px;
 }
 
 /* Level form - clean two-row layout */
