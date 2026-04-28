@@ -438,17 +438,19 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                   title={t('homework.defaultClasses') || 'Default classes count'}
                 />
               </div>
-              <div className="config-field">
-                <span className="config-label">{t('homework.wordsPerClass') || 'Words/Class'}</span>
-                <input
-                  type="number"
-                  value={levelConfig.wordsPerClass}
-                  onChange={(e) => setLevelConfig({ ...levelConfig, wordsPerClass: e.target.value })}
-                  className="config-input"
-                  min="1"
-                  title={t('homework.defaultWords') || 'Default words per class'}
-                />
-              </div>
+              {!isSentences && (
+                <div className="config-field">
+                  <span className="config-label">{t('homework.wordsPerClass') || 'Words/Class'}</span>
+                  <input
+                    type="number"
+                    value={levelConfig.wordsPerClass}
+                    onChange={(e) => setLevelConfig({ ...levelConfig, wordsPerClass: e.target.value })}
+                    className="config-input"
+                    min="1"
+                    title={t('homework.defaultWords') || 'Default words per class'}
+                  />
+                </div>
+              )}
               <div className="config-field">
                 <span className="config-label">{t('homework.passScore') || 'Pass %'}</span>
                 <input
@@ -476,9 +478,11 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                     <div className="hierarchy-info">
                       <h4>{lvl.name}</h4>
                       <span className="hierarchy-meta">
-                        {lvl.classesCount || 11} {t('homework.classes') || 'classes'} ·
-                        {lvl.wordsPerClass || 20} {t('homework.wordsPerClassShort') || 'words/class'} ·
-                        {lvl.minPassScore || 70}%
+                        {lvl.classesCount || 11} {t('homework.classes') || 'classes'}
+                        {!isSentences && (
+                          <> · {lvl.wordsPerClass || 20} {t('homework.wordsPerClassShort') || 'words/class'}</>
+                        )}
+                        {' · '}{lvl.minPassScore || 70}%
                       </span>
                     </div>
                     <div className="hierarchy-actions">
@@ -543,18 +547,20 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                   style={{ maxWidth: '80px' }}
                 />
               </div>
-              <div className="form-field">
-                <label className="form-label">{t('homework.maxWords') || 'Max Words'}</label>
-                <input
-                  type="number"
-                  placeholder="20"
-                  value={lessonForm.maxWords}
-                  onChange={(e) => setLessonForm({ ...lessonForm, maxWords: parseInt(e.target.value) || 20 })}
-                  className="form-input"
-                  min="1"
-                  style={{ maxWidth: '90px' }}
-                />
-              </div>
+              {!isSentences && (
+                <div className="form-field">
+                  <label className="form-label">{t('homework.maxWords') || 'Max Words'}</label>
+                  <input
+                    type="number"
+                    placeholder="20"
+                    value={lessonForm.maxWords}
+                    onChange={(e) => setLessonForm({ ...lessonForm, maxWords: parseInt(e.target.value) || 20 })}
+                    className="form-input"
+                    min="1"
+                    style={{ maxWidth: '90px' }}
+                  />
+                </div>
+              )}
               <div className="form-field">
                 <label className="form-label">{t('homework.passScore') || 'Pass %'}</label>
                 <input
