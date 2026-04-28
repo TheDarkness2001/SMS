@@ -86,7 +86,9 @@
     "staffPayouts": "Xodimlar to'lovlari",
     "results": "Natijalar",
     "homework": "Uy vazifasi",
-    "sentences": "Gaplar"
+    "words": "So'zlar",
+    "sentences": "Gaplar",
+    "learning": "O'rganish"
   },
   "homework": {
     "title": "Uy vazifasi",

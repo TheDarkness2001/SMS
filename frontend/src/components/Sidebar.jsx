@@ -29,7 +29,8 @@ const Sidebar = ({ user, isOpen, onClose }) => {
   const [expandedGroups, setExpandedGroups] = useState({
     attendance: location.pathname.includes('attendance'),
     people: location.pathname === '/teachers' || location.pathname === '/students',
-    finance: ['/payments', '/revenue', '/admin/earnings', '/admin/payouts'].includes(location.pathname)
+    finance: ['/payments', '/revenue', '/admin/earnings', '/admin/payouts'].includes(location.pathname),
+    learning: location.pathname === '/homework' || location.pathname === '/sentences'
   });
   
   // Ensure user object exists
@@ -153,23 +154,35 @@ const Sidebar = ({ user, isOpen, onClose }) => {
           </Link>
         </li>
 
-        {/* 📚 HOMEWORK (Founder only + users with canManageHomework permission) */}
-        {!isParent && (userData.role === 'founder' || userData.permissions?.canManageHomework) && (
-          <li className={isActive('/homework')}>
-            <Link to="/homework">
-              <span className="icon"><AiOutlineBook size={20} /></span>
-              <span>{t('sidebar.homework') || 'Homework'}</span>
-            </Link>
-          </li>
-        )}
-
-        {/* 📝 SENTENCES (All users) */}
+        {/* 📚 LEARNING GROUP - Words & Sentences */}
         {!isParent && (
-          <li className={isActive('/sentences')}>
-            <Link to="/sentences">
-              <span className="icon"><AiOutlineEdit size={20} /></span>
-              <span>{t('sidebar.sentences') || 'Sentences'}</span>
-            </Link>
+          <li className="group-header">
+            <button
+              className="group-toggle"
+              onClick={() => toggleGroup('learning')}
+            >
+              <span className="icon"><AiOutlineBook size={20} /></span>
+              <span>{t('sidebar.learning') || 'Learning'}</span>
+              <span className={`chevron ${expandedGroups.learning ? 'open' : ''}`}>▶</span>
+            </button>
+            {expandedGroups.learning && (
+              <ul className="group-menu">
+                {(userData.role === 'founder' || userData.permissions?.canManageHomework) && (
+                  <li className={isActive('/homework')}>
+                    <Link to="/homework">
+                      <span className="icon"><AiOutlineBook size={18} /></span>
+                      <span>{t('sidebar.words') || 'Words'}</span>
+                    </Link>
+                  </li>
+                )}
+                <li className={isActive('/sentences')}>
+                  <Link to="/sentences">
+                    <span className="icon"><AiOutlineEdit size={18} /></span>
+                    <span>{t('sidebar.sentences') || 'Sentences'}</span>
+                  </Link>
+                </li>
+              </ul>
+            )}
           </li>
         )}
 

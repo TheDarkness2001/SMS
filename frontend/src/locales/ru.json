@@ -86,7 +86,9 @@
     "staffPayouts": "Выплаты персоналу",
     "results": "Результаты",
     "homework": "Домашнее задание",
-    "sentences": "Предложения"
+    "words": "Слова",
+    "sentences": "Предложения",
+    "learning": "Обучение"
   },
   "homework": {
     "title": "Домашнее задание",

@@ -91,7 +91,9 @@
     "staffPayouts": "Staff Payouts",
     "results": "Results",
     "homework": "Homework",
-    "sentences": "Sentences"
+    "words": "Words",
+    "sentences": "Sentences",
+    "learning": "Learning"
   },
   "homework": {
     "title": "Homework",
