@@ -33,7 +33,8 @@ const Sidebar = ({ user, isOpen, onClose }) => {
     attendance: location.pathname.includes('attendance'),
     people: location.pathname === '/teachers' || location.pathname === '/students',
     finance: ['/payments', '/revenue', '/admin/earnings', '/admin/payouts'].includes(location.pathname),
-    learning: location.pathname === '/homework' || location.pathname === '/sentences'
+    learning: location.pathname === '/homework' || location.pathname === '/sentences',
+    competition: ['/penalties', '/presentations', '/bonuses'].includes(location.pathname)
   });
   
   // Ensure user object exists
@@ -189,33 +190,41 @@ const Sidebar = ({ user, isOpen, onClose }) => {
           </li>
         )}
 
-        {/* ⚠️ PENALTIES (Teachers/Admin) */}
+        {/* 🏆 COMPETITION GROUP — Penalties, Presentations, Bonuses */}
         {!isParent && (
-          <li className={isActive('/penalties')}>
-            <Link to="/penalties">
-              <span className="icon"><AiOutlineWarning size={20} /></span>
-              <span>{t('sidebar.penalties') || 'Penalties'}</span>
-            </Link>
-          </li>
-        )}
-
-        {/* ⭐ PRESENTATIONS (Teachers/Admin) */}
-        {!isParent && (
-          <li className={isActive('/presentations')}>
-            <Link to="/presentations">
-              <span className="icon"><AiOutlineStar size={20} /></span>
-              <span>{t('sidebar.presentations') || 'Presentations'}</span>
-            </Link>
-          </li>
-        )}
-
-        {/* 🏆 BONUSES (Admin only) */}
-        {isAdmin && (
-          <li className={isActive('/bonuses')}>
-            <Link to="/bonuses">
+          <li className="group-header">
+            <button
+              className="group-toggle"
+              onClick={() => toggleGroup('competition')}
+            >
               <span className="icon"><AiOutlineTrophy size={20} /></span>
-              <span>{t('sidebar.bonuses') || 'Bonuses'}</span>
-            </Link>
+              <span>{t('sidebar.competition') || 'Competition'}</span>
+              <span className={`chevron ${expandedGroups.competition ? 'open' : ''}`}>▶</span>
+            </button>
+            {expandedGroups.competition && (
+              <ul className="group-menu">
+                <li className={isActive('/penalties')}>
+                  <Link to="/penalties">
+                    <span className="icon"><AiOutlineWarning size={18} /></span>
+                    <span>{t('sidebar.penalties') || 'Penalties'}</span>
+                  </Link>
+                </li>
+                <li className={isActive('/presentations')}>
+                  <Link to="/presentations">
+                    <span className="icon"><AiOutlineStar size={18} /></span>
+                    <span>{t('sidebar.presentations') || 'Presentations'}</span>
+                  </Link>
+                </li>
+                {isAdmin && (
+                  <li className={isActive('/bonuses')}>
+                    <Link to="/bonuses">
+                      <span className="icon"><AiOutlineTrophy size={18} /></span>
+                      <span>{t('sidebar.bonuses') || 'Bonuses'}</span>
+                    </Link>
+                  </li>
+                )}
+              </ul>
+            )}
           </li>
         )}
 

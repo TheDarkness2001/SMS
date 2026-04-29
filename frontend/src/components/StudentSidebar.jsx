@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import {
   AiOutlineHome,
@@ -18,6 +18,18 @@ import './StudentSidebar.css';
 
 const StudentSidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
+  const location = useLocation();
+  const [expandedGroups, setExpandedGroups] = useState({
+    competition: location.pathname === '/student/penalties' || location.pathname === '/student/presentations'
+  });
+
+  const toggleGroup = (groupName) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
+
   const menuItems = [
     {
       path: '/student/dashboard',
@@ -68,18 +80,6 @@ const StudentSidebar = ({ isOpen, onClose }) => {
       key: 'sentences'
     },
     {
-      path: '/student/penalties',
-      icon: <AiOutlineWarning size={20} />,
-      label: t('sidebar.myPenalties') || 'My Penalties',
-      key: 'my-penalties'
-    },
-    {
-      path: '/student/presentations',
-      icon: <AiOutlineStar size={20} />,
-      label: t('sidebar.myPresentations') || 'My Presentations',
-      key: 'my-presentations'
-    },
-    {
       path: '/student/payments',
       icon: <AiOutlineDollar size={20} />,
       label: t('sidebar.payments'),
@@ -113,6 +113,46 @@ const StudentSidebar = ({ isOpen, onClose }) => {
               </NavLink>
             </li>
           ))}
+
+          {/* 🏆 COMPETITION GROUP — My Penalties, My Presentations */}
+          <li className="student-group-header">
+            <button
+              className="student-group-toggle"
+              onClick={() => toggleGroup('competition')}
+            >
+              <span className="menu-icon"><AiOutlineTrophy size={20} /></span>
+              <span className="menu-label">{t('sidebar.competition') || 'Competition'}</span>
+              <span className={`chevron ${expandedGroups.competition ? 'open' : ''}`}>▶</span>
+            </button>
+            {expandedGroups.competition && (
+              <ul className="student-group-menu">
+                <li className="student-menu-item">
+                  <NavLink
+                    to="/student/penalties"
+                    className={({ isActive }) =>
+                      `student-menu-link ${isActive ? 'active' : ''}`
+                    }
+                    onClick={onClose}
+                  >
+                    <span className="menu-icon"><AiOutlineWarning size={18} /></span>
+                    <span className="menu-label">{t('sidebar.myPenalties') || 'My Penalties'}</span>
+                  </NavLink>
+                </li>
+                <li className="student-menu-item">
+                  <NavLink
+                    to="/student/presentations"
+                    className={({ isActive }) =>
+                      `student-menu-link ${isActive ? 'active' : ''}`
+                    }
+                    onClick={onClose}
+                  >
+                    <span className="menu-icon"><AiOutlineStar size={18} /></span>
+                    <span className="menu-label">{t('sidebar.myPresentations') || 'My Presentations'}</span>
+                  </NavLink>
+                </li>
+              </ul>
+            )}
+          </li>
         </ul>
       </nav>
 
