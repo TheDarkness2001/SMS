@@ -187,7 +187,7 @@ exports.parseImageOCR = async (req, res) => {
   }
 };
 
-// Bulk import words into a lesson
+// Bulk import words into a lesson (batch-optimized)
 exports.bulkImportWords = async (req, res) => {
   try {
     const { lessonId, items } = req.body;
@@ -201,7 +201,11 @@ exports.bulkImportWords = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Lesson not found' });
     }
 
-    const created = [];
+    // Fetch ALL existing words in this lesson in ONE query
+    const existingWords = await Word.find({ lessonId }).select('english').lean();
+    const existingSet = new Set(existingWords.map(w => w.english.toLowerCase().trim()));
+
+    const toCreate = [];
     const skipped = [];
 
     for (const item of items) {
@@ -213,33 +217,34 @@ exports.bulkImportWords = async (req, res) => {
         continue;
       }
 
-      // Check for duplicates (with escaped regex to avoid crash)
-      const existing = await Word.findOne({
-        english: { $regex: new RegExp(`^${escapeRegex(english)}$`, 'i') },
-        lessonId
-      });
-      if (existing) {
+      // Check for duplicates in memory (fast)
+      if (existingSet.has(english.toLowerCase())) {
         skipped.push({ english, uzbek, reason: 'Duplicate in lesson' });
         continue;
       }
 
       // Check word count limit
-      if (lesson.maxWords && lesson.wordIds.length >= lesson.maxWords) {
+      if (lesson.maxWords && (toCreate.length + lesson.wordIds.length) >= lesson.maxWords) {
         skipped.push({ english, uzbek, reason: 'Lesson word limit reached' });
         continue;
       }
 
-      const word = await Word.create({ english, uzbek, lessonId });
-      lesson.wordIds.push(word._id);
-      created.push(word);
+      existingSet.add(english.toLowerCase()); // Prevent dupes within the import batch too
+      toCreate.push({ english, uzbek, lessonId });
     }
 
-    await lesson.save();
+    // Batch insert all words at once
+    let createdDocs = [];
+    if (toCreate.length > 0) {
+      createdDocs = await Word.insertMany(toCreate);
+      lesson.wordIds.push(...createdDocs.map(w => w._id));
+      await lesson.save();
+    }
 
     res.status(201).json({
       success: true,
-      message: `Imported ${created.length} words, skipped ${skipped.length}`,
-      data: { created: created.length, skipped, words: created }
+      message: `Imported ${createdDocs.length} words, skipped ${skipped.length}`,
+      data: { created: createdDocs.length, skipped, words: createdDocs }
     });
   } catch (error) {
     console.error('Bulk import words error:', error);
@@ -247,7 +252,7 @@ exports.bulkImportWords = async (req, res) => {
   }
 };
 
-// Bulk import sentences into a lesson
+// Bulk import sentences into a lesson (batch-optimized)
 exports.bulkImportSentences = async (req, res) => {
   try {
     const { lessonId, items } = req.body;
@@ -261,7 +266,11 @@ exports.bulkImportSentences = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Lesson not found' });
     }
 
-    const created = [];
+    // Fetch ALL existing sentences in this lesson in ONE query
+    const existingSentences = await Sentence.find({ lessonId }).select('english').lean();
+    const existingSet = new Set(existingSentences.map(s => s.english.toLowerCase().trim()));
+
+    const toCreate = [];
     const skipped = [];
 
     for (const item of items) {
@@ -273,24 +282,26 @@ exports.bulkImportSentences = async (req, res) => {
         continue;
       }
 
-      // Check for duplicates (with escaped regex to avoid crash)
-      const existing = await Sentence.findOne({
-        english: { $regex: new RegExp(`^${escapeRegex(english)}$`, 'i') },
-        lessonId
-      });
-      if (existing) {
+      // Check for duplicates in memory (fast)
+      if (existingSet.has(english.toLowerCase())) {
         skipped.push({ english, uzbek, reason: 'Duplicate in lesson' });
         continue;
       }
 
-      const sentence = await Sentence.create({ english, uzbek, lessonId });
-      created.push(sentence);
+      existingSet.add(english.toLowerCase()); // Prevent dupes within the import batch too
+      toCreate.push({ english, uzbek, lessonId });
+    }
+
+    // Batch insert all sentences at once
+    let createdDocs = [];
+    if (toCreate.length > 0) {
+      createdDocs = await Sentence.insertMany(toCreate);
     }
 
     res.status(201).json({
       success: true,
-      message: `Imported ${created.length} sentences, skipped ${skipped.length}`,
-      data: { created: created.length, skipped, sentences: created }
+      message: `Imported ${createdDocs.length} sentences, skipped ${skipped.length}`,
+      data: { created: createdDocs.length, skipped, sentences: createdDocs }
     });
   } catch (error) {
     console.error('Bulk import sentences error:', error);

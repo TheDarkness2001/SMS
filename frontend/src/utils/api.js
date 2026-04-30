@@ -244,8 +244,8 @@ export const uploadAPI = {
   parseOCR: (formData) => api.post('/upload/parse-ocr', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  bulkImportWords: (data) => api.post('/upload/bulk-import/words', data),
-  bulkImportSentences: (data) => api.post('/upload/bulk-import/sentences', data)
+  bulkImportWords: (data) => api.post('/upload/bulk-import/words', data, { timeout: 120000 }),
+  bulkImportSentences: (data) => api.post('/upload/bulk-import/sentences', data, { timeout: 120000 })
 };
 
 // Subjects API
