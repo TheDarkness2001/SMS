@@ -310,9 +310,8 @@ const LessonsTab = ({ t, mode = 'words' }) => {
     setEditItemForm({ english: item.english, uzbek: item.uzbek });
   };
 
-  const handleUpdateItem = async (e) => {
-    e.preventDefault();
-    if (!editItemForm.english.trim() || !editItemForm.uzbek.trim()) return;
+  const handleUpdateItem = async () => {
+    if (!editingItem || !editItemForm.english.trim() || !editItemForm.uzbek.trim()) return;
     try {
       if (isSentences) {
         await sentenceAPI.update(editingItem, {
@@ -329,6 +328,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
       setEditItemForm({ english: '', uzbek: '' });
       fetchLessonItems(selectedLesson._id);
     } catch (err) {
+      console.error('Update item error:', err);
       alert(err.response?.data?.message || `Error updating ${itemLabel}`);
     }
   };
@@ -806,10 +806,10 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                             />
                           </td>
                           <td className="actions">
-                            <button className="btn btn-small btn-primary" onClick={handleUpdateItem}>
+                            <button type="button" className="btn btn-small btn-primary" onClick={handleUpdateItem}>
                               {t('homework.save') || 'Save'}
                             </button>
-                            <button className="btn btn-small btn-secondary" onClick={cancelEditItem}>
+                            <button type="button" className="btn btn-small btn-secondary" onClick={cancelEditItem}>
                               {t('homework.cancel') || 'Cancel'}
                             </button>
                           </td>
