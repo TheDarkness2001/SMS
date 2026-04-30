@@ -1,69 +1,62 @@
 const mammoth = require('mammoth');
 const Tesseract = require('tesseract.js');
 const fs = require('fs');
-const path = require('path');
 const Word = require('../models/Word');
 const Sentence = require('../models/Sentence');
 const Lesson = require('../models/Lesson');
 
+// Escape special regex characters in a string
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
- * Parse raw text into English/Uzbek pairs
- * Supports multiple formats:
- * - Pipe: English | Uzbek
- * - Comma: English, Uzbek
- * - Tab: English[tab]Uzbek
- * - Dash: English - Uzbek
- * - Colon: English: Uzbek
- * - Arrow: English -> Uzbek
+ * Parse raw text into English/Uzbek pairs.
+ * Supports: pipe |, tab, arrow ->, dash -, colon :, comma,
+ * Also detects English/Uzbek boundary by ASCII vs non-ASCII
  */
 function parsePairs(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const pairs = [];
 
   for (const line of lines) {
-    // Skip lines that look like headers or single words
     if (line.length < 3) continue;
 
     let english = '';
     let uzbek = '';
 
-    // Try different separators in order of preference
+    // Try separators in order of specificity
     const separators = [
-      { regex: /\s*\|\s*/, label: 'pipe' },
-      { regex: /\s*->\s*/, label: 'arrow' },
-      { regex: /\s*-\s+/, label: 'dash' },
-      { regex: /\s*:\s*/, label: 'colon' },
-      { regex: /\s*,\s*/, label: 'comma' },
-      { regex: /\t+/, label: 'tab' },
+      { regex: /\s*\|\s*/, join: ' | ' },
+      { regex: /\t+/, join: '\t' },
+      { regex: /\s*->\s*/, join: ' -> ' },
+      { regex: /\s*-\s+/, join: ' - ' },
+      { regex: /\s*:\s+/, join: ': ' },
+      { regex: /\s*,\s+/, join: ', ' },
     ];
 
     for (const sep of separators) {
       const parts = line.split(sep.regex);
-      if (parts.length >= 2) {
+      if (parts.length >= 2 && parts[0].trim().length > 1 && parts[1].trim().length > 1) {
         english = parts[0].trim();
-        uzbek = parts.slice(1).join(sep.regex.source.replace(/\\s\*/g, ' ').replace(/\\t\+/g, ' ')).trim();
+        uzbek = parts.slice(1).join(sep.join).trim();
         break;
       }
     }
 
-    // If no separator found, try splitting by detecting English vs non-English
+    // Fallback: detect boundary between English (ASCII) and Uzbek (non-ASCII)
     if (!english && !uzbek) {
-      // Simple heuristic: split at first non-ASCII or after first word boundary
       const words = line.split(/\s+/);
       if (words.length >= 2) {
-        // Try to find where English ends and Uzbek starts
-        // English words typically contain only ASCII letters
-        let splitIndex = words.length;
+        let splitIndex = -1;
         for (let i = 1; i < words.length; i++) {
-          const prevWord = words[i - 1];
-          const currWord = words[i];
-          // If previous is ASCII-only and current has non-ASCII, likely the split
-          if (/^[a-zA-Z0-9\s.,!?';:]+$/.test(prevWord) && /[^\x00-\x7F]/.test(currWord)) {
+          // Current word has non-ASCII chars (Uzbek/Cyrillic)
+          if (/[^\x00-\x7F]/.test(words[i])) {
             splitIndex = i;
             break;
           }
         }
-        if (splitIndex < words.length) {
+        if (splitIndex > 0) {
           english = words.slice(0, splitIndex).join(' ').trim();
           uzbek = words.slice(splitIndex).join(' ').trim();
         }
@@ -72,6 +65,37 @@ function parsePairs(text) {
 
     if (english && uzbek && english.length > 1 && uzbek.length > 1) {
       pairs.push({ english, uzbek });
+    }
+  }
+
+  return pairs;
+}
+
+/**
+ * Extract pairs from HTML tables in a docx file.
+ * mammoth.convertToHtml produces <table> elements.
+ */
+function parseHtmlTablePairs(html) {
+  const pairs = [];
+  // Match table rows: <tr>...</tr>
+  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch;
+
+  while ((rowMatch = rowRegex.exec(html)) !== null) {
+    const rowContent = rowMatch[1];
+    // Extract cell contents: <td>...</td> or <th>...</th>
+    const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    const cells = [];
+    let cellMatch;
+    while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
+      // Strip HTML tags from cell content
+      const text = cellMatch[1].replace(/<[^>]+>/g, '').trim();
+      if (text) cells.push(text);
+    }
+
+    // If we have at least 2 cells, treat first as English, second as Uzbek
+    if (cells.length >= 2 && cells[0].length > 1 && cells[1].length > 1) {
+      pairs.push({ english: cells[0], uzbek: cells[1] });
     }
   }
 
@@ -87,32 +111,31 @@ exports.parseDocx = async (req, res) => {
 
     const filePath = req.file.path;
 
-    // Extract raw text from docx
-    const result = await mammoth.extractRawText({ path: filePath });
-    const text = result.value;
+    // Extract raw text
+    const textResult = await mammoth.extractRawText({ path: filePath });
+    const rawText = textResult.value;
 
-    // Also try to get tables
-    const tableResult = await mammoth.extractRawText({
-      path: filePath,
-      transform: (element) => {
-        if (element.children) {
-          return element.children.map(child => child.value).join('\t');
-        }
-        return element;
-      }
-    });
+    // Also convert to HTML to extract tables
+    const htmlResult = await mammoth.convertToHtml({ path: filePath });
+    const html = htmlResult.value;
 
     // Clean up uploaded file
     fs.unlink(filePath, (err) => {
       if (err) console.error('Failed to delete uploaded file:', err);
     });
 
-    // Parse pairs from text
-    let pairs = parsePairs(text);
+    // Try parsing pairs from raw text first
+    let pairs = parsePairs(rawText);
 
-    // If no pairs found with standard separators, try table parsing
-    if (pairs.length === 0 && tableResult.value) {
-      pairs = parsePairs(tableResult.value);
+    // If nothing found, try HTML table extraction
+    if (pairs.length === 0 && html) {
+      pairs = parseHtmlTablePairs(html);
+    }
+
+    // If still nothing, try parsing the HTML as text (sometimes paragraphs contain pairs)
+    if (pairs.length === 0 && html) {
+      const htmlText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      pairs = parsePairs(htmlText);
     }
 
     res.json({
@@ -120,12 +143,12 @@ exports.parseDocx = async (req, res) => {
       message: `Extracted ${pairs.length} items from document`,
       data: {
         pairs,
-        rawText: text.substring(0, 2000) // Preview first 2000 chars
+        rawText: rawText.substring(0, 3000)
       }
     });
   } catch (error) {
     console.error('Parse DOCX error:', error);
-    res.status(500).json({ success: false, message: 'Failed to parse document', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to parse document: ' + error.message });
   }
 };
 
@@ -138,9 +161,9 @@ exports.parseImageOCR = async (req, res) => {
 
     const filePath = req.file.path;
 
-    // Run OCR
+    // Run OCR with English + Uzbek language support
     const { data: { text } } = await Tesseract.recognize(filePath, 'eng+uzb', {
-      logger: (m) => console.log(m)
+      logger: () => {} // Suppress verbose logging
     });
 
     // Clean up uploaded file
@@ -155,12 +178,12 @@ exports.parseImageOCR = async (req, res) => {
       message: `Extracted ${pairs.length} items from image`,
       data: {
         pairs,
-        rawText: text.substring(0, 2000)
+        rawText: text.substring(0, 3000)
       }
     });
   } catch (error) {
     console.error('OCR error:', error);
-    res.status(500).json({ success: false, message: 'Failed to process image', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to process image: ' + error.message });
   }
 };
 
@@ -190,8 +213,11 @@ exports.bulkImportWords = async (req, res) => {
         continue;
       }
 
-      // Check for duplicates in this lesson
-      const existing = await Word.findOne({ english: { $regex: new RegExp(`^${english}$`, 'i') }, lessonId });
+      // Check for duplicates (with escaped regex to avoid crash)
+      const existing = await Word.findOne({
+        english: { $regex: new RegExp(`^${escapeRegex(english)}$`, 'i') },
+        lessonId
+      });
       if (existing) {
         skipped.push({ english, uzbek, reason: 'Duplicate in lesson' });
         continue;
@@ -247,9 +273,9 @@ exports.bulkImportSentences = async (req, res) => {
         continue;
       }
 
-      // Check for duplicates
+      // Check for duplicates (with escaped regex to avoid crash)
       const existing = await Sentence.findOne({
-        english: { $regex: new RegExp(`^${english}$`, 'i') },
+        english: { $regex: new RegExp(`^${escapeRegex(english)}$`, 'i') },
         lessonId
       });
       if (existing) {

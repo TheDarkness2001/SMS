@@ -42,6 +42,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const [extractedPairs, setExtractedPairs] = useState([]);
   const [selectedPairs, setSelectedPairs] = useState(new Set());
   const [uploadStep, setUploadStep] = useState('select'); // 'select', 'preview', 'importing'
+  const [rawExtractedText, setRawExtractedText] = useState('');
 
   useEffect(() => {
     fetchLanguages();
@@ -359,6 +360,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
       if (res.data.success) {
         const pairs = res.data.data.pairs || [];
         setExtractedPairs(pairs);
+        setRawExtractedText(res.data.data.rawText || '');
         setSelectedPairs(new Set(pairs.map((_, i) => i)));
         setUploadStep('preview');
       } else {
@@ -414,6 +416,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
     setUploadFile(null);
     setExtractedPairs([]);
     setSelectedPairs(new Set());
+    setRawExtractedText('');
   };
 
   // Breadcrumb
@@ -938,7 +941,15 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                 </div>
 
                 {extractedPairs.length === 0 && (
-                  <div className="no-data">{t('homework.noPairsFound') || 'No valid pairs found. Check file format.'}</div>
+                  <div className="no-data">
+                    <p>{t('homework.noPairsFound') || 'No valid pairs found. Check file format.'}</p>
+                    {rawExtractedText && (
+                      <details className="raw-text-details">
+                        <summary>{t('homework.showRawText') || 'Show extracted text'}</summary>
+                        <pre className="raw-text-preview">{rawExtractedText}</pre>
+                      </details>
+                    )}
+                  </div>
                 )}
 
                 <div className="upload-actions">

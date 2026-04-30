@@ -294,6 +294,7 @@
     "itemsFound": "items found",
     "selectAll": "Select All",
     "noPairsFound": "No valid pairs found. Check file format.",
+    "showRawText": "Show extracted text",
     "importSelected": "Import Selected",
     "importing": "Importing..."
   },

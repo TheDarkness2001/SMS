@@ -3098,6 +3098,33 @@
   to { transform: rotate(360deg); }
 }
 
+.raw-text-details {
+  margin-top: 12px;
+  text-align: left;
+}
+
+.raw-text-details summary {
+  cursor: pointer;
+  color: #3b82f6;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.raw-text-preview {
+  background: #1f2937;
+  color: #d1d5db;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  max-height: 250px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
 @media (max-width: 640px) {
   .modal-content {
     max-width: 100%;
