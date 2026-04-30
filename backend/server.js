@@ -98,6 +98,7 @@ app.use('/api', require('./routes/sentenceRoutes'));
 app.use('/api/penalties', require('./routes/penaltyRoutes'));
 app.use('/api/presentations', require('./routes/presentationRoutes'));
 app.use('/api/bonuses', require('./routes/bonusRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // Initialize system defaults
 const { initDefaults } = require('./controllers/systemConfigController');

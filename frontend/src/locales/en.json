@@ -283,7 +283,19 @@
     "practiceShort": "Practice",
     "examShort": "Exam",
     "lockExam": "Lock Exam",
-    "unlockExam": "Unlock Exam"
+    "unlockExam": "Unlock Exam",
+    "uploadFile": "Upload File",
+    "uploadWord": "Word Document",
+    "uploadImage": "Image (OCR)",
+    "docxHint": "Upload a .docx file with English | Uzbek pairs on each line.",
+    "ocrHint": "Upload a clear image of a document with English and Uzbek text.",
+    "parsing": "Parsing...",
+    "parse": "Parse File",
+    "itemsFound": "items found",
+    "selectAll": "Select All",
+    "noPairsFound": "No valid pairs found. Check file format.",
+    "importSelected": "Import Selected",
+    "importing": "Importing..."
   },
   "sentences": {
     "title": "Sentences",

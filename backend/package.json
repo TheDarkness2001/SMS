@@ -27,10 +27,12 @@
     "express-validator": "^7.0.1",
     "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.12.0",
     "mongodb-memory-server": "^10.4.1",
     "mongoose": "^8.0.3",
     "multer": "^2.0.0",
     "nedb": "^1.8.0",
+    "tesseract.js": "^7.0.0",
     "web-push": "^3.6.7",
     "xss": "^1.0.15"
   },

@@ -236,6 +236,18 @@ export const examGroupsAPI = {
   createSchedule: (id, data) => api.post(`/scheduler/from-group/${id}`, data)
 };
 
+// Upload / OCR / Bulk Import API
+export const uploadAPI = {
+  parseDocx: (formData) => api.post('/upload/parse-docx', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  parseOCR: (formData) => api.post('/upload/parse-ocr', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  bulkImportWords: (data) => api.post('/upload/bulk-import/words', data),
+  bulkImportSentences: (data) => api.post('/upload/bulk-import/sentences', data)
+};
+
 // Subjects API
 export const subjectsAPI = {
   getAll: (params) => api.get('/subjects', { params }),

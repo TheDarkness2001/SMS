@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { languageAPI, levelAPI, lessonAPI, homeworkAPI, sentenceAPI } from '../../utils/api';
+import { languageAPI, levelAPI, lessonAPI, homeworkAPI, sentenceAPI, uploadAPI } from '../../utils/api';
 
 const LessonsTab = ({ t, mode = 'words' }) => {
   const isSentences = mode === 'sentences';
@@ -33,6 +33,15 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const [editItemForm, setEditItemForm] = useState({ english: '', uzbek: '' });
   const [generating, setGenerating] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+
+  // Upload / OCR state
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadType, setUploadType] = useState('docx'); // 'docx' or 'ocr'
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [extractedPairs, setExtractedPairs] = useState([]);
+  const [selectedPairs, setSelectedPairs] = useState(new Set());
+  const [uploadStep, setUploadStep] = useState('select'); // 'select', 'preview', 'importing'
 
   useEffect(() => {
     fetchLanguages();
@@ -326,6 +335,85 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const cancelEditItem = () => {
     setEditingItem(null);
     setEditItemForm({ english: '', uzbek: '' });
+  };
+
+  // Upload / OCR handlers
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadFile(file);
+  };
+
+  const handleParseFile = async () => {
+    if (!uploadFile) return;
+    setUploadLoading(true);
+    setExtractedPairs([]);
+    setSelectedPairs(new Set());
+
+    const formData = new FormData();
+    formData.append(uploadType === 'docx' ? 'document' : 'image', uploadFile);
+
+    try {
+      const endpoint = uploadType === 'docx' ? uploadAPI.parseDocx : uploadAPI.parseOCR;
+      const res = await endpoint(formData);
+      if (res.data.success) {
+        const pairs = res.data.data.pairs || [];
+        setExtractedPairs(pairs);
+        setSelectedPairs(new Set(pairs.map((_, i) => i)));
+        setUploadStep('preview');
+      } else {
+        alert(res.data.message || 'Failed to parse file');
+      }
+    } catch (err) {
+      console.error('Upload parse error:', err);
+      alert(err.response?.data?.message || 'Error parsing file');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const togglePairSelection = (index) => {
+    setSelectedPairs(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const handleBulkImport = async () => {
+    if (selectedPairs.size === 0) return;
+    const items = Array.from(selectedPairs).map(i => extractedPairs[i]).filter(Boolean);
+
+    setUploadStep('importing');
+    try {
+      const res = isSentences
+        ? await uploadAPI.bulkImportSentences({ lessonId: selectedLesson._id, items })
+        : await uploadAPI.bulkImportWords({ lessonId: selectedLesson._id, items });
+
+      if (res.data.success) {
+        alert(`${res.data.data.created} ${isSentences ? 'sentences' : 'words'} imported!`);
+        fetchLessonItems(selectedLesson._id);
+        fetchLessons(selectedLevel._id);
+        setShowUploadModal(false);
+        setUploadStep('select');
+        setUploadFile(null);
+        setExtractedPairs([]);
+        setSelectedPairs(new Set());
+      }
+    } catch (err) {
+      console.error('Bulk import error:', err);
+      alert(err.response?.data?.message || 'Import failed');
+      setUploadStep('preview');
+    }
+  };
+
+  const closeUploadModal = () => {
+    setShowUploadModal(false);
+    setUploadStep('select');
+    setUploadFile(null);
+    setExtractedPairs([]);
+    setSelectedPairs(new Set());
   };
 
   // Breadcrumb
@@ -653,6 +741,13 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                 required
               />
               <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowUploadModal(true)}
+              >
+                {t('homework.uploadFile') || 'Upload File'}
+              </button>
             </div>
           </form>
 
@@ -741,6 +836,134 @@ const LessonsTab = ({ t, mode = 'words' }) => {
             </div>
           )}
         </>
+      )}
+
+      {/* Upload / OCR Modal */}
+      {showUploadModal && (
+        <div className="modal-overlay" onClick={closeUploadModal}>
+          <div className="modal-content upload-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{t('homework.uploadFile') || 'Upload File'}</h3>
+              <button className="modal-close" onClick={closeUploadModal}>×</button>
+            </div>
+
+            {uploadStep === 'select' && (
+              <div className="upload-step">
+                <div className="upload-type-toggle">
+                  <button
+                    className={`btn ${uploadType === 'docx' ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setUploadType('docx')}
+                  >
+                    {t('homework.uploadWord') || 'Word Document'}
+                  </button>
+                  <button
+                    className={`btn ${uploadType === 'ocr' ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setUploadType('ocr')}
+                  >
+                    {t('homework.uploadImage') || 'Image (OCR)'}
+                  </button>
+                </div>
+
+                <div className="upload-hint">
+                  {uploadType === 'docx'
+                    ? (t('homework.docxHint') || 'Upload a .docx file with English | Uzbek pairs on each line.')
+                    : (t('homework.ocrHint') || 'Upload a clear image of a document with English and Uzbek text.')
+                  }
+                </div>
+
+                <input
+                  type="file"
+                  accept={uploadType === 'docx' ? '.docx' : 'image/*'}
+                  onChange={handleFileSelect}
+                  className="file-input"
+                />
+
+                {uploadFile && (
+                  <div className="file-selected">
+                    <strong>{uploadFile.name}</strong> ({(uploadFile.size / 1024).toFixed(1)} KB)
+                  </div>
+                )}
+
+                <div className="upload-actions">
+                  <button className="btn btn-secondary" onClick={closeUploadModal}>
+                    {t('homework.cancel') || 'Cancel'}
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleParseFile}
+                    disabled={!uploadFile || uploadLoading}
+                  >
+                    {uploadLoading
+                      ? (t('homework.parsing') || 'Parsing...')
+                      : (t('homework.parse') || 'Parse File')
+                    }
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {uploadStep === 'preview' && (
+              <div className="upload-step">
+                <div className="preview-header">
+                  <span>{extractedPairs.length} {t('homework.itemsFound') || 'items found'}</span>
+                  <label className="select-all-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedPairs.size === extractedPairs.length && extractedPairs.length > 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedPairs(new Set(extractedPairs.map((_, i) => i)));
+                        } else {
+                          setSelectedPairs(new Set());
+                        }
+                      }}
+                    />
+                    {t('homework.selectAll') || 'Select All'}
+                  </label>
+                </div>
+
+                <div className="pairs-list">
+                  {extractedPairs.map((pair, idx) => (
+                    <div key={idx} className={`pair-row ${selectedPairs.has(idx) ? 'selected' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={selectedPairs.has(idx)}
+                        onChange={() => togglePairSelection(idx)}
+                      />
+                      <span className="pair-english">{pair.english}</span>
+                      <span className="pair-sep">→</span>
+                      <span className="pair-uzbek">{pair.uzbek}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {extractedPairs.length === 0 && (
+                  <div className="no-data">{t('homework.noPairsFound') || 'No valid pairs found. Check file format.'}</div>
+                )}
+
+                <div className="upload-actions">
+                  <button className="btn btn-secondary" onClick={() => setUploadStep('select')}>
+                    {t('homework.back') || 'Back'}
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleBulkImport}
+                    disabled={selectedPairs.size === 0}
+                  >
+                    {t('homework.importSelected') || 'Import Selected'} ({selectedPairs.size})
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {uploadStep === 'importing' && (
+              <div className="upload-step importing">
+                <div className="loading-spinner" />
+                <p>{t('homework.importing') || 'Importing...'}</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

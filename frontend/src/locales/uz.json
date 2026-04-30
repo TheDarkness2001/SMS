@@ -278,7 +278,19 @@
     "practiceShort": "Mashq",
     "examShort": "Imtihon",
     "lockExam": "Imtihonni yopish",
-    "unlockExam": "Imtihonni ochish"
+    "unlockExam": "Imtihonni ochish",
+    "uploadFile": "Fayl yuklash",
+    "uploadWord": "Word hujjati",
+    "uploadImage": "Rasm (OCR)",
+    "docxHint": "Har bir qatorda Ingliz | O'zbek juftliklari bilan .docx faylini yuklang.",
+    "ocrHint": "Inglizcha va o'zbekcha matnli hujjatning aniq rasmini yuklang.",
+    "parsing": "Qayta ishlanmoqda...",
+    "parse": "Faylni qayta ishlash",
+    "itemsFound": "ta element topildi",
+    "selectAll": "Hammasini tanlash",
+    "noPairsFound": "Juftliklar topilmadi. Fayl formatini tekshiring.",
+    "importSelected": "Tanlanganlarni import qilish",
+    "importing": "Import qilinmoqda..."
   },
   "sentences": {
     "title": "Gaplar",
