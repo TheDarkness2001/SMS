@@ -352,7 +352,22 @@
     "unassigned": "Tayinlanmagan",
     "noStudentsInGroup": "Bu guruhda o'quvchilar yo'q.",
     "unassignedStudents": "Guruhga biriktirilmagan o'quvchilar",
-    "noStudentsYet": "O'quvchilar topilmadi."
+    "noStudentsYet": "O'quvchilar topilmadi.",
+    "skip": "O'tkazib yuborish",
+    "submit": "Yuborish",
+    "tryAgain": "Yana urinib ko'rish",
+    "warning": "Ogohlantirish",
+    "warningMessage": "Sahifani tark etmang!",
+    "tabResetMessage": "Sahifani juda ko'p tark etdingiz. Menyuga qaytish.",
+    "missingArticle": "Artikl yetishmayapti",
+    "wrongArticle": "Noto'g'ri artikl",
+    "missingPunctuation": "Tinish belgisi yetishmayapti",
+    "wrongWordOrder": "Noto'g'ri so'z tartibi",
+    "wrongWord": "Noto'g'ri so'z",
+    "extraWords": "Qo'llab-quvvatlanmagan so'zlar",
+    "missingWords": "Yetishmayotgan so'zlar",
+    "yourAnswerLabel": "Sizning javobingiz",
+    "similarity": "O'xshashlik"
   },
   "teachers": {
     "title": "O'qituvchilar",

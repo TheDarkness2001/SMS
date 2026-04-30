@@ -358,7 +358,22 @@
     "unassigned": "Unassigned",
     "noStudentsInGroup": "No students in this group.",
     "unassignedStudents": "Unassigned Students",
-    "noStudentsYet": "No students found."
+    "noStudentsYet": "No students found.",
+    "skip": "Skip",
+    "submit": "Submit",
+    "tryAgain": "Try Again",
+    "warning": "Warning",
+    "warningMessage": "Do not leave the page!",
+    "tabResetMessage": "Page left too many times. Returning to menu.",
+    "missingArticle": "Missing Article",
+    "wrongArticle": "Wrong Article",
+    "missingPunctuation": "Missing Punctuation",
+    "wrongWordOrder": "Wrong Word Order",
+    "wrongWord": "Wrong Word",
+    "extraWords": "Extra Words",
+    "missingWords": "Missing Words",
+    "yourAnswerLabel": "Yours",
+    "similarity": "Similarity"
   },
   "teachers": {
     "title": "Teachers",

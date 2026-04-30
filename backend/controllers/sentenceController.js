@@ -2,6 +2,7 @@ const Sentence = require('../models/Sentence');
 const StudentSentenceProgress = require('../models/StudentSentenceProgress');
 const Student = require('../models/Student');
 const Lesson = require('../models/Lesson');
+const { analyzeSentenceAnswer } = require('../utils/sentenceValidator');
 
 // Get all sentences (filtered by lessonId or levelId)
 exports.getAllSentences = async (req, res) => {
@@ -130,7 +131,7 @@ exports.checkSentenceAnswer = async (req, res) => {
     }
 
     const correctAnswer = direction === 'uzToEn' ? sentence.english : sentence.uzbek;
-    const isCorrect = answer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+    const analysis = analyzeSentenceAnswer(correctAnswer, answer.trim());
 
     // Update progress if student
     if (studentId) {
@@ -139,7 +140,7 @@ exports.checkSentenceAnswer = async (req, res) => {
         progress = new StudentSentenceProgress({ studentId, sentenceId });
       }
       progress.attempts += 1;
-      if (isCorrect) progress.correctCount += 1;
+      if (analysis.isCorrect) progress.correctCount += 1;
       progress.lastPracticeDate = new Date();
       await progress.save();
     }
@@ -147,9 +148,14 @@ exports.checkSentenceAnswer = async (req, res) => {
     res.json({
       success: true,
       data: {
-        isCorrect,
+        isCorrect: analysis.isCorrect,
         correctAnswer,
-        yourAnswer: answer.trim()
+        yourAnswer: answer.trim(),
+        analysis: {
+          diff: analysis.diff,
+          categories: analysis.categories,
+          similarityScore: analysis.similarityScore
+        }
       }
     });
   } catch (error) {

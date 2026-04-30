@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { languageAPI, levelAPI, lessonAPI, examGroupsAPI, sentenceAPI, homeworkAPI, getImageUrl } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -66,11 +66,9 @@ const SentencesPage = () => {
   const [practiceView, setPracticeView] = useState('languages'); // 'languages' | 'levels' | 'classes' | 'game'
   const [bestPracticeScore, setBestPracticeScore] = useState(0);
 
-  // Per-sentence timer for practice
-  const SENTENCE_TIME_LIMIT = 30;
-  const [sentenceTimeLeft, setSentenceTimeLeft] = useState(SENTENCE_TIME_LIMIT);
-  const sentenceTimerRef = useRef(null);
-  const autoAdvanceRef = useRef(null);
+  // Tab-switch warning state
+  const [tabWarnings, setTabWarnings] = useState(0);
+  const [tabWarningVisible, setTabWarningVisible] = useState(false);
 
   // Fetch languages for all users (students see only their subject language)
   useEffect(() => {
@@ -194,11 +192,6 @@ const SentencesPage = () => {
   const handleCheckAnswer = async () => {
     if (!userAnswer.trim() || !currentSentence) return;
     setIsChecking(true);
-    // Stop timer when user submits
-    if (sentenceTimerRef.current) {
-      clearInterval(sentenceTimerRef.current);
-      sentenceTimerRef.current = null;
-    }
     try {
       const response = await sentenceAPI.checkAnswer({
         sentenceId: currentSentence._id,
@@ -206,11 +199,13 @@ const SentencesPage = () => {
         direction: currentSentence.direction === 'en-to-uz' ? 'enToUz' : 'uzToEn'
       });
       if (response.data.success) {
-        const isCorrect = response.data.data.isCorrect;
+        const data = response.data.data;
+        const isCorrect = data.isCorrect;
         setFeedback({
           isCorrect,
-          correctAnswer: response.data.data.correctAnswer,
-          userAnswer: response.data.data.yourAnswer || userAnswer
+          correctAnswer: data.correctAnswer,
+          userAnswer: data.yourAnswer || userAnswer,
+          analysis: data.analysis || null
         });
         setSessionStats(prev => {
           const newStats = {
@@ -230,20 +225,36 @@ const SentencesPage = () => {
           }
           return newStats;
         });
-
-        // Auto-advance in practice mode after brief feedback
-        if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-        autoAdvanceRef.current = setTimeout(() => {
-          setFeedback(null);
-          setUserAnswer('');
-          handleNext();
-        }, 1500);
       }
     } catch (error) {
       console.error('Error checking answer:', error);
     } finally {
       setIsChecking(false);
     }
+  };
+
+  // Skip current sentence
+  const handleSkipSentence = () => {
+    if (!currentSentence) return;
+    setSessionStats(prev => {
+      const newStats = {
+        totalAttempts: prev.totalAttempts + 1,
+        correctAnswers: prev.correctAnswers,
+        enToUzCorrect: prev.enToUzCorrect,
+        enToUzTotal: prev.enToUzTotal,
+        uzToEnCorrect: prev.uzToEnCorrect,
+        uzToEnTotal: prev.uzToEnTotal
+      };
+      if (currentSentence.direction === 'en-to-uz') {
+        newStats.enToUzTotal++;
+      } else {
+        newStats.uzToEnTotal++;
+      }
+      return newStats;
+    });
+    setFeedback(null);
+    setUserAnswer('');
+    handleNext();
   };
 
   // Handle next sentence
@@ -283,66 +294,62 @@ const SentencesPage = () => {
     ? Math.round((sessionStats.correctAnswers / sessionStats.totalAttempts) * 100)
     : 0;
 
-  // Timer helpers
-  const startSentenceTimer = () => {
-    setSentenceTimeLeft(SENTENCE_TIME_LIMIT);
-    if (sentenceTimerRef.current) clearInterval(sentenceTimerRef.current);
-    sentenceTimerRef.current = setInterval(() => {
-      setSentenceTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(sentenceTimerRef.current);
-          sentenceTimerRef.current = null;
-          handleSentenceTimeout();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  // Anti-copy/paste handlers
+  const handlePreventCopy = (e) => {
+    e.preventDefault();
+    return false;
   };
 
-  const stopSentenceTimer = () => {
-    if (sentenceTimerRef.current) {
-      clearInterval(sentenceTimerRef.current);
-      sentenceTimerRef.current = null;
-    }
-    if (autoAdvanceRef.current) {
-      clearTimeout(autoAdvanceRef.current);
-      autoAdvanceRef.current = null;
+  const handlePreventKeyboardShortcuts = (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'x' || e.key === 'v')) {
+      e.preventDefault();
     }
   };
 
-  const handleSentenceTimeout = () => {
-    if (!currentSentence) return;
-    const correctAnswer = currentSentence.direction === 'en-to-uz' ? currentSentence.uzbek : currentSentence.english;
-    setFeedback({
-      isCorrect: false,
-      correctAnswer,
-      userAnswer: '',
-      isTimeout: true
-    });
-    setSessionStats(prev => {
-      const newStats = {
-        totalAttempts: prev.totalAttempts + 1,
-        correctAnswers: prev.correctAnswers,
-        enToUzCorrect: prev.enToUzCorrect,
-        enToUzTotal: prev.enToUzTotal,
-        uzToEnCorrect: prev.uzToEnCorrect,
-        uzToEnTotal: prev.uzToEnTotal
-      };
-      if (currentSentence.direction === 'en-to-uz') {
-        newStats.enToUzTotal++;
-      } else {
-        newStats.uzToEnTotal++;
+  // Tab-switch / focus-loss detection
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && practiceView === 'game' && currentSentence && !feedback) {
+        setTabWarnings(prev => {
+          const next = prev + 1;
+          if (next >= 3) {
+            // Reset after 3 warnings
+            setTabWarningVisible(false);
+            goBackToPracticeLanguages();
+            return 0;
+          } else {
+            setTabWarningVisible(true);
+            setTimeout(() => setTabWarningVisible(false), 3000);
+            return next;
+          }
+        });
       }
-      return newStats;
-    });
-    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-    autoAdvanceRef.current = setTimeout(() => {
-      setFeedback(null);
-      setUserAnswer('');
-      handleNext();
-    }, 1500);
-  };
+    };
+
+    const handleWindowBlur = () => {
+      if (practiceView === 'game' && currentSentence && !feedback) {
+        setTabWarnings(prev => {
+          const next = prev + 1;
+          if (next >= 3) {
+            setTabWarningVisible(false);
+            goBackToPracticeLanguages();
+            return 0;
+          } else {
+            setTabWarningVisible(true);
+            setTimeout(() => setTabWarningVisible(false), 3000);
+            return next;
+          }
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [practiceView, currentSentence, feedback]);
 
   // Practice navigation
   const selectLanguageForPractice = (languageId) => {
@@ -385,35 +392,38 @@ const SentencesPage = () => {
     setCurrentSentence(null);
     setFeedback(null);
     setUserAnswer('');
-    setSentenceTimeLeft(SENTENCE_TIME_LIMIT);
-    stopSentenceTimer();
+    setTabWarnings(0);
+    setTabWarningVisible(false);
   };
 
   const goBackToPracticeLanguages = () => {
-    stopSentenceTimer();
     setPracticeView('languages');
     setCurrentSentence(null);
     setFeedback(null);
     setUserAnswer('');
     setSessionComplete(false);
+    setTabWarnings(0);
+    setTabWarningVisible(false);
   };
 
   const goBackToPracticeLevels = () => {
-    stopSentenceTimer();
     setPracticeView('levels');
     setCurrentSentence(null);
     setFeedback(null);
     setUserAnswer('');
     setSessionComplete(false);
+    setTabWarnings(0);
+    setTabWarningVisible(false);
   };
 
   const goBackToPracticeClasses = () => {
-    stopSentenceTimer();
     setPracticeView('classes');
     setCurrentSentence(null);
     setFeedback(null);
     setUserAnswer('');
     setSessionComplete(false);
+    setTabWarnings(0);
+    setTabWarningVisible(false);
   };
 
   const endPractice = () => {
@@ -422,33 +432,19 @@ const SentencesPage = () => {
       const currentAccuracy = Math.round((sessionStats.correctAnswers / sessionStats.totalAttempts) * 100);
       setBestPracticeScore(prev => Math.max(prev, currentAccuracy));
     }
-    stopSentenceTimer();
     setPracticeView('classes');
     setCurrentSentence(null);
     setFeedback(null);
     setUserAnswer('');
     setSessionComplete(false);
+    setTabWarnings(0);
+    setTabWarningVisible(false);
   };
 
-  // Start per-sentence timer when sentence loads in practice
-  useEffect(() => {
-    if (activeTab === 'practice' && practiceView === 'game' && currentSentence && !feedback) {
-      startSentenceTimer();
-    }
-    return () => {
-      if (sentenceTimerRef.current) {
-        clearInterval(sentenceTimerRef.current);
-        sentenceTimerRef.current = null;
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSentence, activeTab, practiceView]);
-
-  // Cleanup timer on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (sentenceTimerRef.current) clearInterval(sentenceTimerRef.current);
-      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+      setTabWarningVisible(false);
     };
   }, []);
 
@@ -632,9 +628,6 @@ const SentencesPage = () => {
                   <button className="btn btn-small btn-secondary" onClick={goBackToPracticeClasses}>
                     ← {t('sentences.backToClasses') || 'Back to Classes'}
                   </button>
-                  <div className={`practice-timer ${sentenceTimeLeft <= 10 ? 'timer-urgent' : ''}`}>
-                    ⏱️ {sentenceTimeLeft}s
-                  </div>
                   <div className="practice-stats">
                     <span>{t('sentences.score') || 'Score'}: {sessionStats.correctAnswers}/{sessionStats.totalAttempts}</span>
                     <span>{t('sentences.accuracy') || 'Accuracy'}: {accuracy}%</span>
@@ -644,10 +637,30 @@ const SentencesPage = () => {
                   </div>
                 </div>
 
+                {/* Tab warning overlay */}
+                {tabWarningVisible && (
+                  <div className="tab-warning-overlay">
+                    <div className="tab-warning-box">
+                      <div className="tab-warning-icon">⚠️</div>
+                      <div className="tab-warning-title">
+                        {t('sentences.warning') || 'Warning'} {tabWarnings}/3
+                      </div>
+                      <div className="tab-warning-message">
+                        {t('sentences.warningMessage') || 'Do not leave the page!'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {isLoading ? (
                   <div className="loading-state">{t('sentences.loading') || 'Loading...'}</div>
                 ) : currentSentence ? (
-                  <div className="word-card">
+                  <div
+                    className="word-card sentence-practice-card"
+                    onContextMenu={handlePreventCopy}
+                    onCopy={handlePreventCopy}
+                    onCut={handlePreventCopy}
+                  >
                     <div className="direction-label">{getDirectionLabel()}</div>
                     <div className="word-display">{getDisplayText()}</div>
 
@@ -656,37 +669,117 @@ const SentencesPage = () => {
                         type="text"
                         value={userAnswer}
                         onChange={(e) => setUserAnswer(e.target.value)}
-                        onKeyDown={handleKeyDown}
+                        onKeyDown={(e) => {
+                          handleKeyDown(e);
+                          handlePreventKeyboardShortcuts(e);
+                        }}
+                        onCopy={handlePreventCopy}
+                        onCut={handlePreventCopy}
+                        onPaste={handlePreventCopy}
                         placeholder={getPlaceholder()}
                         disabled={isChecking || feedback !== null}
                         className="answer-input"
                         autoFocus
                       />
 
-                      <button
-                        onClick={handleCheckAnswer}
-                        disabled={!userAnswer.trim() || isChecking || feedback !== null}
-                        className="btn btn-primary"
-                      >
-                        {isChecking ? (t('sentences.checking') || 'Checking...') : (t('sentences.checkAnswer') || 'Check')}
-                      </button>
+                      <div className="answer-buttons">
+                        <button
+                          onClick={handleSkipSentence}
+                          disabled={isChecking || feedback !== null}
+                          className="btn btn-secondary"
+                        >
+                          {t('sentences.skip') || 'Skip'}
+                        </button>
+                        <button
+                          onClick={handleCheckAnswer}
+                          disabled={!userAnswer.trim() || isChecking || feedback !== null}
+                          className="btn btn-primary"
+                        >
+                          {isChecking ? (t('sentences.checking') || 'Checking...') : (t('sentences.submit') || 'Submit')}
+                        </button>
+                      </div>
                     </div>
 
                     {feedback && (
                       <div className={`feedback ${feedback.isCorrect ? 'correct' : 'incorrect'}`}>
-                        {feedback.isTimeout ? (
-                          <>
-                            <div className="feedback-title">⏰ {t('sentences.notFound') || 'Time\'s Up!'}</div>
-                            <p>{t('sentences.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
-                          </>
-                        ) : feedback.isCorrect ? (
+                        {feedback.isCorrect ? (
                           <>
                             <div className="feedback-title">{t('sentences.correct') || 'Correct!'}</div>
                           </>
                         ) : (
                           <>
                             <div className="feedback-title">{t('sentences.incorrect') || 'Incorrect'}</div>
-                            <p>{t('sentences.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
+
+                            {/* Category pills */}
+                            {feedback.analysis && feedback.analysis.categories.length > 0 && (
+                              <div className="feedback-categories">
+                                {feedback.analysis.categories.map(cat => (
+                                  <span key={cat} className={`category-pill category-${cat}`}>
+                                    {t(`sentences.${cat}`) || cat}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Word diff */}
+                            {feedback.analysis && feedback.analysis.diff.length > 0 && (
+                              <div className="feedback-diff">
+                                <div className="diff-row">
+                                  <span className="diff-label">{t('sentences.correctAnswer') || 'Correct'}:</span>
+                                  <span className="diff-words">
+                                    {feedback.analysis.diff.map((d, i) => {
+                                      if (d.type === 'correct') return <span key={i} className="diff-correct">{d.word}</span>;
+                                      if (d.type === 'missing') return <span key={i} className="diff-missing">{d.word}</span>;
+                                      if (d.type === 'wrong') return <span key={i} className="diff-missing">{d.expected}</span>;
+                                      if (d.type === 'punctuation') return <span key={i} className="diff-missing">{d.expected}</span>;
+                                      return null;
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="diff-row">
+                                  <span className="diff-label">{t('sentences.yourAnswerLabel') || 'Yours'}:</span>
+                                  <span className="diff-words">
+                                    {feedback.analysis.diff.map((d, i) => {
+                                      if (d.type === 'correct') return <span key={i} className="diff-correct">{d.word}</span>;
+                                      if (d.type === 'extra') return <span key={i} className="diff-extra">{d.word}</span>;
+                                      if (d.type === 'wrong') return <span key={i} className="diff-wrong">{d.got}</span>;
+                                      if (d.type === 'punctuation') return <span key={i} className="diff-wrong">{d.got}</span>;
+                                      return null;
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Similarity score */}
+                            {feedback.analysis && (
+                              <div className="feedback-similarity">
+                                {t('sentences.similarity') || 'Similarity'}: {feedback.analysis.similarityScore}%
+                              </div>
+                            )}
+
+                            {/* Action buttons */}
+                            <div className="feedback-actions">
+                              <button
+                                className="btn btn-small btn-secondary"
+                                onClick={() => {
+                                  setFeedback(null);
+                                  setUserAnswer('');
+                                }}
+                              >
+                                {t('sentences.tryAgain') || 'Try Again'}
+                              </button>
+                              <button
+                                className="btn btn-small btn-primary"
+                                onClick={() => {
+                                  setFeedback(null);
+                                  setUserAnswer('');
+                                  handleNext();
+                                }}
+                              >
+                                {t('sentences.next') || 'Next'}
+                              </button>
+                            </div>
                           </>
                         )}
                       </div>

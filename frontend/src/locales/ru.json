@@ -352,7 +352,22 @@
     "unassigned": "Неназначенные",
     "noStudentsInGroup": "В этой группе нет студентов.",
     "unassignedStudents": "Неназначенные студенты",
-    "noStudentsYet": "Студенты не найдены."
+    "noStudentsYet": "Студенты не найдены.",
+    "skip": "Пропустить",
+    "submit": "Отправить",
+    "tryAgain": "Попробовать снова",
+    "warning": "Предупреждение",
+    "warningMessage": "Не покидайте страницу!",
+    "tabResetMessage": "Слишком много раз покинули страницу. Возврат к меню.",
+    "missingArticle": "Пропущен артикль",
+    "wrongArticle": "Неправильный артикль",
+    "missingPunctuation": "Пропущена пунктуация",
+    "wrongWordOrder": "Неправильный порядок слов",
+    "wrongWord": "Неправильное слово",
+    "extraWords": "Лишние слова",
+    "missingWords": "Пропущенные слова",
+    "yourAnswerLabel": "Ваш ответ",
+    "similarity": "Сходство"
   },
   "teachers": {
     "title": "Учителя",

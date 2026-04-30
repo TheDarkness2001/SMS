@@ -2666,3 +2666,216 @@
     justify-content: space-between;
   }
 }
+
+/* ============================================
+   Secure Sentence Practice Styles
+   ============================================ */
+
+/* Anti-screenshot: make sentence text unselectable */
+.sentence-practice-card {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.sentence-practice-card input {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Tab warning overlay */
+.tab-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tab-warning-box {
+  background: white;
+  border-radius: 16px;
+  padding: 32px 40px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 360px;
+  width: 90%;
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.tab-warning-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.tab-warning-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #dc2626;
+  margin-bottom: 8px;
+}
+
+.tab-warning-message {
+  font-size: 15px;
+  color: #4b5563;
+}
+
+/* Answer buttons row */
+.answer-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.answer-buttons .btn {
+  min-width: 100px;
+}
+
+/* Feedback categories */
+.feedback-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.category-pill {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.category-missingArticle {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.category-wrongArticle {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.category-missingPunctuation {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.category-wrongWordOrder {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.category-wrongWord {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.category-extraWords {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.category-missingWords {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+/* Word diff display */
+.feedback-diff {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  text-align: left;
+}
+
+.diff-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.diff-row:last-child {
+  margin-bottom: 0;
+}
+
+.diff-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  min-width: 70px;
+}
+
+.diff-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.diff-words span {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.diff-correct {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.diff-missing {
+  background: #fee2e2;
+  color: #991b1b;
+  text-decoration: line-through;
+}
+
+.diff-wrong {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+.diff-extra {
+  background: #fde68a;
+  color: #92400e;
+}
+
+/* Feedback similarity score */
+.feedback-similarity {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+/* Feedback action buttons */
+.feedback-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px;
+}
