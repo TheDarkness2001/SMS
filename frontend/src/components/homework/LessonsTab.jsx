@@ -724,7 +724,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
       {/* ITEMS VIEW (Words or Sentences) */}
       {view === 'items' && selectedLesson && (
         <>
-          <form onSubmit={handleAddItem} className="word-form">
+          <form onSubmit={handleAddItem} className="word-form word-form-sticky">
             <h3>{isSentences ? (t('sentences.addSentence') || 'Add New Sentence') : (t('homework.addNewWord') || 'Add New Word')}</h3>
             <div className="form-row">
               <input
