@@ -27,6 +27,7 @@ function parsePairs(text) {
 
     // Try separators in order of specificity
     const separators = [
+      { regex: /\s*→\s*/, join: ' → ' },
       { regex: /\s*\|\s*/, join: ' | ' },
       { regex: /\t+/, join: '\t' },
       { regex: /\s*->\s*/, join: ' -> ' },
@@ -124,18 +125,27 @@ exports.parseDocx = async (req, res) => {
       if (err) console.error('Failed to delete uploaded file:', err);
     });
 
-    // Try parsing pairs from raw text first
-    let pairs = parsePairs(rawText);
-
-    // If nothing found, try HTML table extraction
-    if (pairs.length === 0 && html) {
+    // Strategy 1: Try HTML table extraction FIRST (most reliable for tables)
+    let pairs = [];
+    if (html) {
       pairs = parseHtmlTablePairs(html);
     }
 
-    // If still nothing, try parsing the HTML as text (sometimes paragraphs contain pairs)
-    if (pairs.length === 0 && html) {
+    // Strategy 2: If table parsing found little/nothing, try raw text
+    if (pairs.length < 5) {
+      const textPairs = parsePairs(rawText);
+      if (textPairs.length > pairs.length) {
+        pairs = textPairs;
+      }
+    }
+
+    // Strategy 3: If still little/nothing, parse HTML as plain text
+    if (pairs.length < 5 && html) {
       const htmlText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      pairs = parsePairs(htmlText);
+      const htmlTextPairs = parsePairs(htmlText);
+      if (htmlTextPairs.length > pairs.length) {
+        pairs = htmlTextPairs;
+      }
     }
 
     res.json({
