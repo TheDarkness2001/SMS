@@ -47,8 +47,14 @@ const isWithinClassHours = async (studentId) => {
 // Get all lessons
 exports.getAllLessons = async (req, res) => {
   try {
-    const { levelId } = req.query;
+    const { levelId, type } = req.query;
     const filter = levelId ? { levelId } : {};
+    // Backward compatibility: lessons without type are treated as 'words'
+    if (type === 'sentences') {
+      filter.type = 'sentences';
+    } else if (type === 'words') {
+      filter.$or = [{ type: 'words' }, { type: { $exists: false } }];
+    }
     const lessons = await Lesson.find(filter).sort({ levelId: 1, order: 1 });
     res.json({
       success: true,
@@ -96,7 +102,7 @@ exports.getLesson = async (req, res) => {
 // Create lesson
 exports.createLesson = async (req, res) => {
   try {
-    const { name, levelId, order, examTimeLimit, minPassScore, maxWords } = req.body;
+    const { name, levelId, order, examTimeLimit, minPassScore, maxWords, type } = req.body;
 
     if (!name || !levelId) {
       return res.status(400).json({
@@ -112,6 +118,7 @@ exports.createLesson = async (req, res) => {
       examTimeLimit: examTimeLimit || 300,
       minPassScore: minPassScore || 70,
       maxWords: maxWords || 20,
+      type: type || 'words',
       wordIds: []
     });
 
@@ -136,7 +143,7 @@ exports.createLesson = async (req, res) => {
 exports.updateLesson = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, levelId, order, examTimeLimit, minPassScore, maxWords } = req.body;
+    const { name, levelId, order, examTimeLimit, minPassScore, maxWords, type } = req.body;
 
     const lesson = await Lesson.findById(id);
     if (!lesson) {
@@ -152,6 +159,7 @@ exports.updateLesson = async (req, res) => {
     if (examTimeLimit !== undefined) lesson.examTimeLimit = examTimeLimit;
     if (minPassScore !== undefined) lesson.minPassScore = minPassScore;
     if (maxWords !== undefined) lesson.maxWords = maxWords;
+    if (type !== undefined) lesson.type = type;
 
     await lesson.save();
 
@@ -229,15 +237,20 @@ exports.deleteLesson = async (req, res) => {
       });
     }
 
-    // Delete all words in this lesson (words cannot be orphaned)
-    await Word.deleteMany({ _id: { $in: lesson.wordIds } });
+    // Delete all words or sentences in this lesson
+    if (lesson.type === 'sentences') {
+      const Sentence = require('../models/Sentence');
+      await Sentence.deleteMany({ lessonId: id });
+    } else {
+      await Word.deleteMany({ _id: { $in: lesson.wordIds } });
+    }
 
     await Lesson.findByIdAndDelete(id);
     await StudentVocabProgress.deleteMany({ lessonId: id });
 
     res.json({
       success: true,
-      message: 'Class and its words deleted successfully'
+      message: 'Class and its items deleted successfully'
     });
   } catch (error) {
     console.error('Delete lesson error:', error);
@@ -287,7 +300,7 @@ exports.removeWordFromLesson = async (req, res) => {
 exports.autoGenerateClasses = async (req, res) => {
   try {
     const { id } = req.params;
-    const { count, wordsPerClass, examTimeLimit, minPassScore } = req.body;
+    const { count, wordsPerClass, examTimeLimit, minPassScore, type } = req.body;
 
     const level = await Level.findById(id);
     if (!level) {
@@ -298,7 +311,9 @@ exports.autoGenerateClasses = async (req, res) => {
     }
 
     const classCount = count || level.classesCount || 11;
-    const existingLessons = await Lesson.find({ levelId: id }).sort({ order: 1 });
+    const lessonType = type || 'words';
+    const typeFilter = lessonType === 'sentences' ? { type: 'sentences' } : { $or: [{ type: 'words' }, { type: { $exists: false } }] };
+    const existingLessons = await Lesson.find({ levelId: id, ...typeFilter }).sort({ order: 1 });
     const startOrder = existingLessons.length > 0
       ? Math.max(...existingLessons.map(l => l.order)) + 1
       : 1;
@@ -312,6 +327,7 @@ exports.autoGenerateClasses = async (req, res) => {
         maxWords: wordsPerClass || level.wordsPerClass || 20,
         examTimeLimit: examTimeLimit || level.examTimeLimit || 300,
         minPassScore: minPassScore || level.minPassScore || 70,
+        type: lessonType,
         wordIds: []
       });
       await lesson.save();

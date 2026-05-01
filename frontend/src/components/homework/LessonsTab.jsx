@@ -75,7 +75,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const fetchLessons = async (levelId) => {
     setLoading(true);
     try {
-      const res = await lessonAPI.getAllLessons(levelId);
+      const res = await lessonAPI.getAllLessons(levelId, isSentences ? 'sentences' : 'words');
       if (res.data.success) setLessons(res.data.data.lessons);
     } catch (err) {
       console.error('Error fetching lessons:', err);
@@ -176,7 +176,8 @@ const LessonsTab = ({ t, mode = 'words' }) => {
         levelId: selectedLevel._id,
         order: lessonForm.order,
         minPassScore: lessonForm.minPassScore,
-        maxWords: lessonForm.maxWords
+        maxWords: lessonForm.maxWords,
+        type: isSentences ? 'sentences' : 'words'
       });
       setLessonForm({ name: '', order: 1, minPassScore: 70, maxWords: 20 });
       fetchLessons(selectedLevel._id);
@@ -237,7 +238,8 @@ const LessonsTab = ({ t, mode = 'words' }) => {
       const res = await lessonAPI.autoGenerateClasses(selectedLevel._id, {
         count: selectedLevel.classesCount || 11,
         wordsPerClass: selectedLevel.wordsPerClass || 20,
-        minPassScore: selectedLevel.minPassScore || 70
+        minPassScore: selectedLevel.minPassScore || 70,
+        type: isSentences ? 'sentences' : 'words'
       });
       if (res.data.success) {
         fetchLessons(selectedLevel._id);

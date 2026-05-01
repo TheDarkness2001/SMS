@@ -25,6 +25,11 @@ const lessonSchema = new mongoose.Schema({
     default: 20,
     min: 1
   },
+  type: {
+    type: String,
+    enum: ['words', 'sentences'],
+    default: 'words'
+  },
   examTimeLimit: {
     type: Number,
     default: 300

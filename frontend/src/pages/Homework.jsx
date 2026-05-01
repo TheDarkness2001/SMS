@@ -168,7 +168,7 @@ const Homework = () => {
     const fetchLessons = async () => {
       setLessonsLoading(true);
       try {
-        const res = await lessonAPI.getAllLessons(selectedLevelId);
+        const res = await lessonAPI.getAllLessons(selectedLevelId, 'words');
         if (res.data.success) {
           setLevelLessons(res.data.data.lessons);
           if (res.data.data.lessons.length > 0) {
@@ -457,7 +457,7 @@ const Homework = () => {
     // Fetch lessons for this level
     setLessonsLoading(true);
     try {
-      const res = await lessonAPI.getAllLessons(levelId);
+      const res = await lessonAPI.getAllLessons(levelId, 'words');
       if (res.data.success) {
         setLevelLessons(res.data.data.lessons);
       }
@@ -537,7 +537,7 @@ const Homework = () => {
     // Fetch lessons for this level
     setLessonsLoading(true);
     try {
-      const res = await lessonAPI.getAllLessons(levelId);
+      const res = await lessonAPI.getAllLessons(levelId, 'words');
       if (res.data.success) {
         setLevelLessons(res.data.data.lessons);
       }

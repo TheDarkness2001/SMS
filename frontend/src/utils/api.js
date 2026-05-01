@@ -340,7 +340,7 @@ export const levelAPI = {
 // Lesson API
 export const lessonAPI = {
   // Admin
-  getAllLessons: (levelId) => api.get('/homework/lessons', { params: levelId ? { levelId } : {} }),
+  getAllLessons: (levelId, type) => api.get('/homework/lessons', { params: { ...(levelId ? { levelId } : {}), ...(type ? { type } : {}) } }),
   getLesson: (id) => api.get(`/homework/lessons/${id}`),
   createLesson: (data) => api.post('/homework/lessons', data),
   updateLesson: (id, data) => api.put(`/homework/lessons/${id}`, data),

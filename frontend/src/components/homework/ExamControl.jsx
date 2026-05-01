@@ -104,7 +104,7 @@ const ExamControl = ({ t, noExam = false }) => {
   const fetchLessons = async (levelId) => {
     setLoading(true);
     try {
-      const res = await lessonAPI.getAllLessons(levelId);
+      const res = await lessonAPI.getAllLessons(levelId, 'words');
       if (res.data.success) {
         setLessons(res.data.data.lessons || []);
       }
