@@ -90,9 +90,16 @@ function parseHtmlTablePairs(html) {
     const cells = [];
     let cellMatch;
     while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
-      // Strip HTML tags from cell content
-      const text = cellMatch[1].replace(/<[^>]+>/g, '').trim();
+      // Strip HTML tags from cell content, then decode entities
+      let text = cellMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      text = decodeXmlEntities(text);
+      text = stripXmlTags(text);
       if (text) cells.push(text);
+    }
+
+    // Skip rows where extracted text still looks like XML
+    if (looksLikeXml(cells[0]) || looksLikeXml(cells[1])) {
+      continue;
     }
 
     // If we have at least 4 cells, treat as Word table (Word | Pronunciation | Uzbek | ShortUzbek)
@@ -109,8 +116,45 @@ function parseHtmlTablePairs(html) {
 }
 
 /**
+ * Decode common XML/HTML entities in a string.
+ */
+function decodeXmlEntities(str) {
+  if (!str) return '';
+  return str
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
+
+/**
+ * Strip XML-like tags from text and clean up whitespace.
+ */
+function stripXmlTags(str) {
+  if (!str) return '';
+  return str
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Check if extracted text looks like raw XML tag soup.
+ */
+function looksLikeXml(str) {
+  if (!str) return false;
+  // Count XML-like tag patterns
+  const tagMatches = str.match(/<[\/!?]?[\w:-]+[^>]*>/g);
+  if (!tagMatches) return false;
+  // If more than 2 tags and they make up a significant portion, it's XML
+  const tagCharCount = tagMatches.join('').length;
+  return tagMatches.length > 2 && tagCharCount > str.length * 0.3;
+}
+
+/**
  * Parse .docx XML directly by reading word/document.xml from the ZIP.
- * This is a robust fallback when mammoth fails to extract table data.
+ * Uses namespace-agnostic regex to handle different XML prefixes.
  */
 async function parseDocxXmlTables(filePath) {
   try {
@@ -120,27 +164,30 @@ async function parseDocxXmlTables(filePath) {
     if (!documentXml) return [];
 
     const rows = [];
-    // Match table rows: <w:tr> ... </w:tr>
-    const rowRegex = /<w:tr[\s\S]*?<\/w:tr>/gi;
+    // Namespace-agnostic: match <prefix:tr> or <tr>
+    const rowRegex = /<(?:\w+:)?tr[\s>][\s\S]*?<\/(?:\w+:)?tr>/gi;
     let rowMatch;
 
     while ((rowMatch = rowRegex.exec(documentXml)) !== null) {
       const rowXml = rowMatch[0];
       const cells = [];
-      // Match table cells: <w:tc> ... </w:tc>
-      const cellRegex = /<w:tc[\s\S]*?<\/w:tc>/gi;
+      // Namespace-agnostic: match <prefix:tc> or <tc>
+      const cellRegex = /<(?:\w+:)?tc[\s>][\s\S]*?<\/(?:\w+:)?tc>/gi;
       let cellMatch;
 
       while ((cellMatch = cellRegex.exec(rowXml)) !== null) {
         const cellXml = cellMatch[0];
-        // Extract all <w:t> text within the cell
+        // Extract all <prefix:t> text within the cell
         const textParts = [];
-        const textRegex = /<w:t[^>]*>([\s\S]*?)<\/w:t>/gi;
+        const textRegex = /<(?:\w+:)?t(?:\s[^>]*)?>([\s\S]*?)<\/(?:\w+:)?t>/gi;
         let textMatch;
         while ((textMatch = textRegex.exec(cellXml)) !== null) {
           textParts.push(textMatch[1]);
         }
-        const text = textParts.join('').trim();
+        let text = textParts.join('').trim();
+        // Decode entities and strip any XML tags that leaked into text
+        text = decodeXmlEntities(text);
+        text = stripXmlTags(text);
         cells.push(text);
       }
 
@@ -152,9 +199,13 @@ async function parseDocxXmlTables(filePath) {
     // Convert rows to pairs
     const pairs = [];
     for (const cells of rows) {
-      // Skip header rows (contains "Word" or "English")
-      const firstCell = cells[0]?.toLowerCase() || '';
+      const firstCell = cells[0]?.toLowerCase().trim() || '';
+      // Skip header rows
       if (firstCell.includes('word') || firstCell.includes('english') || firstCell.includes('pronunciation')) {
+        continue;
+      }
+      // Skip rows where extracted text still looks like XML
+      if (looksLikeXml(cells[0]) || looksLikeXml(cells[1])) {
         continue;
       }
 
