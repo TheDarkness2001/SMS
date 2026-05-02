@@ -94,8 +94,12 @@ function parseHtmlTablePairs(html) {
       if (text) cells.push(text);
     }
 
+    // If we have at least 4 cells, treat as Word table (Word | Pronunciation | Uzbek | ShortUzbek)
+    if (cells.length >= 4 && cells[0].length > 1 && cells[2].length > 1) {
+      pairs.push({ english: cells[0], pronunciation: cells[1], uzbek: cells[2], shortUzbek: cells[3] });
+    }
     // If we have at least 2 cells, treat first as English, second as Uzbek
-    if (cells.length >= 2 && cells[0].length > 1 && cells[1].length > 1) {
+    else if (cells.length >= 2 && cells[0].length > 1 && cells[1].length > 1) {
       pairs.push({ english: cells[0], uzbek: cells[1] });
     }
   }
@@ -221,6 +225,8 @@ exports.bulkImportWords = async (req, res) => {
     for (const item of items) {
       const english = item.english?.trim();
       const uzbek = item.uzbek?.trim();
+      const pronunciation = item.pronunciation?.trim() || '';
+      const shortUzbek = item.shortUzbek?.trim() || '';
 
       if (!english || !uzbek) {
         skipped.push({ ...item, reason: 'Missing english or uzbek' });
@@ -240,7 +246,7 @@ exports.bulkImportWords = async (req, res) => {
       }
 
       existingSet.add(english.toLowerCase()); // Prevent dupes within the import batch too
-      toCreate.push({ english, uzbek, lessonId });
+      toCreate.push({ english, uzbek, pronunciation, shortUzbek, lessonId });
     }
 
     // Batch insert all words at once

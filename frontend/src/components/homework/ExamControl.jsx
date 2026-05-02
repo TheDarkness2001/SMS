@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { lessonAPI, levelAPI, languageAPI, examGroupsAPI, getImageUrl } from '../../utils/api';
 
 const ExamControl = ({ t, noExam = false }) => {
+  const lessonType = noExam ? 'sentences' : 'words';
   // Navigation state: groups -> languages -> levels -> classes
   const [view, setView] = useState('groups');
 
@@ -104,7 +105,7 @@ const ExamControl = ({ t, noExam = false }) => {
   const fetchLessons = async (levelId) => {
     setLoading(true);
     try {
-      const res = await lessonAPI.getAllLessons(levelId, 'words');
+      const res = await lessonAPI.getAllLessons(levelId, lessonType);
       if (res.data.success) {
         setLessons(res.data.data.lessons || []);
       }
@@ -383,7 +384,10 @@ const ExamControl = ({ t, noExam = false }) => {
                       <span className="exam-control-name">{lesson.name}</span>
                     </div>
                     <div className="exam-control-meta">
-                      {lesson.wordIds?.length || 0} {t('homework.words') || 'words'}
+                      {noExam
+                        ? (t('sentences.title') || 'Sentences')
+                        : `${lesson.wordIds?.length || 0} ${t('homework.words') || 'words'}`
+                      }
                     </div>
                     <div className="exam-control-status-row">
                       <span className={`status-badge ${practiceUnlocked ? 'status-unlocked' : 'status-locked'}`}>

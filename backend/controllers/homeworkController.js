@@ -43,7 +43,9 @@ exports.getRandomWord = async (req, res) => {
         word: {
           id: randomWord._id,
           english: randomWord.english,
+          pronunciation: randomWord.pronunciation || '',
           uzbek: randomWord.uzbek,
+          shortUzbek: randomWord.shortUzbek || randomWord.uzbek,
           direction
         }
       }
@@ -83,8 +85,11 @@ exports.checkAnswer = async (req, res) => {
     let correctAnswer = '';
 
     if (direction === 'en-to-uz') {
-      correctAnswer = word.uzbek;
-      isCorrect = normalizedAnswer === word.uzbek.toLowerCase();
+      // Accept any of the comma-separated short meanings
+      const meaningText = word.shortUzbek || word.uzbek;
+      const meanings = meaningText.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
+      correctAnswer = word.shortUzbek || word.uzbek;
+      isCorrect = meanings.includes(normalizedAnswer);
     } else if (direction === 'uz-to-en') {
       correctAnswer = word.english;
       isCorrect = normalizedAnswer === word.english.toLowerCase();

@@ -28,9 +28,9 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   });
   const [lessonForm, setLessonForm] = useState({ name: '', order: 1, minPassScore: 70, maxWords: 20 });
   const [editingLesson, setEditingLesson] = useState(null);
-  const [newItem, setNewItem] = useState({ english: '', uzbek: '' });
+  const [newItem, setNewItem] = useState({ english: '', pronunciation: '', uzbek: '', shortUzbek: '' });
   const [editingItem, setEditingItem] = useState(null);
-  const [editItemForm, setEditItemForm] = useState({ english: '', uzbek: '' });
+  const [editItemForm, setEditItemForm] = useState({ english: '', pronunciation: '', uzbek: '', shortUzbek: '' });
   const [generating, setGenerating] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
 
@@ -272,7 +272,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
         });
       }
       if (createRes.data.success) {
-        setNewItem({ english: '', uzbek: '' });
+        setNewItem({ english: '', pronunciation: '', uzbek: '', shortUzbek: '' });
         fetchLessonItems(selectedLesson._id);
         fetchLessons(selectedLevel._id);
       }
@@ -309,7 +309,12 @@ const LessonsTab = ({ t, mode = 'words' }) => {
 
   const startEditItem = (item) => {
     setEditingItem(item._id);
-    setEditItemForm({ english: item.english, uzbek: item.uzbek });
+    setEditItemForm({
+      english: item.english,
+      pronunciation: item.pronunciation || '',
+      uzbek: item.uzbek,
+      shortUzbek: item.shortUzbek || ''
+    });
   };
 
   const handleUpdateItem = async () => {
@@ -323,11 +328,13 @@ const LessonsTab = ({ t, mode = 'words' }) => {
       } else {
         await homeworkAPI.updateWord(editingItem, {
           english: editItemForm.english.trim(),
-          uzbek: editItemForm.uzbek.trim()
+          pronunciation: editItemForm.pronunciation.trim(),
+          uzbek: editItemForm.uzbek.trim(),
+          shortUzbek: editItemForm.shortUzbek.trim()
         });
       }
       setEditingItem(null);
-      setEditItemForm({ english: '', uzbek: '' });
+      setEditItemForm({ english: '', pronunciation: '', uzbek: '', shortUzbek: '' });
       fetchLessonItems(selectedLesson._id);
     } catch (err) {
       console.error('Update item error:', err);
@@ -337,7 +344,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
 
   const cancelEditItem = () => {
     setEditingItem(null);
-    setEditItemForm({ english: '', uzbek: '' });
+    setEditItemForm({ english: '', pronunciation: '', uzbek: '', shortUzbek: '' });
   };
 
   // Upload / OCR handlers
@@ -737,14 +744,32 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                 className="form-input"
                 required
               />
+              {!isSentences && (
+                <input
+                  type="text"
+                  placeholder={t('homework.pronunciation') || 'Pronunciation'}
+                  value={newItem.pronunciation}
+                  onChange={(e) => { setNewItem({ ...newItem, pronunciation: e.target.value }); setDuplicateWarning(null); }}
+                  className="form-input"
+                />
+              )}
               <input
                 type="text"
-                placeholder={isSentences ? (t('sentences.uzbekPlaceholder') || 'Uzbek translation') : (t('homework.uzbekWord') || 'Uzbek word')}
+                placeholder={isSentences ? (t('sentences.uzbekPlaceholder') || 'Uzbek translation') : (t('homework.uzbekWord') || 'Uzbek meaning (with example)')}
                 value={newItem.uzbek}
                 onChange={(e) => { setNewItem({ ...newItem, uzbek: e.target.value }); setDuplicateWarning(null); }}
                 className="form-input"
                 required
               />
+              {!isSentences && (
+                <input
+                  type="text"
+                  placeholder={t('homework.shortUzbek') || 'Short meaning (comma-separated)'}
+                  value={newItem.shortUzbek}
+                  onChange={(e) => { setNewItem({ ...newItem, shortUzbek: e.target.value }); setDuplicateWarning(null); }}
+                  className="form-input"
+                />
+              )}
               <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
               <button
                 type="button"
@@ -779,7 +804,9 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                   <tr>
                     <th className="num-col">#</th>
                     <th>{t('homework.english') || 'English'}</th>
-                    <th>{t('homework.uzbek') || 'Uzbek'}</th>
+                    {!isSentences && <th>{t('homework.pronunciation') || 'Pronunciation'}</th>}
+                    <th>{isSentences ? (t('homework.uzbek') || 'Uzbek') : (t('homework.uzbek') || 'Uzbek Meaning')}</th>
+                    {!isSentences && <th>{t('homework.shortUzbek') || 'Short Meaning'}</th>}
                     <th className="actions">{t('homework.actions') || 'Actions'}</th>
                   </tr>
                 </thead>
@@ -798,6 +825,17 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                               style={{ width: '100%', padding: '4px 8px' }}
                             />
                           </td>
+                          {!isSentences && (
+                            <td>
+                              <input
+                                type="text"
+                                value={editItemForm.pronunciation}
+                                onChange={(e) => setEditItemForm({ ...editItemForm, pronunciation: e.target.value })}
+                                className="form-input"
+                                style={{ width: '100%', padding: '4px 8px' }}
+                              />
+                            </td>
+                          )}
                           <td>
                             <input
                               type="text"
@@ -807,6 +845,17 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                               style={{ width: '100%', padding: '4px 8px' }}
                             />
                           </td>
+                          {!isSentences && (
+                            <td>
+                              <input
+                                type="text"
+                                value={editItemForm.shortUzbek}
+                                onChange={(e) => setEditItemForm({ ...editItemForm, shortUzbek: e.target.value })}
+                                className="form-input"
+                                style={{ width: '100%', padding: '4px 8px' }}
+                              />
+                            </td>
+                          )}
                           <td className="actions">
                             <button type="button" className="btn btn-small btn-primary" onClick={handleUpdateItem}>
                               {t('homework.save') || 'Save'}
@@ -820,7 +869,9 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                         <>
                           <td className="num-col">{idx + 1}</td>
                           <td>{item.english}</td>
+                          {!isSentences && <td>{item.pronunciation || '-'}</td>}
                           <td>{item.uzbek}</td>
+                          {!isSentences && <td>{item.shortUzbek || '-'}</td>}
                           <td className="actions">
                             <button className="btn btn-small btn-edit" onClick={() => startEditItem(item)}>
                               {t('homework.edit') || 'Edit'}
