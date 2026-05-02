@@ -1,6 +1,7 @@
 const mammoth = require('mammoth');
 const Tesseract = require('tesseract.js');
 const fs = require('fs');
+const JSZip = require('jszip');
 const Word = require('../models/Word');
 const Sentence = require('../models/Sentence');
 const Lesson = require('../models/Lesson');
@@ -107,6 +108,70 @@ function parseHtmlTablePairs(html) {
   return pairs;
 }
 
+/**
+ * Parse .docx XML directly by reading word/document.xml from the ZIP.
+ * This is a robust fallback when mammoth fails to extract table data.
+ */
+async function parseDocxXmlTables(filePath) {
+  try {
+    const data = fs.readFileSync(filePath);
+    const zip = await JSZip.loadAsync(data);
+    const documentXml = await zip.file('word/document.xml')?.async('string');
+    if (!documentXml) return [];
+
+    const rows = [];
+    // Match table rows: <w:tr> ... </w:tr>
+    const rowRegex = /<w:tr[\s\S]*?<\/w:tr>/gi;
+    let rowMatch;
+
+    while ((rowMatch = rowRegex.exec(documentXml)) !== null) {
+      const rowXml = rowMatch[0];
+      const cells = [];
+      // Match table cells: <w:tc> ... </w:tc>
+      const cellRegex = /<w:tc[\s\S]*?<\/w:tc>/gi;
+      let cellMatch;
+
+      while ((cellMatch = cellRegex.exec(rowXml)) !== null) {
+        const cellXml = cellMatch[0];
+        // Extract all <w:t> text within the cell
+        const textParts = [];
+        const textRegex = /<w:t[^>]*>([\s\S]*?)<\/w:t>/gi;
+        let textMatch;
+        while ((textMatch = textRegex.exec(cellXml)) !== null) {
+          textParts.push(textMatch[1]);
+        }
+        const text = textParts.join('').trim();
+        cells.push(text);
+      }
+
+      if (cells.length > 0) {
+        rows.push(cells);
+      }
+    }
+
+    // Convert rows to pairs
+    const pairs = [];
+    for (const cells of rows) {
+      // Skip header rows (contains "Word" or "English")
+      const firstCell = cells[0]?.toLowerCase() || '';
+      if (firstCell.includes('word') || firstCell.includes('english') || firstCell.includes('pronunciation')) {
+        continue;
+      }
+
+      if (cells.length >= 4 && cells[0].length > 1 && cells[2].length > 1) {
+        pairs.push({ english: cells[0], pronunciation: cells[1] || '', uzbek: cells[2], shortUzbek: cells[3] || '' });
+      } else if (cells.length >= 2 && cells[0].length > 1 && cells[1].length > 1) {
+        pairs.push({ english: cells[0], uzbek: cells[1] });
+      }
+    }
+
+    return pairs;
+  } catch (err) {
+    console.error('Direct XML parse error:', err);
+    return [];
+  }
+}
+
 // Upload and parse Word (.docx) file
 exports.parseDocx = async (req, res) => {
   try {
@@ -124,18 +189,18 @@ exports.parseDocx = async (req, res) => {
     const htmlResult = await mammoth.convertToHtml({ path: filePath });
     const html = htmlResult.value;
 
-    // Clean up uploaded file
-    fs.unlink(filePath, (err) => {
-      if (err) console.error('Failed to delete uploaded file:', err);
-    });
+    // Strategy 1: Try direct XML parsing from .docx ZIP (most reliable for tables)
+    let pairs = await parseDocxXmlTables(filePath);
 
-    // Strategy 1: Try HTML table extraction FIRST (most reliable for tables)
-    let pairs = [];
-    if (html) {
-      pairs = parseHtmlTablePairs(html);
+    // Strategy 2: Try HTML table extraction from mammoth
+    if (pairs.length < 5 && html) {
+      const htmlPairs = parseHtmlTablePairs(html);
+      if (htmlPairs.length > pairs.length) {
+        pairs = htmlPairs;
+      }
     }
 
-    // Strategy 2: If table parsing found little/nothing, try raw text
+    // Strategy 3: If table parsing found little/nothing, try raw text
     if (pairs.length < 5) {
       const textPairs = parsePairs(rawText);
       if (textPairs.length > pairs.length) {
@@ -143,7 +208,7 @@ exports.parseDocx = async (req, res) => {
       }
     }
 
-    // Strategy 3: If still little/nothing, parse HTML as plain text
+    // Strategy 4: If still little/nothing, parse HTML as plain text
     if (pairs.length < 5 && html) {
       const htmlText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
       const htmlTextPairs = parsePairs(htmlText);
@@ -151,6 +216,11 @@ exports.parseDocx = async (req, res) => {
         pairs = htmlTextPairs;
       }
     }
+
+    // Clean up uploaded file
+    fs.unlink(filePath, (err) => {
+      if (err) console.error('Failed to delete uploaded file:', err);
+    });
 
     res.json({
       success: true,
