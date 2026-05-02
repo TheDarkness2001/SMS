@@ -9,18 +9,22 @@ router.get('/student/aggregated-progress', protect, lessonController.getStudentA
 router.post('/student/init', protect, lessonController.initStudentProgress);
 router.post('/student/practice-stats', protect, lessonController.updatePracticeStats);
 
-// Admin routes (founder only + users with canManageHomework permission)
+// Admin-only: bulk student progress
 router.get('/students/progress', protect, authorizeHomework(), lessonController.getAllStudentProgress);
-router.get('/', protect, authorizeHomework(), lessonController.getAllLessons);
+
+// Read-only lesson routes (accessible to all authenticated users including students)
+router.get('/', protect, lessonController.getAllLessons);
+router.get('/:id', protect, lessonController.getLesson);
+
+// Admin-only: lesson management (create, update, delete, auto-generate, toggle locks)
 router.post('/', protect, authorizeHomework(), lessonController.createLesson);
-router.get('/:id', protect, authorizeHomework(), lessonController.getLesson);
 router.put('/:id', protect, authorizeHomework(), lessonController.updateLesson);
 router.delete('/:id', protect, authorizeHomework(), lessonController.deleteLesson);
 router.post('/:id/auto-generate', protect, authorizeHomework(), lessonController.autoGenerateClasses);
 router.delete('/:id/words/:wordId', protect, authorizeHomework(), lessonController.removeWordFromLesson);
 router.post('/:id/toggle-exam-lock', protect, authorizeHomework(), lessonController.toggleExamLock);
 
-// Student lesson routes
+// Student exam routes
 router.get('/:id/exam', protect, lessonController.getExamWords);
 router.post('/:id/exam', protect, lessonController.submitExam);
 
