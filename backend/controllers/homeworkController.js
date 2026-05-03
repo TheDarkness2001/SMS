@@ -43,9 +43,7 @@ exports.getRandomWord = async (req, res) => {
         word: {
           id: randomWord._id,
           english: randomWord.english,
-          pronunciation: randomWord.pronunciation || '',
           uzbek: randomWord.uzbek,
-          shortUzbek: randomWord.shortUzbek || randomWord.uzbek,
           direction
         }
       }
@@ -85,11 +83,14 @@ exports.checkAnswer = async (req, res) => {
     let correctAnswer = '';
 
     if (direction === 'en-to-uz') {
-      // Accept any of the comma-separated short meanings
-      const meaningText = word.shortUzbek || word.uzbek;
-      const meanings = meaningText.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
-      correctAnswer = word.shortUzbek || word.uzbek;
-      isCorrect = meanings.includes(normalizedAnswer);
+      // Accept any comma-separated meaning from uzbek (primary) or shortUzbek (legacy fallback)
+      const primaryMeanings = word.uzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
+      const legacyMeanings = word.shortUzbek
+        ? word.shortUzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean)
+        : [];
+      const allMeanings = [...new Set([...primaryMeanings, ...legacyMeanings])];
+      correctAnswer = word.uzbek;
+      isCorrect = allMeanings.some(m => m === normalizedAnswer || normalizedAnswer.includes(m) || m.includes(normalizedAnswer));
     } else if (direction === 'uz-to-en') {
       correctAnswer = word.english;
       isCorrect = normalizedAnswer === word.english.toLowerCase();
@@ -296,48 +297,21 @@ exports.addWord = async (req, res) => {
     const trimmedEnglish = english.trim().toLowerCase();
     const trimmedUzbek = uzbek.trim().toLowerCase();
 
-    // Check for duplicates across ALL lessons/levels
-    const existingWord = await Word.findOne({
-      english: trimmedEnglish
-    }).populate({
-      path: 'lessonId',
-      select: 'name levelId',
-      populate: {
-        path: 'levelId',
-        select: 'name'
-      }
-    });
-
-    if (existingWord) {
-      const sameMeaning = existingWord.uzbek.toLowerCase() === trimmedUzbek;
-      const location = existingWord.lessonId?.levelId?.name 
-        ? `${existingWord.lessonId.levelId.name} → ${existingWord.lessonId.name}`
-        : existingWord.lessonId?.name || 'unknown location';
-
-      if (sameMeaning) {
-        return res.status(409).json({
-          success: false,
-          message: `This word already exists with the same meaning in ${location}`,
-          duplicate: {
-            english: existingWord.english,
-            uzbek: existingWord.uzbek,
-            location: location
-          }
-        });
-      }
-      // Different meaning - allow but warn (frontend can show a confirmation)
-    }
-
-    // Also check within same lesson for same Uzbek (different English)
-    const existingUzbekInLesson = await Word.findOne({
+    // Only check for exact duplicate (same english + same uzbek) in SAME lesson
+    const existingInLesson = await Word.findOne({
       lessonId,
+      english: trimmedEnglish,
       uzbek: trimmedUzbek
     });
 
-    if (existingUzbekInLesson) {
-      return res.status(400).json({
+    if (existingInLesson) {
+      return res.status(409).json({
         success: false,
-        message: 'This Uzbek translation already exists in this class'
+        message: 'This word with the same meaning already exists in this class',
+        duplicate: {
+          english: existingInLesson.english,
+          uzbek: existingInLesson.uzbek
+        }
       });
     }
 
@@ -382,8 +356,8 @@ exports.updateWord = async (req, res) => {
       });
     }
 
-    if (english) word.english = english.trim().toLowerCase();
-    if (uzbek) word.uzbek = uzbek.trim().toLowerCase();
+    if (english !== undefined) word.english = english.trim().toLowerCase();
+    if (uzbek !== undefined) word.uzbek = uzbek.trim().toLowerCase();
 
     await word.save();
 

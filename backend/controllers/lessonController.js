@@ -416,9 +416,7 @@ exports.getExamWords = async (req, res) => {
     const examWords = words.map(word => ({
       id: word._id,
       english: word.english,
-      pronunciation: word.pronunciation || '',
       uzbek: word.uzbek,
-      shortUzbek: word.shortUzbek || word.uzbek,
       direction: Math.random() < 0.5 ? 'en-to-uz' : 'uz-to-en'
     }));
 
@@ -476,9 +474,14 @@ exports.submitExam = async (req, res) => {
       let correctAnswer = '';
 
       if (ans.direction === 'en-to-uz') {
-        correctAnswer = word.shortUzbek || word.uzbek;
-        const meanings = correctAnswer.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
-        isCorrect = meanings.includes(normalizedAnswer);
+        // Accept any comma-separated meaning from uzbek (primary) or shortUzbek (legacy fallback)
+        const primaryMeanings = word.uzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
+        const legacyMeanings = word.shortUzbek
+          ? word.shortUzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean)
+          : [];
+        const allMeanings = [...new Set([...primaryMeanings, ...legacyMeanings])];
+        correctAnswer = word.uzbek;
+        isCorrect = allMeanings.some(m => m === normalizedAnswer || normalizedAnswer.includes(m) || m.includes(normalizedAnswer));
       } else {
         correctAnswer = word.english;
         isCorrect = normalizedAnswer === word.english.toLowerCase();

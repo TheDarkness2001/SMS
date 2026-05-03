@@ -101,12 +101,8 @@ function parseHtmlTablePairs(html) {
       continue;
     }
 
-    // If we have at least 4 cells, treat as Word table (Word | Pronunciation | Uzbek | ShortUzbek)
-    if (cells.length >= 4 && cells[0].length > 1 && cells[2].length > 1) {
-      pairs.push({ english: cells[0], pronunciation: cells[1], uzbek: cells[2], shortUzbek: cells[3] });
-    }
-    // If we have at least 2 cells, treat first as English, second as Uzbek
-    else if (cells.length >= 2 && cells[0].length > 1 && cells[1].length > 1) {
+    // Only extract English | Uzbek (ignore extra columns like pronunciation, short meaning)
+    if (cells.length >= 2 && cells[0].length > 1 && cells[1].length > 1) {
       pairs.push({ english: cells[0], uzbek: cells[1] });
     }
   }
@@ -244,9 +240,7 @@ async function parseDocxXmlTables(filePath) {
         continue;
       }
 
-      if (cells.length >= 4 && cells[0].length > 1 && cells[2].length > 1) {
-        pairs.push({ english: cells[0], pronunciation: cells[1] || '', uzbek: cells[2], shortUzbek: cells[3] || '' });
-      } else if (cells.length >= 2 && cells[0].length > 1 && cells[1].length > 1) {
+      if (cells.length >= 2 && cells[0].length > 1 && cells[1].length > 1) {
         pairs.push({ english: cells[0], uzbek: cells[1] });
       }
     }
@@ -382,8 +376,6 @@ exports.bulkImportWords = async (req, res) => {
       // Safety: clean any residual XML/entities that parsing might have missed
       const english = cleanExtractedText(item.english || '');
       const uzbek = cleanExtractedText(item.uzbek || '');
-      const pronunciation = cleanExtractedText(item.pronunciation || '');
-      const shortUzbek = cleanExtractedText(item.shortUzbek || '');
 
       if (!english || !uzbek) {
         skipped.push({ ...item, reason: 'Missing english or uzbek' });
@@ -396,8 +388,9 @@ exports.bulkImportWords = async (req, res) => {
         continue;
       }
 
-      // Check for duplicates in memory (fast)
-      if (existingSet.has(english.toLowerCase())) {
+      // Check for duplicates in memory (fast) - same english + same uzbek in same lesson
+      const dupKey = `${english.toLowerCase()}|${uzbek.toLowerCase()}`;
+      if (existingSet.has(dupKey)) {
         skipped.push({ english, uzbek, reason: 'Duplicate in lesson' });
         continue;
       }
@@ -408,8 +401,8 @@ exports.bulkImportWords = async (req, res) => {
         continue;
       }
 
-      existingSet.add(english.toLowerCase()); // Prevent dupes within the import batch too
-      toCreate.push({ english, uzbek, pronunciation, shortUzbek, lessonId });
+      existingSet.add(dupKey); // Prevent dupes within the import batch too
+      toCreate.push({ english, uzbek, lessonId });
     }
 
     // Batch insert all words at once

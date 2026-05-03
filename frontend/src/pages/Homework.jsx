@@ -317,16 +317,9 @@ const Homework = () => {
   const getDisplayText = () => {
     if (!currentWord) return '';
     if (currentWord.direction === 'en-to-uz') {
-      return (
-        <>
-          <div className="word-main">{currentWord.english}</div>
-          {currentWord.pronunciation && (
-            <div className="word-pronunciation">{currentWord.pronunciation}</div>
-          )}
-        </>
-      );
+      return <div className="word-main">{currentWord.english}</div>;
     }
-    return currentWord.shortUzbek || currentWord.uzbek;
+    return currentWord.uzbek;
   };
 
   const getDirectionLabel = () => {
@@ -420,7 +413,7 @@ const Homework = () => {
   const handleWordTimeout = () => {
     if (!currentWord) return;
     const correctAnswer = currentWord.direction === 'en-to-uz'
-      ? (currentWord.shortUzbek || currentWord.uzbek)
+      ? currentWord.uzbek
       : currentWord.english;
     setFeedback({
       isCorrect: false,
