@@ -90,15 +90,14 @@ function parseHtmlTablePairs(html) {
     const cells = [];
     let cellMatch;
     while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
-      // Strip HTML tags from cell content, then decode entities
+      // Strip HTML tags from cell content, then aggressively clean
       let text = cellMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      text = decodeXmlEntities(text);
-      text = stripXmlTags(text);
+      text = cleanExtractedText(text);
       if (text) cells.push(text);
     }
 
-    // Skip rows where extracted text still looks like XML
-    if (looksLikeXml(cells[0]) || looksLikeXml(cells[1])) {
+    // Skip rows where any extracted text still looks like XML
+    if (cells.some(c => looksLikeXml(c))) {
       continue;
     }
 
@@ -116,7 +115,7 @@ function parseHtmlTablePairs(html) {
 }
 
 /**
- * Decode common XML/HTML entities in a string.
+ * Decode common XML/HTML entities in a string, including numeric entities.
  */
 function decodeXmlEntities(str) {
   if (!str) return '';
@@ -125,7 +124,9 @@ function decodeXmlEntities(str) {
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
 }
 
 /**
@@ -140,16 +141,51 @@ function stripXmlTags(str) {
 }
 
 /**
+ * Aggressively clean extracted text by removing Word XML residue,
+ * decoding entities, and stripping tags. Run this as a final pass.
+ */
+function cleanExtractedText(str) {
+  if (!str) return '';
+  let text = str;
+  // Repeatedly decode entities and strip tags until stable
+  for (let i = 0; i < 3; i++) {
+    const prev = text;
+    text = decodeXmlEntities(text);
+    text = stripXmlTags(text);
+    if (text === prev) break;
+  }
+  // Remove Word namespace prefixes like w:, w14:, r:, etc.
+  text = text.replace(/\b(?:w\d*|w14|r|rsid\w*|paraId|textId)\b/g, ' ');
+  // Remove XML attribute patterns like w:w="0", w:type="auto"
+  text = text.replace(/\w+:\w+="[^"]*"/g, ' ');
+  // Clean up whitespace
+  text = text.replace(/\s+/g, ' ').trim();
+  return text;
+}
+
+/**
  * Check if extracted text looks like raw XML tag soup.
+ * Also detects HTML-encoded XML (&lt;w:...&gt;) before decoding.
  */
 function looksLikeXml(str) {
   if (!str) return false;
-  // Count XML-like tag patterns
-  const tagMatches = str.match(/<[\/!?]?[\w:-]+[^>]*>/g);
-  if (!tagMatches) return false;
-  // If more than 2 tags and they make up a significant portion, it's XML
-  const tagCharCount = tagMatches.join('').length;
-  return tagMatches.length > 2 && tagCharCount > str.length * 0.3;
+  // Check for raw XML tags
+  const rawTagMatches = str.match(/<[\/?!?]?[\w:-]+[^>]*>/g);
+  if (rawTagMatches && rawTagMatches.length > 2) {
+    const tagCharCount = rawTagMatches.join('').length;
+    if (tagCharCount > str.length * 0.3) return true;
+  }
+  // Check for HTML-encoded XML tags (&lt;w:...&gt;)
+  const encodedTagMatches = str.match(/&lt;\/?[\w:-]+[^&]*&gt;/g);
+  if (encodedTagMatches && encodedTagMatches.length > 2) {
+    const tagCharCount = encodedTagMatches.join('').length;
+    if (tagCharCount > str.length * 0.3) return true;
+  }
+  // Check for Word-specific XML residue patterns
+  if (/\b(?:w:tcPr|w:tcW|w:tr|w:tbl|w:pPr|w:rPr|w:hideMark|w:rsid|w14:paraId)\b/.test(str)) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -185,9 +221,8 @@ async function parseDocxXmlTables(filePath) {
           textParts.push(textMatch[1]);
         }
         let text = textParts.join('').trim();
-        // Decode entities and strip any XML tags that leaked into text
-        text = decodeXmlEntities(text);
-        text = stripXmlTags(text);
+        // Aggressively clean extracted text
+        text = cleanExtractedText(text);
         cells.push(text);
       }
 
@@ -204,8 +239,8 @@ async function parseDocxXmlTables(filePath) {
       if (firstCell.includes('word') || firstCell.includes('english') || firstCell.includes('pronunciation')) {
         continue;
       }
-      // Skip rows where extracted text still looks like XML
-      if (looksLikeXml(cells[0]) || looksLikeXml(cells[1])) {
+      // Skip rows where extracted text still looks like XML (check all cells)
+      if (cells.some(c => looksLikeXml(c))) {
         continue;
       }
 
@@ -344,13 +379,20 @@ exports.bulkImportWords = async (req, res) => {
     const skipped = [];
 
     for (const item of items) {
-      const english = item.english?.trim();
-      const uzbek = item.uzbek?.trim();
-      const pronunciation = item.pronunciation?.trim() || '';
-      const shortUzbek = item.shortUzbek?.trim() || '';
+      // Safety: clean any residual XML/entities that parsing might have missed
+      const english = cleanExtractedText(item.english || '');
+      const uzbek = cleanExtractedText(item.uzbek || '');
+      const pronunciation = cleanExtractedText(item.pronunciation || '');
+      const shortUzbek = cleanExtractedText(item.shortUzbek || '');
 
       if (!english || !uzbek) {
         skipped.push({ ...item, reason: 'Missing english or uzbek' });
+        continue;
+      }
+
+      // Reject if still looks like XML after cleanup
+      if (looksLikeXml(english) || looksLikeXml(uzbek)) {
+        skipped.push({ english, uzbek, reason: 'Contains XML markup' });
         continue;
       }
 
@@ -411,11 +453,16 @@ exports.bulkImportSentences = async (req, res) => {
     const skipped = [];
 
     for (const item of items) {
-      const english = item.english?.trim();
-      const uzbek = item.uzbek?.trim();
+      const english = cleanExtractedText(item.english || '');
+      const uzbek = cleanExtractedText(item.uzbek || '');
 
       if (!english || !uzbek) {
         skipped.push({ ...item, reason: 'Missing english or uzbek' });
+        continue;
+      }
+
+      if (looksLikeXml(english) || looksLikeXml(uzbek)) {
+        skipped.push({ english, uzbek, reason: 'Contains XML markup' });
         continue;
       }
 
