@@ -261,32 +261,17 @@ const ManageExamGroups = () => {
 
   const classOptions = Array.from({ length: 10 }, (_, i) => `${t('common.level')} ${i + 1}`);
 
-  // Filter available students: must study the subject AND not be in another group for same subject
+  // Filter available students: must study the subject
+  // Students CAN be in multiple groups (same or different subjects)
   const getAvailableStudents = () => {
     // Use groupName as subject for filtering (since we send groupName as subject to backend)
     const currentSubject = (formData.groupName || formData.subject)?.trim().toLowerCase();
     if (!currentSubject) return students.filter(s => s.status === 'active');
 
-    // Get all student IDs already enrolled in OTHER groups with the same subject
-    const enrolledStudentIds = groups
-      .filter(group => {
-        const groupSubject = (group.subject || group.groupName)?.trim().toLowerCase();
-        const isSameSubject = groupSubject === currentSubject;
-        const isDifferentGroup = group._id !== editingGroup?._id;
-        return isSameSubject && isDifferentGroup;
-      })
-      .flatMap(group => group.students.map(s => s._id || s));
-
-    console.log('[ManageExamGroups] Filtering students for subject:', currentSubject);
-    console.log('[ManageExamGroups] Already enrolled student IDs:', enrolledStudentIds);
-
-    // Show only ACTIVE students who:
-    // 1. Have the subject in their subjects array
-    // 2. Are not already in another group for this subject
+    // Show only ACTIVE students who have the subject in their subjects array
     return students.filter(student => {
       if (student.status !== 'active') return false;
-      if (enrolledStudentIds.includes(student._id)) return false;
-      
+
       // Check if student studies this subject
       const studentSubjects = (student.subjects || []).map(s => s.toLowerCase().trim());
       return studentSubjects.includes(currentSubject);

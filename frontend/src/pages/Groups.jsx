@@ -305,70 +305,55 @@ const Groups = () => {
     return unifiedForm.subjectName.toLowerCase().trim();
   };
 
-  // Get students already enrolled in ANY group (for uniqueness)
-  const getEnrolledStudentIds = () => {
-    const enrolled = new Set();
-    groups.forEach(group => {
-      if (modalMode === 'edit' && editingGroup && group._id === editingGroup._id) {
-        return; // Skip current group when editing
-      }
-      group.students?.forEach(s => enrolled.add(s._id || s));
-    });
-    return enrolled;
-  };
-
-  // Filter available students based on subject, branch and enrollment
+  // Filter available students based on subject and branch
+  // Students CAN be in multiple groups (e.g., English + IT)
   const getAvailableStudents = () => {
     const subjectName = getSelectedSubjectName();
-    const enrolledIds = getEnrolledStudentIds();
     const selectedBranchId = unifiedForm.branchId;
-    
+
     return students.filter(student => {
       // Must be active (or no status field) - handle case insensitive
       if (student.status && student.status.toLowerCase() !== 'active') return false;
-      
+
       // Must belong to selected branch
       if (selectedBranchId && student.branchId !== selectedBranchId) return false;
-      
-      // Must not be enrolled in another group
-      if (enrolledIds.has(student._id)) return false;
-      
+
       // If subject selected, student must be studying that subject
       if (subjectName) {
         // Collect all possible subject fields from student
         const allStudentSubjects = [];
-        
+
         // Check subjects array
         if (Array.isArray(student.subjects)) {
           student.subjects.forEach(s => {
             if (typeof s === 'string') allStudentSubjects.push(s.toLowerCase().trim());
           });
         }
-        
+
         // Check single subject field (could be comma-separated)
         if (typeof student.subject === 'string') {
           student.subject.split(',').forEach(s => {
             allStudentSubjects.push(s.toLowerCase().trim());
           });
         }
-        
+
         // Check subjectName field
         if (typeof student.subjectName === 'string') {
           student.subjectName.split(',').forEach(s => {
             allStudentSubjects.push(s.toLowerCase().trim());
           });
         }
-        
+
         // Check if any subject matches
-        const matchesSubject = allStudentSubjects.some(s => 
-          s === subjectName || 
-          s.includes(subjectName) || 
+        const matchesSubject = allStudentSubjects.some(s =>
+          s === subjectName ||
+          s.includes(subjectName) ||
           subjectName.includes(s)
         );
-        
+
         if (!matchesSubject) return false;
       }
-      
+
       return true;
     });
   };
@@ -732,11 +717,7 @@ const Groups = () => {
                         </label>
                       ))}
                     </div>
-                    {getEnrolledStudentIds().size > 0 && (
-                      <div style={{ fontSize: '0.8em', color: '#999', marginTop: '6px' }}>
-                        * {getEnrolledStudentIds().size} student(s) already enrolled in other groups are hidden
-                      </div>
-                    )}
+
                   </div>
                 </div>
               </div>
