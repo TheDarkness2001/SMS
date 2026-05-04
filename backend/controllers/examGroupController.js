@@ -3,6 +3,9 @@ const Student = require('../models/Student');
 const ClassSchedule = require('../models/ClassSchedule');
 const Teacher = require('../models/Teacher');
 const Subject = require('../models/Subject');
+const Lesson = require('../models/Lesson');
+const Level = require('../models/Level');
+const Language = require('../models/Language');
 
 // @desc    Get all exam groups
 // @route   GET /api/exam-groups
@@ -140,18 +143,47 @@ exports.getGroups = async (req, res) => {
     }
     
     // For managers, founders, admins - show all groups
-    const groups = await ExamGroup.find(query)
+    let groups = await ExamGroup.find(query)
       .populate('students', 'name studentId profileImage class')
       .populate('teachers', 'name teacherId')
       .populate('createdBy', 'name')
       .populate('subject', 'name code pricePerClass');
+
+    // If lessonType filter requested, only show groups whose subject has lessons
+    const { lessonType } = req.query;
+    if (lessonType) {
+      const lessonFilter = {};
+      if (lessonType === 'sentences') {
+        lessonFilter.type = 'sentences';
+      } else if (lessonType === 'words') {
+        lessonFilter.$or = [{ type: 'words' }, { type: { $exists: false } }];
+      }
+      const lessons = await Lesson.find(lessonFilter).select('levelId').lean();
+      const levelIds = [...new Set(lessons.map(l => l.levelId.toString()))];
+
+      if (levelIds.length > 0) {
+        const levels = await Level.find({ _id: { $in: levelIds } }).select('languageId').lean();
+        const languageIds = [...new Set(levels.map(l => l.languageId.toString()))];
+
+        const languages = await Language.find({ _id: { $in: languageIds } }).select('name').lean();
+        const languageNamesWithLessons = new Set(languages.map(l => l.name.toLowerCase().trim()));
+
+        groups = groups.filter(group => {
+          const groupSubject = (group.subjectName || group.groupName || group.subject?.name || '').toLowerCase().trim();
+          return languageNamesWithLessons.has(groupSubject);
+        });
+      } else {
+        // No lessons of this type exist at all, hide all groups
+        groups = [];
+      }
+    }
 
     // Clean duplicates in students array for each group
     let cleaned = false;
     for (let group of groups) {
       const originalLength = group.students.length;
       const uniqueStudentIds = [...new Set(group.students.map(s => s._id.toString()))];
-      
+
       if (originalLength !== uniqueStudentIds.length) {
         console.log(`[ExamGroupController] Auto-cleaning duplicates in group ${group.groupName}: ${originalLength} -> ${uniqueStudentIds.length}`);
         group.students = uniqueStudentIds;
@@ -161,7 +193,7 @@ exports.getGroups = async (req, res) => {
         cleaned = true;
       }
     }
-    
+
     if (cleaned) {
       console.log('[ExamGroupController] Auto-cleaned duplicate students in admin view');
     }

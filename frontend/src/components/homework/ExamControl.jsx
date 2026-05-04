@@ -63,7 +63,7 @@ const ExamControl = ({ t, noExam = false }) => {
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      const res = await examGroupsAPI.getAll();
+      const res = await examGroupsAPI.getAll({ lessonType });
       if (res.data.success) {
         setGroups(res.data.data || []);
       }
