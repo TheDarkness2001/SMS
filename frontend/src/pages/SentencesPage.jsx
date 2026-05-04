@@ -190,7 +190,7 @@ const SentencesPage = () => {
 
   // Check answer
   const handleCheckAnswer = async () => {
-    if (!userAnswer.trim() || !currentSentence) return;
+    if (!userAnswer.trim() || !currentSentence || feedback) return;
     setIsChecking(true);
     try {
       const response = await sentenceAPI.checkAnswer({
@@ -225,6 +225,15 @@ const SentencesPage = () => {
           }
           return newStats;
         });
+
+        // Auto-advance to next sentence on correct answer after brief delay
+        if (isCorrect) {
+          setTimeout(() => {
+            setFeedback(null);
+            setUserAnswer('');
+            fetchRandomSentence();
+          }, 1200);
+        }
       }
     } catch (error) {
       console.error('Error checking answer:', error);
@@ -265,8 +274,17 @@ const SentencesPage = () => {
   // Handle Enter key
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      // In practice, just submit (auto-advance handles next)
-      if (!feedback && userAnswer.trim()) handleCheckAnswer();
+      if (feedback) {
+        // If incorrect feedback is shown, Enter goes to next sentence
+        if (!feedback.isCorrect) {
+          setFeedback(null);
+          setUserAnswer('');
+          fetchRandomSentence();
+        }
+        // If correct, auto-advance is already in progress — do nothing
+      } else if (userAnswer.trim()) {
+        handleCheckAnswer();
+      }
     }
   };
 
@@ -689,13 +707,6 @@ const SentencesPage = () => {
                           className="btn btn-secondary"
                         >
                           {t('sentences.skip') || 'Skip'}
-                        </button>
-                        <button
-                          onClick={handleCheckAnswer}
-                          disabled={!userAnswer.trim() || isChecking || feedback !== null}
-                          className="btn btn-primary"
-                        >
-                          {isChecking ? (t('sentences.checking') || 'Checking...') : (t('sentences.submit') || 'Submit')}
                         </button>
                       </div>
                     </div>
