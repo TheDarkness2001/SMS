@@ -306,10 +306,23 @@ const Groups = () => {
   };
 
   // Filter available students based on subject and branch
-  // Students CAN be in multiple groups (e.g., English + IT)
+  // Students CAN be in multiple groups for DIFFERENT subjects (English + IT)
+  // But CANNOT be in multiple groups for the SAME subject
   const getAvailableStudents = () => {
     const subjectName = getSelectedSubjectName();
     const selectedBranchId = unifiedForm.branchId;
+
+    // Get student IDs already enrolled in OTHER groups with the SAME subject
+    const enrolledInSameSubject = new Set();
+    groups.forEach(group => {
+      // Skip current group when editing
+      if (modalMode === 'edit' && editingGroup && group._id === editingGroup._id) return;
+
+      const groupSubject = (group.subject?.name || group.subjectName || group.groupName || '').toLowerCase().trim();
+      if (subjectName && groupSubject === subjectName) {
+        group.students?.forEach(s => enrolledInSameSubject.add(s._id || s));
+      }
+    });
 
     return students.filter(student => {
       // Must be active (or no status field) - handle case insensitive
@@ -317,6 +330,9 @@ const Groups = () => {
 
       // Must belong to selected branch
       if (selectedBranchId && student.branchId !== selectedBranchId) return false;
+
+      // Must not already be in another group for the SAME subject
+      if (enrolledInSameSubject.has(student._id)) return false;
 
       // If subject selected, student must be studying that subject
       if (subjectName) {
