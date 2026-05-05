@@ -459,13 +459,14 @@ exports.bulkImportSentences = async (req, res) => {
         continue;
       }
 
-      // Check for duplicates in memory (fast)
-      if (existingSet.has(english.toLowerCase())) {
+      // Check for duplicates in memory (fast) — normalize with trim for consistency
+      const englishKey = english.toLowerCase().trim();
+      if (existingSet.has(englishKey)) {
         skipped.push({ english, uzbek, reason: 'Duplicate in lesson' });
         continue;
       }
 
-      existingSet.add(english.toLowerCase()); // Prevent dupes within the import batch too
+      existingSet.add(englishKey); // Prevent dupes within the import batch too
       toCreate.push({ english, uzbek, lessonId });
     }
 

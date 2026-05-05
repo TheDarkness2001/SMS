@@ -399,7 +399,24 @@ const LessonsTab = ({ t, mode = 'words' }) => {
         : await uploadAPI.bulkImportWords({ lessonId: selectedLesson._id, items });
 
       if (res.data.success) {
-        alert(`${res.data.data.created} ${isSentences ? 'sentences' : 'words'} imported!`);
+        const created = res.data.data.created || 0;
+        const skipped = res.data.data.skipped || [];
+        const skippedCount = skipped.length;
+        const noun = isSentences ? 'sentences' : 'words';
+        let msg = `${created} ${noun} imported`;
+        if (skippedCount > 0) {
+          msg += `, ${skippedCount} skipped`;
+          const dupes = skipped.filter(s => s.reason === 'Duplicate in lesson').length;
+          const empty = skipped.filter(s => s.reason === 'Missing english or uzbek').length;
+          const xml = skipped.filter(s => s.reason === 'Contains XML markup').length;
+          const reasons = [];
+          if (dupes) reasons.push(`${dupes} duplicate`);
+          if (empty) reasons.push(`${empty} empty`);
+          if (xml) reasons.push(`${xml} XML`);
+          if (reasons.length) msg += ` (${reasons.join(', ')})`;
+        }
+        msg += '!';
+        alert(msg);
         fetchLessonItems(selectedLesson._id);
         fetchLessons(selectedLevel._id);
         setShowUploadModal(false);
