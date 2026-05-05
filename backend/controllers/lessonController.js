@@ -3,6 +3,7 @@ const Lesson = require('../models/Lesson');
 const Level = require('../models/Level');
 const Language = require('../models/Language');
 const Word = require('../models/Word');
+const Sentence = require('../models/Sentence');
 const StudentVocabProgress = require('../models/StudentVocabProgress');
 const Student = require('../models/Student');
 const ClassSchedule = require('../models/ClassSchedule');
@@ -55,7 +56,30 @@ exports.getAllLessons = async (req, res) => {
     } else if (type === 'words') {
       filter.$or = [{ type: 'words' }, { type: { $exists: false } }];
     }
-    const lessons = await Lesson.find(filter).sort({ levelId: 1, order: 1 });
+    const lessons = await Lesson.find(filter).sort({ levelId: 1, order: 1 }).lean();
+
+    // Attach sentence counts for sentence-type lessons
+    const sentenceLessons = lessons.filter(l => l.type === 'sentences');
+    if (sentenceLessons.length > 0) {
+      const lessonIds = sentenceLessons.map(l => l._id.toString());
+      const counts = await Sentence.aggregate([
+        { $match: { lessonId: { $in: lessonIds.map(id => new mongoose.Types.ObjectId(id)) } } },
+        { $group: { _id: '$lessonId', count: { $sum: 1 } } }
+      ]);
+      const countMap = new Map(counts.map(c => [c._id.toString(), c.count]));
+      for (const lesson of lessons) {
+        if (lesson.type === 'sentences') {
+          lesson.sentenceCount = countMap.get(lesson._id.toString()) || 0;
+        } else {
+          lesson.wordCount = (lesson.wordIds || []).length;
+        }
+      }
+    } else {
+      for (const lesson of lessons) {
+        lesson.wordCount = (lesson.wordIds || []).length;
+      }
+    }
+
     res.json({
       success: true,
       count: lessons.length,
