@@ -6,8 +6,22 @@
 const ARTICLES = new Set(['a', 'an', 'the']);
 const PUNCTUATION_REGEX = /[.,!?;:"']$/;
 
+/**
+ * Normalize apostrophe-like characters to straight apostrophe.
+ * Handles curly quotes (U+2018, U+2019), backtick (U+0060), and modifier letter apostrophe (U+02BC).
+ */
+function normalizeApostrophes(text) {
+  return text
+    .replace(/[\u2018\u2019\u0060\u02BC]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"');
+}
+
 function tokenize(text) {
-  return text.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  return normalizeApostrophes(text)
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
 }
 
 function normalizeWord(word) {
@@ -178,13 +192,8 @@ function computeSimilarity(correctTokens, userTokens) {
  * Analyze a sentence answer and return detailed feedback.
  */
 function analyzeSentenceAnswer(correct, userAnswer) {
-  const correctTrimmed = correct.trim();
-  const userTrimmed = userAnswer.trim();
-
-  // Correct if no real errors (wrong/missing/extra words or missing period).
-  // Comma/semicolon/exclamation differences are ignored.
-  const hasRealErrors = diff.some(d => ['wrong', 'missing', 'extra', 'missingPeriod'].includes(d.type));
-  const isCorrect = !hasRealErrors;
+  const correctTrimmed = normalizeApostrophes(correct.trim());
+  const userTrimmed = normalizeApostrophes(userAnswer.trim());
 
   const correctTokens = tokenize(correctTrimmed);
   const userTokens = tokenize(userTrimmed);
@@ -192,6 +201,11 @@ function analyzeSentenceAnswer(correct, userAnswer) {
   const diff = computeDiff(correctTokens, userTokens);
   const categories = detectCategories(diff);
   const similarityScore = computeSimilarity(correctTokens, userTokens);
+
+  // Correct if no real errors (wrong/missing/extra words or missing period).
+  // Comma/semicolon/exclamation differences are ignored.
+  const hasRealErrors = diff.some(d => ['wrong', 'missing', 'extra', 'missingPeriod'].includes(d.type));
+  const isCorrect = !hasRealErrors;
 
   return {
     isCorrect,
