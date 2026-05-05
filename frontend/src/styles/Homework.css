@@ -2790,6 +2790,11 @@
   color: #1e40af;
 }
 
+.category-missingPeriod {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .category-wrongWordOrder {
   background: #e0e7ff;
   color: #3730a3;

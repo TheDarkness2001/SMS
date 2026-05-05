@@ -14,9 +14,23 @@ function normalizeWord(word) {
   return word.replace(/[.,!?;:"']$/, '');
 }
 
+/**
+ * Strip non-period trailing punctuation (comma, semicolon, colon, exclamation, question mark, quote).
+ * Periods are preserved because they are required at end of sentences.
+ */
+function stripNonPeriodPunctuation(word) {
+  return word.replace(/[,;:!?"']$/, '');
+}
+
 function hasPunctuationDiff(wordA, wordB) {
   const pA = wordA.match(/[.,!?;:"']$/)?.[0] || '';
   const pB = wordB.match(/[.,!?;:"']$/)?.[0] || '';
+  return pA !== pB;
+}
+
+function hasPeriodDiff(wordA, wordB) {
+  const pA = wordA.endsWith('.') ? '.' : '';
+  const pB = wordB.endsWith('.') ? '.' : '';
   return pA !== pB;
 }
 
@@ -42,13 +56,25 @@ function computeDiff(correctTokens, userTokens) {
       continue;
     }
 
+    const cStripped = stripNonPeriodPunctuation(c);
+    const uStripped = stripNonPeriodPunctuation(u);
+
     if (c === u) {
       diff.push({ type: 'correct', word: c });
       i++;
       j++;
+    } else if (cStripped === uStripped) {
+      // Words match when ignoring non-period punctuation (comma, semicolon, etc.)
+      diff.push({ type: 'correct', word: c });
+      i++;
+      j++;
     } else if (normalizeWord(c) === normalizeWord(u)) {
-      // Same word, different punctuation
-      diff.push({ type: 'punctuation', expected: c, got: u });
+      // Same base word, difference is only punctuation
+      if (hasPeriodDiff(c, u)) {
+        diff.push({ type: 'missingPeriod', expected: c, got: u });
+      } else {
+        diff.push({ type: 'punctuation', expected: c, got: u });
+      }
       i++;
       j++;
     } else {
@@ -116,6 +142,8 @@ function detectCategories(diff) {
       }
     } else if (item.type === 'punctuation') {
       categories.add('missingPunctuation');
+    } else if (item.type === 'missingPeriod') {
+      categories.add('missingPeriod');
     }
   }
 
@@ -153,8 +181,10 @@ function analyzeSentenceAnswer(correct, userAnswer) {
   const correctTrimmed = correct.trim();
   const userTrimmed = userAnswer.trim();
 
-  // Exact match (case-insensitive)
-  const isCorrect = correctTrimmed.toLowerCase() === userTrimmed.toLowerCase();
+  // Correct if no real errors (wrong/missing/extra words or missing period).
+  // Comma/semicolon/exclamation differences are ignored.
+  const hasRealErrors = diff.some(d => ['wrong', 'missing', 'extra', 'missingPeriod'].includes(d.type));
+  const isCorrect = !hasRealErrors;
 
   const correctTokens = tokenize(correctTrimmed);
   const userTokens = tokenize(userTrimmed);

@@ -375,6 +375,7 @@
     "missingArticle": "Пропущен артикль",
     "wrongArticle": "Неправильный артикль",
     "missingPunctuation": "Пропущена пунктуация",
+    "missingPeriod": "Пропущена точка",
     "wrongWordOrder": "Неправильный порядок слов",
     "wrongWord": "Неправильное слово",
     "extraWords": "Лишние слова",
