@@ -17,11 +17,27 @@ exports.getLevelsByLanguage = async (req, res) => {
       const studentGroups = await ExamGroup.find({ students: { $in: [userId, userId.toString()] } }).select('_id');
       const studentGroupIds = studentGroups.map(g => g._id.toString());
 
+      // Fetch all lessons for these levels to check exam unlocks
+      const levelIds = levels.map(l => l._id.toString());
+      const lessons = await Lesson.find({ levelId: { $in: levelIds } }).select('levelId examUnlockedFor').lean();
+      const lessonsByLevel = {};
+      lessons.forEach(lesson => {
+        const lid = lesson.levelId.toString();
+        if (!lessonsByLevel[lid]) lessonsByLevel[lid] = [];
+        lessonsByLevel[lid].push(lesson);
+      });
+
       levels.forEach(level => {
         const unlockedFor = (level.practiceUnlockedFor || []).map(g => g.toString());
         // Also check deprecated boolean for backward compatibility
         level.practiceUnlockedForMe = level.practiceUnlocked === true ||
           unlockedFor.some(gid => studentGroupIds.includes(gid));
+
+        // Check if any lesson in this level has exam unlocked for student's groups
+        const levelLessons = lessonsByLevel[level._id.toString()] || [];
+        level.examUnlockedForMe = levelLessons.some(lesson =>
+          (lesson.examUnlockedFor || []).some(g => studentGroupIds.includes(g.toString()))
+        );
       });
     }
 

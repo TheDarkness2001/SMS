@@ -845,7 +845,7 @@ const Homework = () => {
                 <h3 className="practice-section-title">{t('homework.selectLevel') || 'Select a Level'}</h3>
                 <div className="practice-levels-grid">
                   {levelsList.map(level => {
-                    const isUnlocked = isStudent ? (level.practiceUnlockedForMe || false) : true;
+                    const isUnlocked = isStudent ? (level.examUnlockedForMe || false) : true;
                     return (
                       <div
                         key={level._id}
@@ -857,7 +857,7 @@ const Homework = () => {
                         <div className="practice-level-name">{level.name}</div>
                         {!isUnlocked && (
                           <div className="practice-level-locked-label">
-                            {t('homework.practiceLocked') || 'Locked'}
+                            {t('homework.examLocked') || 'Locked'}
                           </div>
                         )}
                       </div>

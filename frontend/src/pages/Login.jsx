@@ -168,6 +168,7 @@ const Login = () => {
                 required
                 placeholder={t('login.email')}
                 className="auth-layout__form-control"
+                autoComplete="off"
               />
             </div>
 
@@ -183,6 +184,7 @@ const Login = () => {
                   placeholder={t('login.password')}
                   className="auth-layout__form-control"
                   style={{ paddingRight: '45px' }}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
