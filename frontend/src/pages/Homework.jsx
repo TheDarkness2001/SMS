@@ -187,8 +187,12 @@ const Homework = () => {
   // Initialize answers when word changes
   useEffect(() => {
     if (currentWord) {
-      if (currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 0) {
+      const isMultiEnToUz = currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1;
+      const isMultiUzToEn = currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1;
+      if (isMultiEnToUz) {
         setUserAnswers(new Array(currentWord.uzbekMeanings.length).fill(''));
+      } else if (isMultiUzToEn) {
+        setUserAnswers(new Array(currentWord.englishForms.length).fill(''));
       } else {
         setUserAnswers(['']);
       }
@@ -243,7 +247,9 @@ const Homework = () => {
         wordId: currentWord.id,
         direction: currentWord.direction
       };
-      if (currentWord.direction === 'en-to-uz') {
+      const isMultiEnToUz = currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1;
+      const isMultiUzToEn = currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1;
+      if (isMultiEnToUz || isMultiUzToEn) {
         payload.answers = userAnswers;
       } else {
         payload.answer = userAnswers[0];
@@ -386,6 +392,9 @@ const Homework = () => {
     if (!currentWord) return '';
     if (currentWord.direction === 'en-to-uz') {
       return `${t('homework.meaning') || 'Meaning'} ${index + 1}...`;
+    }
+    if (currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1) {
+      return `${t('homework.form') || 'Form'} ${index + 1}...`;
     }
     return t('homework.typeEnglish') || 'Type English translation...';
   };
@@ -834,9 +843,29 @@ const Homework = () => {
                     <div className="word-display">{getDisplayText()}</div>
 
                     <div className="answer-section">
-                      {currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 0 ? (
+                      {currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1 ? (
                         <div className="multi-answer-inputs">
                           {currentWord.uzbekMeanings.map((meaning, idx) => (
+                            <input
+                              key={idx}
+                              type="text"
+                              value={userAnswers[idx] || ''}
+                              onChange={(e) => {
+                                const newAnswers = [...userAnswers];
+                                newAnswers[idx] = e.target.value;
+                                setUserAnswers(newAnswers);
+                              }}
+                              onKeyDown={(e) => handleKeyDown(e, idx)}
+                              placeholder={getPlaceholder(idx)}
+                              disabled={isChecking || feedback !== null}
+                              className="answer-input"
+                              autoFocus={idx === 0}
+                            />
+                          ))}
+                        </div>
+                      ) : currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1 ? (
+                        <div className="multi-answer-inputs">
+                          {currentWord.englishForms.map((form, idx) => (
                             <input
                               key={idx}
                               type="text"

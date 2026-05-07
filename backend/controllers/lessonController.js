@@ -441,11 +441,15 @@ exports.getExamWords = async (req, res) => {
       const uzbekMeanings = word.uzbek
         ? word.uzbek.split(',').map(m => m.trim()).filter(Boolean).slice(0, 3)
         : [];
+      const englishForms = word.english
+        ? word.english.split(',').map(f => f.trim()).filter(Boolean).slice(0, 3)
+        : [];
       return {
         id: word._id,
         english: word.english,
         uzbek: word.uzbek,
         uzbekMeanings,
+        englishForms,
         direction: Math.random() < 0.5 ? 'en-to-uz' : 'uz-to-en'
       };
     });
@@ -519,10 +523,20 @@ exports.submitExam = async (req, res) => {
           isCorrect = meanings.some(m => m === normalizedAnswer);
         }
       } else {
-        const normalizedAnswer = String(ans.answer || '').trim().toLowerCase();
-        correctAnswer = word.english;
+        // uz-to-en direction
         const englishForms = word.english.split(',').map(f => f.trim().toLowerCase()).filter(Boolean);
-        isCorrect = englishForms.some(form => form === normalizedAnswer);
+        correctAnswer = word.english;
+
+        if (Array.isArray(ans.answers) && ans.answers.length > 0) {
+          const studentAnswers = ans.answers.map(a => String(a).trim().toLowerCase()).filter(Boolean);
+          const sortedForms = [...englishForms].sort();
+          const sortedAnswers = [...studentAnswers].sort();
+          isCorrect = sortedForms.length === sortedAnswers.length &&
+            sortedForms.every((f, i) => f === sortedAnswers[i]);
+        } else {
+          const normalizedAnswer = String(ans.answer || '').trim().toLowerCase();
+          isCorrect = englishForms.some(form => form === normalizedAnswer);
+        }
       }
 
       if (isCorrect) correctCount++;

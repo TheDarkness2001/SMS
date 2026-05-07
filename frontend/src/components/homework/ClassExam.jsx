@@ -64,8 +64,12 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
   // Initialize current answers when word changes
   useEffect(() => {
     if (currentWord) {
-      if (currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 0) {
+      const isMultiEnToUz = currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1;
+      const isMultiUzToEn = currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1;
+      if (isMultiEnToUz) {
         setCurrentAnswers(new Array(currentWord.uzbekMeanings.length).fill(''));
+      } else if (isMultiUzToEn) {
+        setCurrentAnswers(new Array(currentWord.englishForms.length).fill(''));
       } else {
         setCurrentAnswers(['']);
       }
@@ -78,7 +82,9 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
       wordId: currentWord.id,
       direction: currentWord.direction
     };
-    if (currentWord.direction === 'en-to-uz') {
+    const isMultiEnToUz = currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1;
+    const isMultiUzToEn = currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1;
+    if (isMultiEnToUz || isMultiUzToEn) {
       payload.answers = currentAnswers.map(() => '');
     } else {
       payload.answer = '';
@@ -100,7 +106,9 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
       wordId: currentWord.id,
       direction: currentWord.direction
     };
-    if (currentWord.direction === 'en-to-uz') {
+    const isMultiEnToUz = currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1;
+    const isMultiUzToEn = currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1;
+    if (isMultiEnToUz || isMultiUzToEn) {
       payload.answers = currentAnswers;
     } else {
       payload.answer = currentAnswers[0]?.trim() || '';
@@ -122,7 +130,9 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
       wordId: currentWord.id,
       direction: currentWord.direction
     };
-    if (currentWord.direction === 'en-to-uz') {
+    const isMultiEnToUz = currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1;
+    const isMultiUzToEn = currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1;
+    if (isMultiEnToUz || isMultiUzToEn) {
       payload.answers = [];
     } else {
       payload.answer = '';
@@ -251,7 +261,7 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
         <div className="question-word">
           {isEnToUz ? currentWord?.english : currentWord?.uzbek}
         </div>
-        {isEnToUz && currentWord?.uzbekMeanings?.length > 0 ? (
+        {isEnToUz && currentWord?.uzbekMeanings?.length > 1 ? (
           <div className="exam-multi-inputs">
             {currentWord.uzbekMeanings.map((meaning, idx) => (
               <input
@@ -266,6 +276,25 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && currentAnswers.some(a => a.trim()) && submitAnswer()}
                 placeholder={`${t('homework.meaning') || 'Meaning'} ${idx + 1}...`}
+                autoFocus={idx === 0}
+              />
+            ))}
+          </div>
+        ) : !isEnToUz && currentWord?.englishForms?.length > 1 ? (
+          <div className="exam-multi-inputs">
+            {currentWord.englishForms.map((form, idx) => (
+              <input
+                key={idx}
+                type="text"
+                className="exam-answer-input"
+                value={currentAnswers[idx] || ''}
+                onChange={(e) => {
+                  const newAnswers = [...currentAnswers];
+                  newAnswers[idx] = e.target.value;
+                  setCurrentAnswers(newAnswers);
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && currentAnswers.some(a => a.trim()) && submitAnswer()}
+                placeholder={`${t('homework.form') || 'Form'} ${idx + 1}...`}
                 autoFocus={idx === 0}
               />
             ))}

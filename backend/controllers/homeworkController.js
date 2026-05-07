@@ -40,6 +40,9 @@ exports.getRandomWord = async (req, res) => {
     const uzbekMeanings = randomWord.uzbek
       ? randomWord.uzbek.split(',').map(m => m.trim()).filter(Boolean).slice(0, 3)
       : [];
+    const englishForms = randomWord.english
+      ? randomWord.english.split(',').map(f => f.trim()).filter(Boolean).slice(0, 3)
+      : [];
 
     res.json({
       success: true,
@@ -49,6 +52,7 @@ exports.getRandomWord = async (req, res) => {
           english: randomWord.english,
           uzbek: randomWord.uzbek,
           uzbekMeanings,
+          englishForms,
           direction
         }
       }
@@ -109,9 +113,21 @@ exports.checkAnswer = async (req, res) => {
     } else if (direction === 'uz-to-en') {
       const englishForms = word.english.split(',').map(f => f.trim().toLowerCase()).filter(Boolean);
       correctAnswer = word.english;
-      const normalizedAnswer = String(answer || '').trim().toLowerCase();
-      userAnswer = normalizedAnswer;
-      isCorrect = englishForms.some(form => form === normalizedAnswer);
+
+      // Support array of answers for irregular verbs (e.g., "go, went, gone")
+      if (Array.isArray(answers) && answers.length > 0) {
+        const studentAnswers = answers.map(a => String(a).trim().toLowerCase()).filter(Boolean);
+        userAnswer = studentAnswers.join(', ');
+        // All English forms must be matched by student answers (order-independent, no duplicates)
+        const sortedForms = [...englishForms].sort();
+        const sortedAnswers = [...studentAnswers].sort();
+        isCorrect = sortedForms.length === sortedAnswers.length &&
+          sortedForms.every((f, i) => f === sortedAnswers[i]);
+      } else if (answer) {
+        const normalizedAnswer = String(answer).trim().toLowerCase();
+        userAnswer = normalizedAnswer;
+        isCorrect = englishForms.some(form => form === normalizedAnswer);
+      }
     } else {
       return res.status(400).json({
         success: false,
