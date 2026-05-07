@@ -595,13 +595,12 @@ exports.getStudentProgress = async (req, res) => {
     const studentGroupIds = studentGroups.map(g => g._id.toString());
 
     // Get all levels for practiceUnlocked info
-    const allLevels = await Level.find().select('_id practiceUnlocked practiceUnlockedFor');
+    const allLevels = await Level.find().select('_id practiceUnlockedFor');
     const levelMap = new Map(allLevels.map(l => {
       const levelData = l.toObject ? l.toObject() : l;
       // Compute effective practice unlock for this student
       const unlockedFor = (levelData.practiceUnlockedFor || []).map(g => g.toString());
-      levelData.isPracticeUnlocked = levelData.practiceUnlocked === true ||
-        unlockedFor.some(gid => studentGroupIds.includes(gid));
+      levelData.isPracticeUnlocked = unlockedFor.some(gid => studentGroupIds.includes(gid));
       return [l._id.toString(), levelData];
     }));
 

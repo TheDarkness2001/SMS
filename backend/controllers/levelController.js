@@ -29,9 +29,8 @@ exports.getLevelsByLanguage = async (req, res) => {
 
       levels.forEach(level => {
         const unlockedFor = (level.practiceUnlockedFor || []).map(g => g.toString());
-        // Also check deprecated boolean for backward compatibility
-        level.practiceUnlockedForMe = level.practiceUnlocked === true ||
-          unlockedFor.some(gid => studentGroupIds.includes(gid));
+        // Only check practiceUnlockedFor array (deprecated practiceUnlocked boolean ignored)
+        level.practiceUnlockedForMe = unlockedFor.some(gid => studentGroupIds.includes(gid));
 
         // Check if any lesson in this level has exam unlocked for student's groups
         const levelLessons = lessonsByLevel[level._id.toString()] || [];
