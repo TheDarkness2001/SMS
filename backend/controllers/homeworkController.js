@@ -37,6 +37,10 @@ exports.getRandomWord = async (req, res) => {
     ]);
     const direction = Math.random() < 0.5 ? 'en-to-uz' : 'uz-to-en';
 
+    const uzbekMeanings = randomWord.uzbek
+      ? randomWord.uzbek.split(',').map(m => m.trim()).filter(Boolean).slice(0, 3)
+      : [];
+
     res.json({
       success: true,
       data: {
@@ -44,6 +48,7 @@ exports.getRandomWord = async (req, res) => {
           id: randomWord._id,
           english: randomWord.english,
           uzbek: randomWord.uzbek,
+          uzbekMeanings,
           direction
         }
       }
@@ -61,12 +66,12 @@ exports.getRandomWord = async (req, res) => {
 // Check answer
 exports.checkAnswer = async (req, res) => {
   try {
-    const { wordId, answer, direction } = req.body;
+    const { wordId, answer, answers, direction } = req.body;
 
-    if (!wordId || !answer || !direction) {
+    if (!wordId || !direction) {
       return res.status(400).json({
         success: false,
-        message: 'Word ID, answer, and direction are required'
+        message: 'Word ID and direction are required'
       });
     }
 
@@ -78,22 +83,35 @@ exports.checkAnswer = async (req, res) => {
       });
     }
 
-    const normalizedAnswer = answer.trim().toLowerCase();
     let isCorrect = false;
     let correctAnswer = '';
+    let userAnswer = '';
 
     if (direction === 'en-to-uz') {
-      // Accept any comma-separated meaning from uzbek (primary) or shortUzbek (legacy fallback)
-      const primaryMeanings = word.uzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
-      const legacyMeanings = word.shortUzbek
-        ? word.shortUzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean)
-        : [];
-      const allMeanings = [...new Set([...primaryMeanings, ...legacyMeanings])];
+      const meanings = word.uzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
       correctAnswer = word.uzbek;
-      isCorrect = allMeanings.some(m => m === normalizedAnswer || normalizedAnswer.includes(m) || m.includes(normalizedAnswer));
+
+      // Support array of answers for multiple meanings
+      if (Array.isArray(answers) && answers.length > 0) {
+        const studentAnswers = answers.map(a => String(a).trim().toLowerCase()).filter(Boolean);
+        userAnswer = studentAnswers.join(', ');
+        // All meanings must be matched by student answers (order-independent, no duplicates allowed)
+        const sortedMeanings = [...meanings].sort();
+        const sortedAnswers = [...studentAnswers].sort();
+        isCorrect = sortedMeanings.length === sortedAnswers.length &&
+          sortedMeanings.every((m, i) => m === sortedAnswers[i]);
+      } else if (answer) {
+        // Backward compatibility: single answer
+        const normalizedAnswer = String(answer).trim().toLowerCase();
+        userAnswer = normalizedAnswer;
+        isCorrect = meanings.some(m => m === normalizedAnswer);
+      }
     } else if (direction === 'uz-to-en') {
+      const englishForms = word.english.split(',').map(f => f.trim().toLowerCase()).filter(Boolean);
       correctAnswer = word.english;
-      isCorrect = normalizedAnswer === word.english.toLowerCase();
+      const normalizedAnswer = String(answer || '').trim().toLowerCase();
+      userAnswer = normalizedAnswer;
+      isCorrect = englishForms.some(form => form === normalizedAnswer);
     } else {
       return res.status(400).json({
         success: false,
@@ -106,7 +124,7 @@ exports.checkAnswer = async (req, res) => {
       data: {
         isCorrect,
         correctAnswer,
-        userAnswer: normalizedAnswer,
+        userAnswer,
         direction
       }
     });

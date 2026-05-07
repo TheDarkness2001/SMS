@@ -177,6 +177,18 @@
   margin: 0 auto;
 }
 
+.multi-answer-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.answer-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 .answer-input {
   padding: 14px 18px;
   font-size: 16px;
@@ -971,6 +983,25 @@
 .exam-answer-input:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+.exam-multi-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.exam-multi-inputs .exam-answer-input {
+  margin-bottom: 0;
+}
+
+.exam-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .exam-result {

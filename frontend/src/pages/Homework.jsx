@@ -16,7 +16,7 @@ const Homework = () => {
 
   // Game state
   const [currentWord, setCurrentWord] = useState(null);
-  const [userAnswer, setUserAnswer] = useState('');
+  const [userAnswers, setUserAnswers] = useState(['']);
   const [feedback, setFeedback] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
@@ -184,11 +184,21 @@ const Homework = () => {
     fetchLessons();
   }, [selectedLevelId]);
 
+  // Initialize answers when word changes
+  useEffect(() => {
+    if (currentWord) {
+      if (currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 0) {
+        setUserAnswers(new Array(currentWord.uzbekMeanings.length).fill(''));
+      } else {
+        setUserAnswers(['']);
+      }
+    }
+  }, [currentWord]);
+
   // Fetch random word
   const fetchRandomWord = useCallback(async () => {
     setIsLoading(true);
     setFeedback(null);
-    setUserAnswer('');
     try {
       const params = {};
       if (practiceMode === 'lesson' && selectedPracticeLessonId) {
@@ -217,7 +227,9 @@ const Homework = () => {
 
   // Check answer
   const handleCheckAnswer = async () => {
-    if (!userAnswer.trim() || !currentWord) return;
+    if (!currentWord) return;
+    const hasAnswers = userAnswers.some(a => a.trim());
+    if (!hasAnswers) return;
     setIsChecking(true);
     // Stop word timer when user submits
     if (activeTab === 'practice') {
@@ -227,11 +239,16 @@ const Homework = () => {
       }
     }
     try {
-      const response = await homeworkAPI.checkAnswer({
+      const payload = {
         wordId: currentWord.id,
-        answer: userAnswer,
         direction: currentWord.direction
-      });
+      };
+      if (currentWord.direction === 'en-to-uz') {
+        payload.answers = userAnswers;
+      } else {
+        payload.answer = userAnswers[0];
+      }
+      const response = await homeworkAPI.checkAnswer(payload);
       if (response.data.success) {
         const isCorrect = response.data.data.isCorrect;
         setFeedback({
@@ -275,7 +292,6 @@ const Homework = () => {
           if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
           autoAdvanceRef.current = setTimeout(() => {
             setFeedback(null);
-            setUserAnswer('');
             handleNext();
           }, 1500);
         }
@@ -285,6 +301,42 @@ const Homework = () => {
     } finally {
       setIsChecking(false);
     }
+  };
+
+  // Skip word
+  const handleSkipWord = () => {
+    if (!currentWord) return;
+    stopWordTimer();
+    setFeedback({
+      isCorrect: false,
+      correctAnswer: currentWord.uzbek,
+      userAnswer: 'Skipped',
+      isSkipped: true
+    });
+    setSessionStats(prev => {
+      const newStats = {
+        totalAttempts: prev.totalAttempts + 1,
+        correctAnswers: prev.correctAnswers,
+        enToUzCorrect: prev.enToUzCorrect,
+        enToUzTotal: prev.enToUzTotal,
+        uzToEnCorrect: prev.uzToEnCorrect,
+        uzToEnTotal: prev.uzToEnTotal
+      };
+      if (currentWord.direction === 'en-to-uz') {
+        newStats.enToUzTotal++;
+      } else {
+        newStats.uzToEnTotal++;
+      }
+      return newStats;
+    });
+    if (isStudent && activeTab === 'practice' && practiceMode === 'lesson' && selectedPracticeLessonId) {
+      lessonAPI.updatePracticeStats({ lessonId: selectedPracticeLessonId, isCorrect: false }).catch(() => {});
+    }
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    autoAdvanceRef.current = setTimeout(() => {
+      setFeedback(null);
+      handleNext();
+    }, 1500);
   };
 
   // Handle next word
@@ -297,11 +349,12 @@ const Homework = () => {
   };
 
   // Handle Enter key
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e, inputIndex) => {
     if (e.key === 'Enter') {
       if (activeTab === 'practice') {
         // In practice, just submit (auto-advance handles next)
-        if (!feedback && userAnswer.trim()) handleCheckAnswer();
+        const hasAnswers = userAnswers.some(a => a.trim());
+        if (!feedback && hasAnswers) handleCheckAnswer();
       } else {
         // In exam, toggle between check and next
         if (feedback) {
@@ -329,11 +382,12 @@ const Homework = () => {
       : t('homework.translateToEnglish') || 'Translate to English';
   };
 
-  const getPlaceholder = () => {
+  const getPlaceholder = (index) => {
     if (!currentWord) return '';
-    return currentWord.direction === 'en-to-uz'
-      ? t('homework.typeUzbek') || 'Type Uzbek translation...'
-      : t('homework.typeEnglish') || 'Type English translation...';
+    if (currentWord.direction === 'en-to-uz') {
+      return `${t('homework.meaning') || 'Meaning'} ${index + 1}...`;
+    }
+    return t('homework.typeEnglish') || 'Type English translation...';
   };
 
   const accuracy = sessionStats.totalAttempts > 0
@@ -418,7 +472,7 @@ const Homework = () => {
     setFeedback({
       isCorrect: false,
       correctAnswer,
-      userAnswer: '',
+      userAnswer: 'Timeout',
       isTimeout: true
     });
     setSessionStats(prev => {
@@ -443,7 +497,6 @@ const Homework = () => {
     if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
     autoAdvanceRef.current = setTimeout(() => {
       setFeedback(null);
-      setUserAnswer('');
       handleNext();
     }, 1500);
   };
@@ -488,7 +541,7 @@ const Homework = () => {
     setSessionComplete(false);
     setCurrentWord(null);
     setFeedback(null);
-    setUserAnswer('');
+    setUserAnswers(['']);
     setWordTimeLeft(WORD_TIME_LIMIT);
     stopWordTimer();
     // Word will be fetched by useEffect when currentWord is null and activeTab is practice
@@ -499,7 +552,7 @@ const Homework = () => {
     setPracticeView('languages');
     setCurrentWord(null);
     setFeedback(null);
-    setUserAnswer('');
+    setUserAnswers(['']);
     setSessionComplete(false);
   };
 
@@ -508,7 +561,7 @@ const Homework = () => {
     setPracticeView('levels');
     setCurrentWord(null);
     setFeedback(null);
-    setUserAnswer('');
+    setUserAnswers(['']);
     setSessionComplete(false);
   };
 
@@ -517,7 +570,7 @@ const Homework = () => {
     setPracticeView('classes');
     setCurrentWord(null);
     setFeedback(null);
-    setUserAnswer('');
+    setUserAnswers(['']);
     setSessionComplete(false);
   };
 
@@ -531,7 +584,7 @@ const Homework = () => {
     setPracticeView('classes');
     setCurrentWord(null);
     setFeedback(null);
-    setUserAnswer('');
+    setUserAnswers(['']);
     setSessionComplete(false);
   };
 
@@ -781,24 +834,55 @@ const Homework = () => {
                     <div className="word-display">{getDisplayText()}</div>
 
                     <div className="answer-section">
-                      <input
-                        type="text"
-                        value={userAnswer}
-                        onChange={(e) => setUserAnswer(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={getPlaceholder()}
-                        disabled={isChecking || feedback !== null}
-                        className="answer-input"
-                        autoFocus
-                      />
+                      {currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 0 ? (
+                        <div className="multi-answer-inputs">
+                          {currentWord.uzbekMeanings.map((meaning, idx) => (
+                            <input
+                              key={idx}
+                              type="text"
+                              value={userAnswers[idx] || ''}
+                              onChange={(e) => {
+                                const newAnswers = [...userAnswers];
+                                newAnswers[idx] = e.target.value;
+                                setUserAnswers(newAnswers);
+                              }}
+                              onKeyDown={(e) => handleKeyDown(e, idx)}
+                              placeholder={getPlaceholder(idx)}
+                              disabled={isChecking || feedback !== null}
+                              className="answer-input"
+                              autoFocus={idx === 0}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={userAnswers[0] || ''}
+                          onChange={(e) => setUserAnswers([e.target.value])}
+                          onKeyDown={(e) => handleKeyDown(e, 0)}
+                          placeholder={getPlaceholder(0)}
+                          disabled={isChecking || feedback !== null}
+                          className="answer-input"
+                          autoFocus
+                        />
+                      )}
 
-                      <button
-                        onClick={handleCheckAnswer}
-                        disabled={!userAnswer.trim() || isChecking || feedback !== null}
-                        className="btn btn-primary"
-                      >
-                        {isChecking ? (t('homework.checking') || 'Checking...') : (t('homework.checkAnswer') || 'Check')}
-                      </button>
+                      <div className="answer-actions">
+                        <button
+                          onClick={handleCheckAnswer}
+                          disabled={!userAnswers.some(a => a.trim()) || isChecking || feedback !== null}
+                          className="btn btn-primary"
+                        >
+                          {isChecking ? (t('homework.checking') || 'Checking...') : (t('homework.checkAnswer') || 'Check')}
+                        </button>
+                        <button
+                          onClick={handleSkipWord}
+                          disabled={isChecking || feedback !== null}
+                          className="btn btn-secondary"
+                        >
+                          {t('homework.skip') || 'Skip'}
+                        </button>
+                      </div>
                     </div>
 
                     {feedback && (
@@ -806,6 +890,11 @@ const Homework = () => {
                         {feedback.isTimeout ? (
                           <>
                             <div className="feedback-title">⏰ {t('homework.notFound') || 'Not Found'}</div>
+                            <p>{t('homework.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
+                          </>
+                        ) : feedback.isSkipped ? (
+                          <>
+                            <div className="feedback-title">⏭️ {t('homework.skipped') || 'Skipped'}</div>
                             <p>{t('homework.correctAnswer') || 'Correct answer'}: <strong>{feedback.correctAnswer}</strong></p>
                           </>
                         ) : feedback.isCorrect ? (

@@ -6,7 +6,7 @@ const QUESTION_TIME_LIMIT = 35; // 35 seconds per question
 const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
   const [examWords, setExamWords] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answer, setAnswer] = useState('');
+  const [currentAnswers, setCurrentAnswers] = useState(['']);
   const [questionTimeLeft, setQuestionTimeLeft] = useState(QUESTION_TIME_LIMIT);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState([]);
@@ -61,16 +61,74 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
 
   const currentWord = examWords[currentIndex];
 
+  // Initialize current answers when word changes
+  useEffect(() => {
+    if (currentWord) {
+      if (currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 0) {
+        setCurrentAnswers(new Array(currentWord.uzbekMeanings.length).fill(''));
+      } else {
+        setCurrentAnswers(['']);
+      }
+    }
+  }, [currentWord]);
+
   const submitAnswerTimedOut = useCallback(() => {
     if (!currentWord) return;
-    const newAnswer = {
+    const payload = {
       wordId: currentWord.id,
-      answer: '',
       direction: currentWord.direction
     };
-    const newAnswers = [...answers, newAnswer];
+    if (currentWord.direction === 'en-to-uz') {
+      payload.answers = currentAnswers.map(() => '');
+    } else {
+      payload.answer = '';
+    }
+    const newAnswers = [...answers, payload];
     setAnswers(newAnswers);
-    setAnswer('');
+
+    if (currentIndex >= examWords.length - 1) {
+      finishExam(newAnswers);
+    } else {
+      setCurrentIndex(prev => prev + 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWord, currentIndex, examWords, answers, currentAnswers]);
+
+  const submitAnswer = useCallback(() => {
+    if (!currentWord) return;
+    const payload = {
+      wordId: currentWord.id,
+      direction: currentWord.direction
+    };
+    if (currentWord.direction === 'en-to-uz') {
+      payload.answers = currentAnswers;
+    } else {
+      payload.answer = currentAnswers[0]?.trim() || '';
+    }
+    const newAnswers = [...answers, payload];
+    setAnswers(newAnswers);
+
+    if (currentIndex >= examWords.length - 1) {
+      finishExam(newAnswers);
+    } else {
+      setCurrentIndex(prev => prev + 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWord, currentAnswers, currentIndex, examWords, answers]);
+
+  const skipAnswer = useCallback(() => {
+    if (!currentWord) return;
+    const payload = {
+      wordId: currentWord.id,
+      direction: currentWord.direction
+    };
+    if (currentWord.direction === 'en-to-uz') {
+      payload.answers = [];
+    } else {
+      payload.answer = '';
+    }
+    const newAnswers = [...answers, payload];
+    setAnswers(newAnswers);
 
     if (currentIndex >= examWords.length - 1) {
       finishExam(newAnswers);
@@ -79,25 +137,6 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWord, currentIndex, examWords, answers]);
-
-  const submitAnswer = useCallback(() => {
-    if (!currentWord) return;
-    const newAnswer = {
-      wordId: currentWord.id,
-      answer: answer.trim(),
-      direction: currentWord.direction
-    };
-    const newAnswers = [...answers, newAnswer];
-    setAnswers(newAnswers);
-    setAnswer('');
-
-    if (currentIndex >= examWords.length - 1) {
-      finishExam(newAnswers);
-    } else {
-      setCurrentIndex(prev => prev + 1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentWord, answer, currentIndex, examWords, answers]);
 
   const finishExam = async (finalAnswers) => {
     if (finished || submitting) return;
@@ -212,25 +251,54 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
         <div className="question-word">
           {isEnToUz ? currentWord?.english : currentWord?.uzbek}
         </div>
-        <input
-          type="text"
-          className="exam-answer-input"
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && answer.trim() && submitAnswer()}
-          placeholder={t('homework.typeAnswer') || 'Type your answer...'}
-          autoFocus
-        />
-        <button
-          className="btn btn-primary btn-large"
-          onClick={submitAnswer}
-          disabled={!answer.trim()}
-        >
-          {currentIndex >= examWords.length - 1
-            ? (t('homework.finish') || 'Finish')
-            : (t('homework.next') || 'Next')
-          }
-        </button>
+        {isEnToUz && currentWord?.uzbekMeanings?.length > 0 ? (
+          <div className="exam-multi-inputs">
+            {currentWord.uzbekMeanings.map((meaning, idx) => (
+              <input
+                key={idx}
+                type="text"
+                className="exam-answer-input"
+                value={currentAnswers[idx] || ''}
+                onChange={(e) => {
+                  const newAnswers = [...currentAnswers];
+                  newAnswers[idx] = e.target.value;
+                  setCurrentAnswers(newAnswers);
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && currentAnswers.some(a => a.trim()) && submitAnswer()}
+                placeholder={`${t('homework.meaning') || 'Meaning'} ${idx + 1}...`}
+                autoFocus={idx === 0}
+              />
+            ))}
+          </div>
+        ) : (
+          <input
+            type="text"
+            className="exam-answer-input"
+            value={currentAnswers[0] || ''}
+            onChange={(e) => setCurrentAnswers([e.target.value])}
+            onKeyDown={(e) => e.key === 'Enter' && currentAnswers[0]?.trim() && submitAnswer()}
+            placeholder={t('homework.typeAnswer') || 'Type your answer...'}
+            autoFocus
+          />
+        )}
+        <div className="exam-actions">
+          <button
+            className="btn btn-primary btn-large"
+            onClick={submitAnswer}
+            disabled={!currentAnswers.some(a => a.trim())}
+          >
+            {currentIndex >= examWords.length - 1
+              ? (t('homework.finish') || 'Finish')
+              : (t('homework.next') || 'Next')
+            }
+          </button>
+          <button
+            className="btn btn-secondary btn-large"
+            onClick={skipAnswer}
+          >
+            {t('homework.skip') || 'Skip'}
+          </button>
+        </div>
       </div>
     </div>
   );
