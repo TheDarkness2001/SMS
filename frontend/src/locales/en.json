@@ -70,7 +70,9 @@
     "best10Presentations": "Best 10 Presentations",
     "otherStudents": "Other Students",
     "prev": "Prev",
-    "next": "Next"
+    "next": "Next",
+    "dailyFeedback": "Daily Feedback",
+    "viewAll": "View All"
   },
   "sidebar": {
     "dashboard": "Dashboard",

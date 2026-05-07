@@ -314,6 +314,72 @@ const StudentDashboard = () => {
         <p className="welcome-subtitle">{t('dashboard.studentId')} {user.studentId}</p>
       </div>
 
+      {/* Daily Feedback Section */}
+      <div className="daily-feedback-section">
+        <div className="daily-feedback-header">
+          <h2 className="section-title">
+            <AiOutlineMessage size={22} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+            {t('dashboard.dailyFeedback') || 'Daily Feedback'}
+          </h2>
+          <a href="/student/feedback" className="view-all-link">
+            {t('dashboard.viewAll') || 'View All'} →
+          </a>
+        </div>
+        {feedbackRecords.length === 0 ? (
+          <div className="no-feedback-placeholder">
+            <AiOutlineMessage size={36} />
+            <p>{t('feedback.noFeedbackAvailable') || 'No feedback available yet'}</p>
+          </div>
+        ) : (
+          <div className="daily-feedback-cards">
+            {feedbackRecords.slice(0, 5).map((fb) => (
+              <div key={fb._id} className="daily-feedback-card">
+                <div className="daily-feedback-card-header">
+                  <span className="daily-feedback-subject">
+                    {fb.subject?.name || fb.subject || t('common.unknown')}
+                  </span>
+                  <span className="daily-feedback-date">
+                    {new Date(fb.feedbackDate || fb.createdAt).toLocaleDateString(t('common.locale'), { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+                {fb.isExamDay ? (
+                  <div className="daily-feedback-score exam-day">
+                    <span className="score-label">🏆 {t('feedback.examScore') || 'Exam'}</span>
+                    <span className="score-value exam-value">{fb.examPercentage}%</span>
+                  </div>
+                ) : (
+                  <div className="daily-feedback-scores">
+                    <div className="daily-feedback-score">
+                      <span className="score-label">📚 {t('feedback.homework') || 'HW'}</span>
+                      <span className={`score-value ${fb.homework >= 80 ? 'good' : fb.homework >= 50 ? 'okay' : 'low'}`}>{fb.homework || 0}%</span>
+                    </div>
+                    <div className="daily-feedback-score">
+                      <span className="score-label">😊 {t('feedback.behavior') || 'Beh'}</span>
+                      <span className={`score-value ${fb.behavior >= 80 ? 'good' : fb.behavior >= 50 ? 'okay' : 'low'}`}>{fb.behavior || 0}%</span>
+                    </div>
+                    <div className="daily-feedback-score">
+                      <span className="score-label">🙋 {t('feedback.participation') || 'Part'}</span>
+                      <span className={`score-value ${fb.participation >= 80 ? 'good' : fb.participation >= 50 ? 'okay' : 'low'}`}>{fb.participation || 0}%</span>
+                    </div>
+                  </div>
+                )}
+                {fb.classLevel && (
+                  <span className={`daily-feedback-level ${fb.classLevel.toLowerCase().includes('retake') ? 'retake' : ''}`}>
+                    {fb.classLevel}
+                  </span>
+                )}
+                {fb.notes && (
+                  <p className="daily-feedback-note">{fb.notes}</p>
+                )}
+                {fb.teacher && (
+                  <span className="daily-feedback-teacher">— {fb.teacher?.name || t('feedback.teacher')}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Leaderboards Grid */}
       <div className="leaderboards-grid">
         {/* Top 10 Words */}
