@@ -126,7 +126,7 @@ exports.getLesson = async (req, res) => {
 // Create lesson
 exports.createLesson = async (req, res) => {
   try {
-    const { name, levelId, order, examTimeLimit, minPassScore, maxWords, type } = req.body;
+    const { name, levelId, order, examTimeLimit, minPassScore, maxWords, type, directionMode } = req.body;
 
     if (!name || !levelId) {
       return res.status(400).json({
@@ -143,7 +143,8 @@ exports.createLesson = async (req, res) => {
       minPassScore: minPassScore || 70,
       maxWords: maxWords || 20,
       type: type || 'words',
-      wordIds: []
+      wordIds: [],
+      directionMode: directionMode || 'mixed'
     });
 
     await lesson.save();
@@ -167,7 +168,7 @@ exports.createLesson = async (req, res) => {
 exports.updateLesson = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, levelId, order, examTimeLimit, minPassScore, maxWords, type } = req.body;
+    const { name, levelId, order, examTimeLimit, minPassScore, maxWords, type, directionMode } = req.body;
 
     const lesson = await Lesson.findById(id);
     if (!lesson) {
@@ -184,6 +185,7 @@ exports.updateLesson = async (req, res) => {
     if (minPassScore !== undefined) lesson.minPassScore = minPassScore;
     if (maxWords !== undefined) lesson.maxWords = maxWords;
     if (type !== undefined) lesson.type = type;
+    if (directionMode !== undefined) lesson.directionMode = directionMode;
 
     await lesson.save();
 
@@ -444,13 +446,18 @@ exports.getExamWords = async (req, res) => {
       const englishForms = word.english
         ? word.english.split(',').map(f => f.trim()).filter(Boolean).slice(0, 3)
         : [];
+      // Determine direction based on lesson's directionMode
+      let direction = Math.random() < 0.5 ? 'en-to-uz' : 'uz-to-en';
+      if (lesson.directionMode && lesson.directionMode !== 'mixed') {
+        direction = lesson.directionMode;
+      }
       return {
         id: word._id,
         english: word.english,
         uzbek: word.uzbek,
         uzbekMeanings,
         englishForms,
-        direction: Math.random() < 0.5 ? 'en-to-uz' : 'uz-to-en'
+        direction
       };
     });
 

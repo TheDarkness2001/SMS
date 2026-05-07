@@ -42,6 +42,11 @@ const lessonSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ExamGroup'
   }],
+  directionMode: {
+    type: String,
+    enum: ['mixed', 'en-to-uz', 'uz-to-en'],
+    default: 'mixed'
+  },
   createdAt: {
     type: Date,
     default: Date.now

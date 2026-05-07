@@ -35,7 +35,15 @@ exports.getRandomWord = async (req, res) => {
       { $match: filter },
       { $sample: { size: 1 } }
     ]);
-    const direction = Math.random() < 0.5 ? 'en-to-uz' : 'uz-to-en';
+
+    // Determine direction based on lesson's directionMode if available
+    let direction = Math.random() < 0.5 ? 'en-to-uz' : 'uz-to-en';
+    if (lessonId) {
+      const lesson = await Lesson.findById(lessonId).select('directionMode');
+      if (lesson && lesson.directionMode && lesson.directionMode !== 'mixed') {
+        direction = lesson.directionMode;
+      }
+    }
 
     const uzbekMeanings = randomWord.uzbek
       ? randomWord.uzbek.split(',').map(m => m.trim()).filter(Boolean).slice(0, 3)

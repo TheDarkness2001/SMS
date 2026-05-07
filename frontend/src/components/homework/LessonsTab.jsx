@@ -33,6 +33,13 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const [editItemForm, setEditItemForm] = useState({ english: '', uzbek: '' });
   const [generating, setGenerating] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [directionSettingsOpen, setDirectionSettingsOpen] = useState(null);
+
+  const directionOptions = [
+    { value: 'mixed', label: t('homework.mixed') || 'Mixed', icon: '🔀' },
+    { value: 'en-to-uz', label: t('homework.enToUz') || 'English → Uzbek', icon: '🇬🇧→🇺🇿' },
+    { value: 'uz-to-en', label: t('homework.uzToEn') || 'Uzbek → English', icon: '🇺🇿→🇬🇧' }
+  ];
 
   // Upload / OCR state
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -228,6 +235,24 @@ const LessonsTab = ({ t, mode = 'words' }) => {
     setSelectedLesson(lesson);
     fetchLessonItems(lesson._id);
     setView('items');
+  };
+
+  // Update lesson direction mode
+  const handleUpdateDirectionMode = async (lessonId, directionMode) => {
+    try {
+      await lessonAPI.updateLesson(lessonId, { directionMode });
+      setLessons(prev => prev.map(l => l._id === lessonId ? { ...l, directionMode } : l));
+      setDirectionSettingsOpen(null);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error updating direction mode');
+    }
+  };
+
+  const getDirectionBadge = (mode) => {
+    if (!mode || mode === 'mixed') return { label: t('homework.mixed') || 'Mixed', class: 'direction-mixed' };
+    if (mode === 'en-to-uz') return { label: t('homework.enToUzShort') || 'EN→UZ', class: 'direction-en-uz' };
+    if (mode === 'uz-to-en') return { label: t('homework.uzToEnShort') || 'UZ→EN', class: 'direction-uz-en' };
+    return { label: t('homework.mixed') || 'Mixed', class: 'direction-mixed' };
   };
 
   // Auto-generate classes
@@ -710,33 +735,61 @@ const LessonsTab = ({ t, mode = 'words' }) => {
               {lessons.length === 0 ? (
                 <div className="no-data">{t('homework.noLessons') || 'No lessons yet.'}</div>
               ) : (
-                lessons.map(lesson => (
-                  <div key={lesson._id} className="lesson-item">
-                    <div className="lesson-row">
-                      <div className="lesson-main" onClick={() => selectLesson(lesson)} style={{ cursor: 'pointer' }}>
-                        <span className="lesson-order">{lesson.order}</span>
-                        <span className="lesson-name">{lesson.name}</span>
-                        <span className="lesson-meta">
-                          {isSentences
-                            ? `${lesson.sentenceCount || 0} ${t('sentences.title') || 'Sentences'} · ${lesson.minPassScore}%`
-                            : `${lesson.wordIds?.length || 0}/${lesson.maxWords || 20} ${t('homework.words') || 'words'} · ${lesson.minPassScore}%`
-                          }
-                        </span>
-                      </div>
-                      <div className="lesson-actions">
-                        <button className="btn btn-small btn-edit" onClick={() => startEditLesson(lesson)}>
-                          {t('homework.edit') || 'Edit'}
-                        </button>
-                        <button className="btn btn-small btn-primary" onClick={() => selectLesson(lesson)}>
-                          {isSentences ? (t('sentences.title') || 'Sentences') : (t('homework.words') || 'Words')}
-                        </button>
-                        <button className="btn btn-small btn-delete" onClick={() => handleDeleteLesson(lesson._id)}>
-                          {t('homework.delete') || 'Delete'}
-                        </button>
+                lessons.map(lesson => {
+                  const badge = getDirectionBadge(lesson.directionMode);
+                  const isSettingsOpen = directionSettingsOpen === lesson._id;
+                  return (
+                    <div key={lesson._id} className="lesson-item">
+                      <div className="lesson-row">
+                        <div className="lesson-main" onClick={() => selectLesson(lesson)} style={{ cursor: 'pointer' }}>
+                          <span className="lesson-order">{lesson.order}</span>
+                          <span className="lesson-name">{lesson.name}</span>
+                          <span className="lesson-meta">
+                            {isSentences
+                              ? `${lesson.sentenceCount || 0} ${t('sentences.title') || 'Sentences'} · ${lesson.minPassScore}%`
+                              : `${lesson.wordIds?.length || 0}/${lesson.maxWords || 20} ${t('homework.words') || 'words'} · ${lesson.minPassScore}%`
+                            }
+                          </span>
+                          <span className={`direction-badge ${badge.class}`}>{badge.label}</span>
+                        </div>
+                        <div className="lesson-actions">
+                          <div className="direction-settings-wrapper">
+                            <button
+                              className="btn btn-small btn-settings"
+                              onClick={(e) => { e.stopPropagation(); setDirectionSettingsOpen(isSettingsOpen ? null : lesson._id); }}
+                              title={t('homework.directionSettings') || 'Direction settings'}
+                            >
+                              ⚙️
+                            </button>
+                            {isSettingsOpen && (
+                              <div className="direction-settings-dropdown">
+                                {directionOptions.map(opt => (
+                                  <button
+                                    key={opt.value}
+                                    className={`direction-option ${lesson.directionMode === opt.value ? 'active' : ''}`}
+                                    onClick={() => handleUpdateDirectionMode(lesson._id, opt.value)}
+                                  >
+                                    <span className="direction-option-icon">{opt.icon}</span>
+                                    <span className="direction-option-label">{opt.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <button className="btn btn-small btn-edit" onClick={() => startEditLesson(lesson)}>
+                            {t('homework.edit') || 'Edit'}
+                          </button>
+                          <button className="btn btn-small btn-primary" onClick={() => selectLesson(lesson)}>
+                            {isSentences ? (t('sentences.title') || 'Sentences') : (t('homework.words') || 'Words')}
+                          </button>
+                          <button className="btn btn-small btn-delete" onClick={() => handleDeleteLesson(lesson._id)}>
+                            {t('homework.delete') || 'Delete'}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}

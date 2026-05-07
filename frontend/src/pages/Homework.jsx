@@ -793,21 +793,29 @@ const Homework = () => {
                   <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
                 ) : (
                   <div className="practice-classes-grid">
-                    {levelLessons.map(lesson => (
-                      <div
-                        key={lesson._id}
-                        className="practice-class-card"
-                        onClick={() => selectClassForPractice(lesson._id)}
-                      >
-                        <div className="practice-class-header">
-                          <span className="practice-class-order">{lesson.order}</span>
-                          <span className="practice-class-name">{lesson.name}</span>
+                    {levelLessons.map(lesson => {
+                      const dirBadge = !lesson.directionMode || lesson.directionMode === 'mixed'
+                        ? { label: t('homework.mixed') || 'Mixed', class: 'direction-mixed' }
+                        : lesson.directionMode === 'en-to-uz'
+                          ? { label: t('homework.enToUzShort') || 'EN→UZ', class: 'direction-en-uz' }
+                          : { label: t('homework.uzToEnShort') || 'UZ→EN', class: 'direction-uz-en' };
+                      return (
+                        <div
+                          key={lesson._id}
+                          className="practice-class-card"
+                          onClick={() => selectClassForPractice(lesson._id)}
+                        >
+                          <div className="practice-class-header">
+                            <span className="practice-class-order">{lesson.order}</span>
+                            <span className="practice-class-name">{lesson.name}</span>
+                            <span className={`practice-class-direction ${dirBadge.class}`}>{dirBadge.label}</span>
+                          </div>
+                          <div className="practice-class-meta">
+                            {lesson.wordIds?.length || 0} {t('homework.words') || 'words'}
+                          </div>
                         </div>
-                        <div className="practice-class-meta">
-                          {lesson.wordIds?.length || 0} {t('homework.words') || 'words'}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {levelLessons.length === 0 && (
                       <div className="no-data">{t('homework.noLessonsYet') || 'No classes available yet.'}</div>
                     )}

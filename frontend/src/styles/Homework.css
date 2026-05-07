@@ -1184,6 +1184,100 @@
   color: var(--text-secondary);
 }
 
+/* Direction badge on lesson card */
+.direction-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.direction-badge.direction-mixed {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.direction-badge.direction-en-uz {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.direction-badge.direction-uz-en {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Direction settings */
+.direction-settings-wrapper {
+  position: relative;
+}
+
+.btn-settings {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 4px 8px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-settings:hover {
+  background: #e5e7eb;
+  transform: scale(1.05);
+}
+
+.direction-settings-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 6px;
+  min-width: 180px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.direction-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-align: left;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.direction-option:hover {
+  background: #f3f4f6;
+}
+
+.direction-option.active {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.direction-option-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
 .lesson-words-panel {
   padding: 20px;
   border-top: 1px solid #eee;
@@ -1650,6 +1744,31 @@
   font-size: 13px;
   color: var(--text-secondary);
   padding-left: 38px;
+}
+
+.practice-class-direction {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.practice-class-direction.direction-mixed {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.practice-class-direction.direction-en-uz {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.practice-class-direction.direction-uz-en {
+  background: #d1fae5;
+  color: #065f46;
 }
 
 /* Practice Game Bar */
