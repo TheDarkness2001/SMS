@@ -170,7 +170,13 @@ exports.getGroups = async (req, res) => {
 
         groups = groups.filter(group => {
           const groupSubject = (group.subjectName || group.groupName || group.subject?.name || '').toLowerCase().trim();
-          return languageNamesWithLessons.has(groupSubject);
+          // Flexible match: exact match OR language name is contained in group subject OR vice versa
+          for (const langName of languageNamesWithLessons) {
+            if (groupSubject === langName || groupSubject.includes(langName) || langName.includes(groupSubject)) {
+              return true;
+            }
+          }
+          return false;
         });
       } else {
         // No lessons of this type exist at all, hide all groups
