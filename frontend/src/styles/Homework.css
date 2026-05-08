@@ -1930,6 +1930,23 @@
   margin-left: -8px;
 }
 
+.group-card-main {
+  flex: 1;
+  cursor: pointer;
+}
+
+.group-card-actions {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.group-view-classes-btn {
+  width: 100%;
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
 /* Exam Control (Staff) */
 .exam-control-section {
   padding: 8px 0;
@@ -3237,6 +3254,72 @@
 .modal-close:hover {
   background: #f3f4f6;
   color: #1f2937;
+}
+
+.lesson-preview-modal {
+  max-width: 700px;
+  width: 90%;
+}
+
+.lesson-preview-modal .modal-body {
+  padding: 20px 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.preview-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.preview-words-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-word-item {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.preview-word-number {
+  color: #9ca3af;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.preview-word-en {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.preview-word-uz {
+  color: #4b5563;
+}
+
+.exam-control-buttons .preview-btn {
+  margin-top: 6px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.exam-control-buttons .preview-btn:hover {
+  background: #e5e7eb;
 }
 
 .upload-modal .upload-step {

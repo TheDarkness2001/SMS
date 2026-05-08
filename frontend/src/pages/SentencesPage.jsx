@@ -34,7 +34,6 @@ const SentencesPage = () => {
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState('all');
-  const [groupFilter, setGroupFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
 
   const isStudent = user?.userType === 'student';
@@ -867,35 +866,6 @@ const SentencesPage = () => {
                       );
                     })()}
 
-                    {/* Group Filter */}
-                    {(() => {
-                      const groups = ['all'];
-                      (studentsProgress.groups || []).forEach(g => {
-                        if (g.groupName && !groups.includes(g.groupName)) {
-                          groups.push(g.groupName);
-                        }
-                      });
-                      if (groups.length <= 1) return null;
-                      return (
-                        <div className="filter-chip">
-                          <span className="filter-icon">👥</span>
-                          <div className="filter-content">
-                            <label>{t('sentences.filterByGroup') || 'Class'}</label>
-                            <select
-                              value={groupFilter}
-                              onChange={(e) => setGroupFilter(e.target.value)}
-                              className="filter-select"
-                            >
-                              <option value="all">{t('sentences.allGroups') || 'All Classes'}</option>
-                              {groups.filter(g => g !== 'all').map(group => (
-                                <option key={group} value={group}>{group}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
                     {/* Date Filter */}
                     <div className="filter-chip">
                       <span className="filter-icon">📅</span>
@@ -940,8 +910,7 @@ const SentencesPage = () => {
                   };
 
                   const filteredGroups = (studentsProgress.groups || [])
-                    .filter(g => subjectFilter === 'all' || g.subjectName === subjectFilter)
-                    .filter(g => groupFilter === 'all' || g.groupName === groupFilter);
+                    .filter(g => subjectFilter === 'all' || g.subjectName === subjectFilter);
 
                   const groupsWithStudents = filteredGroups.map(group => ({
                     ...group,

@@ -36,7 +36,6 @@ const Homework = () => {
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState('all');
-  const [groupFilter, setGroupFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
 
   const isStudent = user?.userType === 'student';
@@ -1165,41 +1164,12 @@ const Homework = () => {
                             <label>{t('homework.filterBySubject') || 'Subject'}</label>
                             <select
                               value={subjectFilter}
-                              onChange={(e) => { setSubjectFilter(e.target.value); setGroupFilter('all'); }}
+                              onChange={(e) => setSubjectFilter(e.target.value)}
                               className="filter-select"
                             >
                               <option value="all">{t('homework.allSubjects') || 'All Subjects'}</option>
                               {subjects.filter(s => s !== 'all').map(subject => (
                                 <option key={subject} value={subject}>{subject}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Group Filter */}
-                    {(() => {
-                      const groups = ['all'];
-                      (studentsProgress.groups || []).forEach(g => {
-                        if (g.groupName && !groups.includes(g.groupName)) {
-                          groups.push(g.groupName);
-                        }
-                      });
-                      if (groups.length <= 1) return null;
-                      return (
-                        <div className="filter-chip">
-                          <span className="filter-icon">👥</span>
-                          <div className="filter-content">
-                            <label>{t('homework.filterByGroup') || 'Class'}</label>
-                            <select
-                              value={groupFilter}
-                              onChange={(e) => setGroupFilter(e.target.value)}
-                              className="filter-select"
-                            >
-                              <option value="all">{t('homework.allGroups') || 'All Classes'}</option>
-                              {groups.filter(g => g !== 'all').map(grp => (
-                                <option key={grp} value={grp}>{grp}</option>
                               ))}
                             </select>
                           </div>
@@ -1251,8 +1221,7 @@ const Homework = () => {
                   };
 
                   const filteredGroups = (studentsProgress.groups || [])
-                    .filter(g => subjectFilter === 'all' || g.subjectName === subjectFilter)
-                    .filter(g => groupFilter === 'all' || g.groupName === groupFilter);
+                    .filter(g => subjectFilter === 'all' || g.subjectName === subjectFilter);
 
                   const groupsWithStudents = filteredGroups.map(group => ({
                     ...group,
