@@ -55,6 +55,18 @@ const LessonsTab = ({ t, mode = 'words' }) => {
     fetchLanguages();
   }, []);
 
+  // Close direction settings dropdown when clicking outside
+  useEffect(() => {
+    if (!directionSettingsOpen) return;
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.direction-settings-wrapper')) {
+        setDirectionSettingsOpen(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [directionSettingsOpen]);
+
   const fetchLanguages = async () => {
     setLoading(true);
     try {
