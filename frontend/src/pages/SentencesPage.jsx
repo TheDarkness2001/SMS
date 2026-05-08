@@ -34,7 +34,8 @@ const SentencesPage = () => {
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState('all');
-    const [dateFilter, setDateFilter] = useState('');
+  const [groupFilter, setGroupFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
 
   const isStudent = user?.userType === 'student';
 
@@ -835,50 +836,90 @@ const SentencesPage = () => {
             ) : (
               <div className="progress-flat-container">
                 {/* Filters */}
-                <div className="filters-bar">
-                  {/* Subject Filter */}
-                  {(() => {
-                    const subjects = ['all'];
-                    (studentsProgress.groups || []).forEach(g => {
-                      if (g.subjectName && !subjects.includes(g.subjectName)) {
-                        subjects.push(g.subjectName);
-                      }
-                    });
-                    if (subjects.length <= 1) return null;
-                    return (
-                      <div className="filter-item">
-                        <label>{t('sentences.filterBySubject') || 'Subject:'}</label>
-                        <select
-                          value={subjectFilter}
-                          onChange={(e) => setSubjectFilter(e.target.value)}
-                          className="subject-filter-select"
-                        >
-                          <option value="all">{t('sentences.allSubjects') || 'All Subjects'}</option>
-                          {subjects.filter(s => s !== 'all').map(subject => (
-                            <option key={subject} value={subject}>{subject}</option>
-                          ))}
-                        </select>
-                      </div>
-                    );
-                  })()}
+                <div className="filters-bar-modern">
+                  <div className="filters-row">
+                    {/* Subject Filter */}
+                    {(() => {
+                      const subjects = ['all'];
+                      (studentsProgress.groups || []).forEach(g => {
+                        if (g.subjectName && !subjects.includes(g.subjectName)) {
+                          subjects.push(g.subjectName);
+                        }
+                      });
+                      if (subjects.length <= 1) return null;
+                      return (
+                        <div className="filter-chip">
+                          <span className="filter-icon">📚</span>
+                          <div className="filter-content">
+                            <label>{t('sentences.filterBySubject') || 'Subject'}</label>
+                            <select
+                              value={subjectFilter}
+                              onChange={(e) => setSubjectFilter(e.target.value)}
+                              className="filter-select"
+                            >
+                              <option value="all">{t('sentences.allSubjects') || 'All Subjects'}</option>
+                              {subjects.filter(s => s !== 'all').map(subject => (
+                                <option key={subject} value={subject}>{subject}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
-                  {/* Date Filter */}
-                  <div className="filter-item">
-                    <label>{t('sentences.filterByDate') || 'Date:'}</label>
-                    <input
-                      type="date"
-                      value={dateFilter}
-                      onChange={(e) => setDateFilter(e.target.value)}
-                      className="date-filter-input"
-                    />
-                    {dateFilter && (
-                      <button
-                        className="btn btn-small btn-secondary"
-                        onClick={() => setDateFilter('')}
-                      >
-                        {t('sentences.clear') || 'Clear'}
-                      </button>
-                    )}
+                    {/* Group Filter */}
+                    {(() => {
+                      const groups = ['all'];
+                      (studentsProgress.groups || []).forEach(g => {
+                        if (g.groupName && !groups.includes(g.groupName)) {
+                          groups.push(g.groupName);
+                        }
+                      });
+                      if (groups.length <= 1) return null;
+                      return (
+                        <div className="filter-chip">
+                          <span className="filter-icon">👥</span>
+                          <div className="filter-content">
+                            <label>{t('sentences.filterByGroup') || 'Class'}</label>
+                            <select
+                              value={groupFilter}
+                              onChange={(e) => setGroupFilter(e.target.value)}
+                              className="filter-select"
+                            >
+                              <option value="all">{t('sentences.allGroups') || 'All Classes'}</option>
+                              {groups.filter(g => g !== 'all').map(group => (
+                                <option key={group} value={group}>{group}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Date Filter */}
+                    <div className="filter-chip">
+                      <span className="filter-icon">📅</span>
+                      <div className="filter-content">
+                        <label>{t('sentences.filterByDate') || 'Date'}</label>
+                        <div className="filter-date-wrap">
+                          <input
+                            type="date"
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            className="filter-date-input"
+                          />
+                          {dateFilter && (
+                            <button
+                              className="filter-clear-btn"
+                              onClick={() => setDateFilter('')}
+                              title={t('sentences.clear') || 'Clear'}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -898,9 +939,9 @@ const SentencesPage = () => {
                     return students.filter(s => isSameDay(s.lastActivityDate, dateFilter));
                   };
 
-                  const filteredGroups = subjectFilter === 'all'
-                    ? (studentsProgress.groups || [])
-                    : (studentsProgress.groups || []).filter(g => g.subjectName === subjectFilter);
+                  const filteredGroups = (studentsProgress.groups || [])
+                    .filter(g => subjectFilter === 'all' || g.subjectName === subjectFilter)
+                    .filter(g => groupFilter === 'all' || g.groupName === groupFilter);
 
                   const groupsWithStudents = filteredGroups.map(group => ({
                     ...group,
