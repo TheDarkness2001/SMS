@@ -55,12 +55,28 @@ const EditStudent = () => {
         // Convert subjects array to comma-separated string for the form
         const subjectsString = student.subjects ? student.subjects.join(', ') : '';
         
-        // Handle payment subjects - if they exist, use them, otherwise initialize with empty array
-        const paymentSubjects = (student.subjectPayments && student.subjectPayments.length > 0) 
-          ? student.subjectPayments 
-          : (student.paymentSubjects && student.paymentSubjects.length > 0)
-            ? student.paymentSubjects
-            : [{ subject: '', amount: '' }];
+        // Build payment subjects from student's enrolled subjects
+        // Look up amounts from existing payment configs, or use defaults
+        const defaultAmounts = {
+          'mathematics': 150, 'physics': 140, 'chemistry': 130,
+          'biology': 130, 'english': 120, 'history': 110,
+          'geography': 110, 'computer science': 160,
+          'it': 300, 'art': 100, 'music': 100
+        };
+        const existingPayments = (student.subjectPayments || []).concat(student.paymentSubjects || []);
+        const enrolledSubjects = student.subjects || [];
+        
+        const paymentSubjects = enrolledSubjects.length > 0
+          ? enrolledSubjects.map(subject => {
+              const existing = existingPayments.find(p => 
+                p.subject && p.subject.toLowerCase().trim() === subject.toLowerCase().trim()
+              );
+              return {
+                subject: subject,
+                amount: existing ? existing.amount : (defaultAmounts[subject.toLowerCase().trim()] || 100)
+              };
+            })
+          : [{ subject: '', amount: '' }];
         
         setFormData({
           studentId: student.studentId || '',
