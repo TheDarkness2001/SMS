@@ -36,9 +36,9 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const [directionSettingsOpen, setDirectionSettingsOpen] = useState(null);
 
   const directionOptions = [
-    { value: 'mixed', label: t('homework.mixed') || 'Mixed', icon: '🔀' },
-    { value: 'en-to-uz', label: t('homework.enToUz') || 'English → Uzbek', icon: '🇬🇧→🇺🇿' },
-    { value: 'uz-to-en', label: t('homework.uzToEn') || 'Uzbek → English', icon: '🇺🇿→🇬🇧' }
+    { value: 'mixed', label: t('homework.mixed') || 'Mixed' },
+    { value: 'en-to-uz', label: 'EN → UZ' },
+    { value: 'uz-to-en', label: 'UZ → EN' }
   ];
 
   // Upload / OCR state
@@ -262,8 +262,8 @@ const LessonsTab = ({ t, mode = 'words' }) => {
 
   const getDirectionBadge = (mode) => {
     if (!mode || mode === 'mixed') return { label: t('homework.mixed') || 'Mixed', class: 'direction-mixed' };
-    if (mode === 'en-to-uz') return { label: t('homework.enToUzShort') || 'EN→UZ', class: 'direction-en-uz' };
-    if (mode === 'uz-to-en') return { label: t('homework.uzToEnShort') || 'UZ→EN', class: 'direction-uz-en' };
+    if (mode === 'en-to-uz') return { label: 'EN → UZ', class: 'direction-en-uz' };
+    if (mode === 'uz-to-en') return { label: 'UZ → EN', class: 'direction-uz-en' };
     return { label: t('homework.mixed') || 'Mixed', class: 'direction-mixed' };
   };
 
@@ -781,8 +781,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                                     className={`direction-option ${lesson.directionMode === opt.value ? 'active' : ''}`}
                                     onClick={() => handleUpdateDirectionMode(lesson._id, opt.value)}
                                   >
-                                    <span className="direction-option-icon">{opt.icon}</span>
-                                    <span className="direction-option-label">{opt.label}</span>
+                                    {opt.label}
                                   </button>
                                 ))}
                               </div>

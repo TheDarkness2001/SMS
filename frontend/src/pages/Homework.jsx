@@ -797,8 +797,8 @@ const Homework = () => {
                       const dirBadge = !lesson.directionMode || lesson.directionMode === 'mixed'
                         ? { label: t('homework.mixed') || 'Mixed', class: 'direction-mixed' }
                         : lesson.directionMode === 'en-to-uz'
-                          ? { label: t('homework.enToUzShort') || 'EN→UZ', class: 'direction-en-uz' }
-                          : { label: t('homework.uzToEnShort') || 'UZ→EN', class: 'direction-uz-en' };
+                          ? { label: 'EN → UZ', class: 'direction-en-uz' }
+                          : { label: 'UZ → EN', class: 'direction-uz-en' };
                       return (
                         <div
                           key={lesson._id}
