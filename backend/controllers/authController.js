@@ -216,7 +216,14 @@ exports.getMe = async (req, res) => {
       res.status(200).json({
         success: true,
         data: {
-          ...teacher.toObject(),
+          id: teacher._id,
+          name: teacher.name,
+          email: teacher.email,
+          role: teacher.role,
+          branchId: teacher.branchId,
+          permissions: teacher.permissions,
+          profileImage: teacher.profileImage,
+          teacherId: teacher.teacherId,
           userType: 'teacher'
         }
       });
@@ -225,7 +232,12 @@ exports.getMe = async (req, res) => {
       res.status(200).json({
         success: true,
         data: {
-          ...student.toObject(),
+          id: student._id,
+          name: student.name,
+          email: student.email,
+          branchId: student.branchId,
+          studentId: student.studentId,
+          profileImage: student.profileImage,
           userType: 'student'
         }
       });

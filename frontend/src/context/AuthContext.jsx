@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -19,9 +19,6 @@ export const AuthProvider = ({ children }) => {
     // Check if user is logged in by verifying token
     const token = sessionStorage.getItem('token');
     if (token) {
-      // Set token for axios requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       // Get user info
       fetchUser();
     } else {
@@ -31,12 +28,14 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get('/api/auth/me');
-      setUser(response.data.data);
+      const response = await api.get('/auth/me');
+      const userData = response.data.data;
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
     } catch (error) {
       console.error('Error fetching user:', error);
       sessionStorage.removeItem('token');
-      delete axios.defaults.headers.common['Authorization'];
+      sessionStorage.removeItem('user');
       setUser(null);
     } finally {
       setLoading(false);
@@ -46,9 +45,9 @@ export const AuthProvider = ({ children }) => {
   const loginUser = async (email, password, userType = 'teacher') => {
     try {
       // Use specific endpoint based on user type
-      const endpoint = userType === 'teacher' ? '/api/auth/teacher/login' : '/api/auth/student/login';
+      const endpoint = userType === 'teacher' ? '/auth/teacher/login' : '/auth/student/login';
       
-      const response = await axios.post(endpoint, {
+      const response = await api.post(endpoint, {
         email,
         password
       });
@@ -56,7 +55,6 @@ export const AuthProvider = ({ children }) => {
       const { token, user: userData } = response.data.data;
       
       sessionStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
       
       return { success: true, user: userData };
@@ -67,7 +65,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     sessionStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
+    sessionStorage.removeItem('user');
     setUser(null);
   };
 
