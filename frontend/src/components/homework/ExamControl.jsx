@@ -274,12 +274,18 @@ const ExamControl = ({ t, noExam = false }) => {
       );
     }
     if (selectedLanguage && (view === 'levels' || view === 'classes')) {
-      items.push(
-        <span key="sep2" className="breadcrumb-sep">/</span>,
-        <button key="lang" className="breadcrumb-item" onClick={() => setView('levels')}>
-          {selectedLanguage.name}
-        </button>
-      );
+      const langName = selectedLanguage.name?.trim();
+      const groupName = selectedGroup?.groupName?.trim();
+      if (langName && groupName && langName.toLowerCase() === groupName.toLowerCase()) {
+        // Skip language breadcrumb if it duplicates group name
+      } else {
+        items.push(
+          <span key="sep2" className="breadcrumb-sep">/</span>,
+          <button key="lang" className="breadcrumb-item" onClick={() => setView('levels')}>
+            {selectedLanguage.name}
+          </button>
+        );
+      }
     }
     if (selectedLevel && (view === 'classes' || view === 'groupClasses')) {
       items.push(
