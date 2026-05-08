@@ -700,10 +700,24 @@ const ExamControl = ({ t, noExam = false }) => {
               ) : previewData ? (
                 <div className="lesson-preview-content">
                   <div className="preview-meta">
-                    <span>{t('homework.words') || 'Words'}: {previewData.words?.length || 0}</span>
+                    {previewData.sentences ? (
+                      <span>{t('sentences.title') || 'Sentences'}: {previewData.sentences?.length || 0}</span>
+                    ) : (
+                      <span>{t('homework.words') || 'Words'}: {previewData.words?.length || 0}</span>
+                    )}
                     <span>{t('homework.order') || 'Order'}: {previewData.lesson?.order}</span>
                   </div>
-                  {previewData.words && previewData.words.length > 0 ? (
+                  {previewData.sentences && previewData.sentences.length > 0 ? (
+                    <div className="preview-words-list">
+                      {previewData.sentences.map((sentence, idx) => (
+                        <div key={sentence._id || idx} className="preview-word-item">
+                          <span className="preview-word-number">{idx + 1}.</span>
+                          <span className="preview-word-en">{sentence.english}</span>
+                          <span className="preview-word-uz">{sentence.uzbek}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : previewData.words && previewData.words.length > 0 ? (
                     <div className="preview-words-list">
                       {previewData.words.map((word, idx) => (
                         <div key={word._id || idx} className="preview-word-item">
@@ -714,7 +728,12 @@ const ExamControl = ({ t, noExam = false }) => {
                       ))}
                     </div>
                   ) : (
-                    <div className="no-data">{t('homework.noWords') || 'No words available.'}</div>
+                    <div className="no-data">
+                      {previewData.sentences
+                        ? (t('sentences.noSentences') || 'No sentences available.')
+                        : (t('homework.noWords') || 'No words available.')
+                      }
+                    </div>
                   )}
                 </div>
               ) : (

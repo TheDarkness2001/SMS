@@ -95,7 +95,7 @@ exports.getAllLessons = async (req, res) => {
   }
 };
 
-// Get single lesson with words
+// Get single lesson with words or sentences
 exports.getLesson = async (req, res) => {
   try {
     const { id } = req.params;
@@ -107,11 +107,18 @@ exports.getLesson = async (req, res) => {
       });
     }
 
-    const words = await Word.find({ _id: { $in: lesson.wordIds } });
+    let data = { lesson };
+    if (lesson.type === 'sentences') {
+      const sentences = await Sentence.find({ lessonId: lesson._id });
+      data.sentences = sentences;
+    } else {
+      const words = await Word.find({ _id: { $in: lesson.wordIds } });
+      data.words = words;
+    }
 
     res.json({
       success: true,
-      data: { lesson, words }
+      data
     });
   } catch (error) {
     console.error('Get lesson error:', error);
