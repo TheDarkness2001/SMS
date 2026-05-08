@@ -159,18 +159,27 @@ exports.getGroups = async (req, res) => {
         lessonFilter.$or = [{ type: 'words' }, { type: { $exists: false } }];
       }
       const lessons = await Lesson.find(lessonFilter).select('levelId').lean();
-      const levelIds = [...new Set(lessons.map(l => l.levelId.toString()))];
+      const levelIds = [...new Set(lessons.map(l => l.levelId?.toString()).filter(Boolean))];
+
+      console.log('[ExamGroupController] lessonType filter:', lessonType);
+      console.log('[ExamGroupController] Lessons found:', lessons.length);
+      console.log('[ExamGroupController] Unique levelIds:', levelIds.length);
 
       if (levelIds.length > 0) {
         const levels = await Level.find({ _id: { $in: levelIds } }).select('languageId').lean();
-        const languageIds = [...new Set(levels.map(l => l.languageId.toString()))];
+        const languageIds = [...new Set(levels.map(l => l.languageId?.toString()).filter(Boolean))];
 
         const languages = await Language.find({ _id: { $in: languageIds } }).select('name').lean();
         const languageNamesWithLessons = new Set(languages.map(l => l.name.toLowerCase().trim()));
 
-        groups = groups.filter(group => {
+        console.log('[ExamGroupController] Levels found:', levels.length);
+        console.log('[ExamGroupController] Languages found:', languages.length);
+        console.log('[ExamGroupController] Language names:', [...languageNamesWithLessons]);
+        console.log('[ExamGroupController] Groups before filter:', groups.length);
+        console.log('[ExamGroupController] Group subjects:', groups.map(g => ({ groupName: g.groupName, subjectName: g.subjectName, subject: g.subject?.name })));
+
+        const filteredGroups = groups.filter(group => {
           const groupSubject = (group.subjectName || group.groupName || group.subject?.name || '').toLowerCase().trim();
-          // Flexible match: exact match OR language name is contained in group subject OR vice versa
           for (const langName of languageNamesWithLessons) {
             if (groupSubject === langName || groupSubject.includes(langName) || langName.includes(groupSubject)) {
               return true;
@@ -178,9 +187,25 @@ exports.getGroups = async (req, res) => {
           }
           return false;
         });
+
+        console.log('[ExamGroupController] Groups after filter:', filteredGroups.length);
+
+        // For founders: if filter removes ALL groups, fallback to showing all groups with a warning
+        if (filteredGroups.length === 0 && userRole === 'founder') {
+          console.log('[ExamGroupController] FOUNDER FALLBACK: filter removed all groups, showing all groups instead');
+          // Keep original documents, just mark them
+          groups.forEach(g => { g._unmatchedSubject = true; });
+        } else {
+          groups = filteredGroups;
+        }
       } else {
-        // No lessons of this type exist at all, hide all groups
-        groups = [];
+        console.log('[ExamGroupController] No lessons found for type:', lessonType);
+        // For founders: if no lessons exist, still show all groups
+        if (userRole === 'founder') {
+          console.log('[ExamGroupController] FOUNDER FALLBACK: no lessons exist, showing all groups');
+        } else {
+          groups = [];
+        }
       }
     }
 
