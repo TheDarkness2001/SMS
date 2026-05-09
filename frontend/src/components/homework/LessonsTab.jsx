@@ -34,6 +34,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const [generating, setGenerating] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [directionSettingsOpen, setDirectionSettingsOpen] = useState(null);
+  const [itemSearch, setItemSearch] = useState('');
 
   const directionOptions = [
     { value: 'mixed', label: t('homework.mixed') || 'Mixed' },
@@ -245,6 +246,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
 
   const selectLesson = (lesson) => {
     setSelectedLesson(lesson);
+    setItemSearch('');
     fetchLessonItems(lesson._id);
     setView('items');
   };
@@ -482,7 +484,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const renderBreadcrumb = () => {
     const items = [];
     items.push(
-      <button key="lang" className="breadcrumb-item" onClick={() => setView('languages')}>
+      <button key="lang" className="breadcrumb-item" onClick={() => { setView('languages'); setItemSearch(''); }}>
         {t('homework.languages') || 'Languages'}
       </button>
     );
@@ -497,7 +499,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
     if (selectedLevel && (view === 'lessons' || view === 'items')) {
       items.push(
         <span key="sep2" className="breadcrumb-sep">/</span>,
-        <button key="les" className="breadcrumb-item" onClick={() => setView('lessons')}>
+        <button key="les" className="breadcrumb-item" onClick={() => { setView('lessons'); setItemSearch(''); }}>
           {selectedLevel.name}
         </button>
       );
@@ -840,6 +842,26 @@ const LessonsTab = ({ t, mode = 'words' }) => {
             </div>
           </form>
 
+          {/* Search Filter */}
+          <div className="items-search-bar">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder={isSentences
+                ? (t('sentences.searchSentences') || 'Search sentences...')
+                : (t('homework.searchWords') || 'Search words...')
+              }
+              value={itemSearch}
+              onChange={(e) => setItemSearch(e.target.value)}
+              className="items-search-input"
+            />
+            {itemSearch && (
+              <button className="search-clear-btn" onClick={() => setItemSearch('')} title={t('homework.clear') || 'Clear'}>
+                ×
+              </button>
+            )}
+          </div>
+
           {duplicateWarning && (
             <div className="duplicate-warning">
               <div className="duplicate-warning-icon">⚠️</div>
@@ -868,7 +890,11 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {lessonItems.map((item, idx) => (
+                  {lessonItems.filter(item => {
+                    const q = itemSearch.trim().toLowerCase();
+                    if (!q) return true;
+                    return (item.english || '').toLowerCase().includes(q) || (item.uzbek || '').toLowerCase().includes(q);
+                  }).map((item, idx) => (
                     <tr key={item._id}>
                       {editingItem === item._id ? (
                         <>
@@ -919,7 +945,11 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                   ))}
                 </tbody>
               </table>
-              {lessonItems.length === 0 && (
+              {lessonItems.filter(item => {
+                const q = itemSearch.trim().toLowerCase();
+                if (!q) return true;
+                return (item.english || '').toLowerCase().includes(q) || (item.uzbek || '').toLowerCase().includes(q);
+              }).length === 0 && (
                 <div className="no-data">{isSentences ? (t('sentences.noSentences') || 'No sentences in this lesson yet.') : (t('homework.noWordsInLesson') || 'No words in this lesson yet.')}</div>
               )}
             </div>

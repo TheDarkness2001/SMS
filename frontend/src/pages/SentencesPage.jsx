@@ -36,6 +36,13 @@ const SentencesPage = () => {
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
 
+  // Student detail modal state
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailStudent, setDetailStudent] = useState(null);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailTab, setDetailTab] = useState('words');
+
   const isStudent = user?.userType === 'student';
 
   const isAdmin = (() => {
@@ -496,6 +503,30 @@ const SentencesPage = () => {
     } catch (error) {
       console.error('Error resetting progress:', error);
     }
+  };
+
+  const handleViewDetails = async (student) => {
+    setDetailStudent(student);
+    setDetailModalOpen(true);
+    setDetailLoading(true);
+    setDetailData(null);
+    setDetailTab('words');
+    try {
+      const res = await homeworkAPI.getStudentLessonProgress(student._id);
+      if (res.data.success) {
+        setDetailData(res.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching student lesson progress:', error);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const closeDetailModal = () => {
+    setDetailModalOpen(false);
+    setDetailStudent(null);
+    setDetailData(null);
   };
 
   // Build tabs
@@ -982,6 +1013,13 @@ const SentencesPage = () => {
                                     </td>
                                     <td className="actions">
                                       <button
+                                        onClick={() => handleViewDetails(student)}
+                                        className="btn btn-small btn-primary"
+                                        style={{ marginRight: '6px' }}
+                                      >
+                                        {t('sentences.viewDetails') || 'View Details'}
+                                      </button>
+                                      <button
                                         onClick={() => handleResetProgress(student._id)}
                                         className="btn btn-small btn-delete"
                                       >
@@ -1049,6 +1087,13 @@ const SentencesPage = () => {
                                     </td>
                                     <td className="actions">
                                       <button
+                                        onClick={() => handleViewDetails(student)}
+                                        className="btn btn-small btn-primary"
+                                        style={{ marginRight: '6px' }}
+                                      >
+                                        {t('sentences.viewDetails') || 'View Details'}
+                                      </button>
+                                      <button
                                         onClick={() => handleResetProgress(student._id)}
                                         className="btn btn-small btn-delete"
                                       >
@@ -1070,6 +1115,115 @@ const SentencesPage = () => {
           </div>
         )}
       </div>
+
+      {/* STUDENT DETAIL MODAL */}
+      {detailModalOpen && detailStudent && (
+        <div className="modal-overlay" onClick={closeDetailModal}>
+          <div className="modal-content student-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{detailStudent.name || 'Student'} — {t('sentences.classProgress') || 'Class Progress'}</h3>
+              <button className="modal-close" onClick={closeDetailModal}>×</button>
+            </div>
+            {detailLoading ? (
+              <div className="loading-state">{t('sentences.loading') || 'Loading...'}</div>
+            ) : detailData ? (
+              <div className="detail-modal-body">
+                {/* Tab Switch */}
+                <div className="detail-tabs">
+                  <button className={`detail-tab ${detailTab === 'words' ? 'active' : ''}`} onClick={() => setDetailTab('words')}>
+                    {t('homework.words') || 'Words'}
+                  </button>
+                  <button className={`detail-tab ${detailTab === 'sentences' ? 'active' : ''}`} onClick={() => setDetailTab('sentences')}>
+                    {t('sentences.title') || 'Sentences'}
+                  </button>
+                </div>
+
+                {detailTab === 'words' && (
+                  <div className="detail-section">
+                    {detailData.wordLessons?.filter(l => l.practiceAttempts > 0 || l.examAttempts > 0 || l.wordsTotal > 0).length === 0 ? (
+                      <div className="no-data">{t('sentences.noWordProgress') || 'No word class progress yet.'}</div>
+                    ) : (
+                      <table className="detail-table">
+                        <thead>
+                          <tr>
+                            <th>{t('sentences.level') || 'Level'}</th>
+                            <th>{t('sentences.class') || 'Class'}</th>
+                            <th>{t('sentences.practiceAttempts') || 'Practice'}</th>
+                            <th>{t('sentences.practiceCorrect') || 'Correct'}</th>
+                            <th>{t('sentences.practiceAccuracy') || 'Practice %'}</th>
+                            <th>{t('sentences.examAttempts') || 'Exams'}</th>
+                            <th>{t('sentences.bestScore') || 'Best Score'}</th>
+                            <th>{t('sentences.memorization') || 'Memorized'}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {detailData.wordLessons?.filter(l => l.practiceAttempts > 0 || l.examAttempts > 0 || l.wordsTotal > 0).map((lesson, idx) => (
+                            <tr key={idx}>
+                              <td>{lesson.levelName}</td>
+                              <td><strong>{lesson.lessonName}</strong></td>
+                              <td>{lesson.practiceAttempts}</td>
+                              <td>{lesson.practiceCorrect}</td>
+                              <td>
+                                <span className={`progress-badge ${lesson.practiceAccuracy >= 70 ? 'good' : lesson.practiceAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                  {lesson.practiceAccuracy}%
+                                </span>
+                              </td>
+                              <td>{lesson.examAttempts}</td>
+                              <td>
+                                <span className={`progress-badge ${lesson.bestExamScore >= 70 ? 'good' : lesson.bestExamScore >= 50 ? 'medium' : 'low'}`}>
+                                  {lesson.bestExamScore}%
+                                </span>
+                              </td>
+                              <td>{lesson.wordsMemorized}/{lesson.wordsTotal} ({lesson.memorizationPercent}%)</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+
+                {detailTab === 'sentences' && (
+                  <div className="detail-section">
+                    {detailData.sentenceLessons?.filter(l => l.attempts > 0).length === 0 ? (
+                      <div className="no-data">{t('sentences.noSentenceProgress') || 'No sentence class progress yet.'}</div>
+                    ) : (
+                      <table className="detail-table">
+                        <thead>
+                          <tr>
+                            <th>{t('sentences.level') || 'Level'}</th>
+                            <th>{t('sentences.class') || 'Class'}</th>
+                            <th>{t('sentences.attempts') || 'Attempts'}</th>
+                            <th>{t('sentences.correct') || 'Correct'}</th>
+                            <th>{t('sentences.accuracy') || 'Accuracy'}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {detailData.sentenceLessons?.filter(l => l.attempts > 0).map((lesson, idx) => (
+                            <tr key={idx}>
+                              <td>{lesson.levelName}</td>
+                              <td><strong>{lesson.lessonName}</strong></td>
+                              <td>{lesson.attempts}</td>
+                              <td>{lesson.correctCount}</td>
+                              <td>
+                                <span className={`progress-badge ${lesson.accuracy >= 70 ? 'good' : lesson.accuracy >= 50 ? 'medium' : 'low'}`}>
+                                  {lesson.accuracy}%
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="no-data">{t('sentences.noData') || 'No data available.'}</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

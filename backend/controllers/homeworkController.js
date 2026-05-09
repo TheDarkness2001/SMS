@@ -8,6 +8,7 @@ const Student = require('../models/Student');
 const ExamGroup = require('../models/ExamGroup');
 const StudentVocabProgress = require('../models/StudentVocabProgress');
 const StudentSentenceProgress = require('../models/StudentSentenceProgress');
+const Sentence = require('../models/Sentence');
 
 // Get random word for practice
 exports.getRandomWord = async (req, res) => {
@@ -707,6 +708,109 @@ exports.getGroupStudentProgress = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching group student progress',
+      error: error.message
+    });
+  }
+};
+
+// Get per-lesson progress for a specific student (admin view)
+exports.getStudentLessonProgress = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const studentId = new mongoose.Types.ObjectId(id);
+
+    // Fetch all lessons with level info
+    const lessons = await Lesson.find().sort({ levelId: 1, order: 1 }).lean();
+    const levelIds = [...new Set(lessons.map(l => l.levelId.toString()))];
+    const levels = await Level.find({ _id: { $in: levelIds } }).select('name languageId').lean();
+    const levelMap = new Map(levels.map(l => [l._id.toString(), l]));
+    const languageIds = [...new Set(levels.map(l => l.languageId?.toString()).filter(Boolean))];
+    const languages = await Language.find({ _id: { $in: languageIds } }).select('name').lean();
+    const langMap = new Map(languages.map(l => [l._id.toString(), l.name]));
+
+    // Fetch vocab progress for this student
+    const vocabProgress = await StudentVocabProgress.find({ studentId }).lean();
+    const vocabMap = new Map(vocabProgress.map(p => [p.lessonId.toString(), p]));
+
+    // Fetch sentence progress for this student
+    const sentenceProgress = await StudentSentenceProgress.find({ studentId }).lean();
+    // Need to map sentenceIds to lessonIds
+    const sentenceIds = sentenceProgress.map(p => p.sentenceId.toString());
+    const sentences = await Sentence.find({ _id: { $in: sentenceIds } }).select('lessonId').lean();
+    const sentenceLessonMap = new Map(sentences.map(s => [s._id.toString(), s.lessonId?.toString()]));
+
+    // Aggregate sentence progress by lessonId
+    const sentenceByLesson = new Map();
+    for (const p of sentenceProgress) {
+      const lessonId = sentenceLessonMap.get(p.sentenceId.toString());
+      if (!lessonId) continue;
+      if (!sentenceByLesson.has(lessonId)) {
+        sentenceByLesson.set(lessonId, { attempts: 0, correctCount: 0 });
+      }
+      const agg = sentenceByLesson.get(lessonId);
+      agg.attempts += p.attempts || 0;
+      agg.correctCount += p.correctCount || 0;
+    }
+
+    // Build per-lesson data
+    const wordLessons = [];
+    const sentenceLessons = [];
+
+    for (const lesson of lessons) {
+      const level = levelMap.get(lesson.levelId?.toString());
+      const languageName = langMap.get(level?.languageId?.toString()) || '';
+      const levelName = level?.name || '';
+
+      const base = {
+        lessonId: lesson._id.toString(),
+        lessonName: lesson.name,
+        order: lesson.order,
+        levelName,
+        languageName,
+        type: lesson.type
+      };
+
+      if (lesson.type === 'sentences') {
+        const agg = sentenceByLesson.get(lesson._id.toString()) || { attempts: 0, correctCount: 0 };
+        sentenceLessons.push({
+          ...base,
+          attempts: agg.attempts,
+          correctCount: agg.correctCount,
+          accuracy: agg.attempts > 0 ? Math.round((agg.correctCount / agg.attempts) * 100) : 0
+        });
+      } else {
+        const vp = vocabMap.get(lesson._id.toString()) || {
+          practiceAttempts: 0, practiceCorrect: 0, examAttempts: 0, bestExamScore: 0,
+          wordsMemorized: 0, wordsTotal: 0, status: 'locked'
+        };
+        wordLessons.push({
+          ...base,
+          practiceAttempts: vp.practiceAttempts || 0,
+          practiceCorrect: vp.practiceCorrect || 0,
+          practiceAccuracy: (vp.practiceAttempts || 0) > 0 ? Math.round(((vp.practiceCorrect || 0) / vp.practiceAttempts) * 100) : 0,
+          examAttempts: vp.examAttempts || 0,
+          bestExamScore: vp.bestExamScore || 0,
+          wordsMemorized: vp.wordsMemorized || 0,
+          wordsTotal: vp.wordsTotal || 0,
+          memorizationPercent: (vp.wordsTotal || 0) > 0 ? Math.round(((vp.wordsMemorized || 0) / vp.wordsTotal) * 100) : 0,
+          status: vp.status || 'locked'
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        studentId: id,
+        wordLessons,
+        sentenceLessons
+      }
+    });
+  } catch (error) {
+    console.error('Get student lesson progress error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching student lesson progress',
       error: error.message
     });
   }

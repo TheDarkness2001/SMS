@@ -3516,3 +3516,131 @@
     gap: 8px;
   }
 }
+
+/* Items Search Filter */
+.items-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+  padding: 8px 14px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  max-width: 480px;
+}
+
+.items-search-bar .search-icon {
+  font-size: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.items-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  padding: 0;
+}
+
+.items-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.search-clear-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.search-clear-btn:hover {
+  background: var(--background-light);
+  color: var(--danger);
+}
+
+/* Student Detail Modal */
+.student-detail-modal {
+  max-width: 960px;
+  width: 95%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.detail-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.detail-tab {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.detail-tab:hover {
+  color: var(--text-primary);
+  background: var(--background-light);
+}
+
+.detail-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: #eff6ff;
+}
+
+.detail-section {
+  overflow-x: auto;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.detail-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--background-light);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.detail-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.detail-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.detail-table tbody tr:last-child td {
+  border-bottom: none;
+}
