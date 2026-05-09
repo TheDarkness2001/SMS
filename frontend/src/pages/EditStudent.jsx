@@ -73,7 +73,9 @@ const EditStudent = () => {
               );
               return {
                 subject: subject,
-                amount: existing ? existing.amount : (defaultAmounts[subject.toLowerCase().trim()] || 100)
+                amount: existing && existing.amount !== undefined && existing.amount !== null
+                  ? existing.amount
+                  : (defaultAmounts[subject.toLowerCase().trim()] || 100)
               };
             })
           : [{ subject: '', amount: '' }];
@@ -236,7 +238,7 @@ const EditStudent = () => {
       // Filter out empty payment subjects (check if subject AND amount are provided)
       const paymentSubjects = formData.paymentSubjects.filter(ps => {
         const hasSubject = ps.subject && ps.subject.trim() !== '';
-        const hasAmount = ps.amount && ps.amount !== '' && Number(ps.amount) > 0;
+        const hasAmount = ps.amount !== '' && ps.amount !== undefined && ps.amount !== null && !isNaN(Number(ps.amount));
         return hasSubject && hasAmount;
       });
       
