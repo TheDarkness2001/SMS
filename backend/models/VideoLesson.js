@@ -55,7 +55,11 @@ const videoLessonSchema = new mongoose.Schema({
   lessonId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Lesson',
-    default: null
+    default: null,
+    required: false
+    // NOTE: Video Lessons are independent from Words/Sentences lessons.
+    // This field is kept for legacy/optional linkage only. The new flow
+    // does not use it — use the `topic` free-text field instead.
   },
   difficulty: {
     type: String,

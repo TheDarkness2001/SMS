@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { languageAPI, levelAPI, lessonAPI, videoLessonAPI } from '../../utils/api';
+import { languageAPI, levelAPI, videoLessonAPI } from '../../utils/api';
 
 const extractYouTubeId = (url) => {
   if (!url) return '';
@@ -17,7 +17,6 @@ const emptyForm = {
   duration: 0,
   languageId: '',
   levelId: '',
-  lessonId: '',
   difficulty: 'beginner',
   topic: '',
   requireWatchPercent: 70
@@ -27,7 +26,6 @@ const VideoLessonFormModal = ({ editVideo, onClose, onSaved }) => {
   const [form, setForm] = useState(emptyForm);
   const [languages, setLanguages] = useState([]);
   const [levels, setLevels] = useState([]);
-  const [lessons, setLessons] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,7 +39,6 @@ const VideoLessonFormModal = ({ editVideo, onClose, onSaved }) => {
         duration: editVideo.duration || 0,
         languageId: editVideo.languageId?._id || editVideo.languageId || '',
         levelId: editVideo.levelId?._id || editVideo.levelId || '',
-        lessonId: editVideo.lessonId?._id || editVideo.lessonId || '',
         difficulty: editVideo.difficulty || 'beginner',
         topic: editVideo.topic || '',
         requireWatchPercent: editVideo.requireWatchPercent || 70
@@ -67,16 +64,6 @@ const VideoLessonFormModal = ({ editVideo, onClose, onSaved }) => {
     });
   }, [form.languageId]);
 
-  useEffect(() => {
-    if (!form.levelId) {
-      setLessons([]);
-      return;
-    }
-    lessonAPI.getAllLessons(form.levelId).then(res => {
-      if (res.data.success) setLessons(res.data.data.lessons || []);
-    });
-  }, [form.levelId]);
-
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const previewId = extractYouTubeId(form.youtubeUrl);
@@ -92,7 +79,7 @@ const VideoLessonFormModal = ({ editVideo, onClose, onSaved }) => {
     try {
       const payload = {
         ...form,
-        lessonId: form.lessonId || null
+        lessonId: null
       };
       const res = editVideo
         ? await videoLessonAPI.update(editVideo._id, payload)
@@ -133,23 +120,16 @@ const VideoLessonFormModal = ({ editVideo, onClose, onSaved }) => {
           <div className="video-field-row">
             <label className="video-field">
               <span>Language *</span>
-              <select value={form.languageId} onChange={(e) => { set('languageId', e.target.value); set('levelId', ''); set('lessonId', ''); }}>
+              <select value={form.languageId} onChange={(e) => { set('languageId', e.target.value); set('levelId', ''); }}>
                 <option value="">-- Select --</option>
                 {languages.map(l => <option key={l._id} value={l._id}>{l.name}</option>)}
               </select>
             </label>
             <label className="video-field">
               <span>Level *</span>
-              <select value={form.levelId} onChange={(e) => { set('levelId', e.target.value); set('lessonId', ''); }} disabled={!form.languageId}>
+              <select value={form.levelId} onChange={(e) => set('levelId', e.target.value)} disabled={!form.languageId}>
                 <option value="">-- Select --</option>
                 {levels.map(l => <option key={l._id} value={l._id}>{l.name}</option>)}
-              </select>
-            </label>
-            <label className="video-field">
-              <span>Lesson (optional)</span>
-              <select value={form.lessonId} onChange={(e) => set('lessonId', e.target.value)} disabled={!form.levelId}>
-                <option value="">-- None --</option>
-                {lessons.map(l => <option key={l._id} value={l._id}>{l.name}</option>)}
               </select>
             </label>
           </div>

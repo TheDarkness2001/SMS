@@ -412,7 +412,7 @@ const VideoLessons = () => {
                       <th>Title</th>
                       <th>Language</th>
                       <th>Level</th>
-                      <th>Lesson</th>
+                      <th>Topic</th>
                       <th>Difficulty</th>
                       <th>Active</th>
                       <th>Actions</th>
@@ -435,7 +435,7 @@ const VideoLessons = () => {
                         <td className="manage-video-title">{v.title}</td>
                         <td>{v.languageId?.name || '-'}</td>
                         <td>{v.levelId?.name || '-'}</td>
-                        <td>{v.lessonId?.name || '-'}</td>
+                        <td>{v.topic || '-'}</td>
                         <td><span className={`video-card-chip video-card-chip-${v.difficulty || 'easy'}`}>{v.difficulty || 'easy'}</span></td>
                         <td>{v.isActive ? '✅' : '❌'}</td>
                         <td className="manage-video-actions">
