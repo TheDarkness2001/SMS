@@ -22,7 +22,7 @@ const emptyForm = {
   requireWatchPercent: 70
 };
 
-const VideoLessonFormModal = ({ editVideo, onClose, onSaved }) => {
+const VideoLessonFormModal = ({ editVideo, preset, onClose, onSaved }) => {
   const [form, setForm] = useState(emptyForm);
   const [languages, setLanguages] = useState([]);
   const [levels, setLevels] = useState([]);
@@ -43,10 +43,16 @@ const VideoLessonFormModal = ({ editVideo, onClose, onSaved }) => {
         topic: editVideo.topic || '',
         requireWatchPercent: editVideo.requireWatchPercent || 70
       });
+    } else if (preset) {
+      setForm({
+        ...emptyForm,
+        languageId: preset.languageId || '',
+        levelId: preset.levelId || ''
+      });
     } else {
       setForm(emptyForm);
     }
-  }, [editVideo]);
+  }, [editVideo, preset]);
 
   useEffect(() => {
     languageAPI.getAll().then(res => {

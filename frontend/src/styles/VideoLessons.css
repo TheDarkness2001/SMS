@@ -288,6 +288,97 @@
 [data-theme="dark"] .manage-videos-table tbody tr:hover { background: #111827; }
 [data-theme="dark"] .manage-video-title { color: #f3f4f6; }
 
+/* ===== Manage hierarchy (Subjects → Levels → Videos) ===== */
+.manage-hierarchy { width: 100%; }
+
+.manage-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.crumb-btn {
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #374151;
+  font-weight: 500;
+}
+.crumb-btn:hover { background: #e5e7eb; }
+.crumb-active { background: #6366f1; color: #fff; }
+.crumb-active:hover { background: #4f46e5; }
+.crumb-sep { color: #9ca3af; font-size: 18px; }
+
+.manage-add-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.manage-input {
+  flex: 1;
+  min-width: 240px;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+.manage-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+
+.manage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.manage-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: all 0.2s;
+}
+.manage-card:hover { border-color: #6366f1; box-shadow: 0 4px 12px rgba(99,102,241,0.12); }
+.manage-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+.manage-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.manage-card-actions .video-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+[data-theme="dark"] .manage-breadcrumb { background: #1f2937; }
+[data-theme="dark"] .crumb-btn { color: #e5e7eb; }
+[data-theme="dark"] .crumb-btn:hover { background: #374151; }
+[data-theme="dark"] .manage-input {
+  background: #111827;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+[data-theme="dark"] .manage-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+[data-theme="dark"] .manage-card-title { color: #f3f4f6; }
+
 /* ===== Toolbar & layout ===== */
 .video-toolbar {
   display: flex;

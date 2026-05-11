@@ -58,11 +58,29 @@ const VideoLessons = () => {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editVideo, setEditVideo] = useState(null);
+  const [presetVideo, setPresetVideo] = useState(null); // { languageId, levelId } pre-fill for create
   const [testBuilderVideo, setTestBuilderVideo] = useState(null);
 
   // Student Progress (admin tab)
   const [groupProgress, setGroupProgress] = useState([]);
   const [groupProgressLoading, setGroupProgressLoading] = useState(false);
+
+  // ===== Manage tab state (hierarchical: Subjects → Levels → Videos) =====
+  const [manageView, setManageView] = useState('languages'); // languages | levels | videos
+  const [manageLanguages, setManageLanguages] = useState([]);
+  const [manageLevels, setManageLevels] = useState([]);
+  const [manageVideos, setManageVideos] = useState([]);
+  const [manageLanguage, setManageLanguage] = useState(null); // selected language obj
+  const [manageLevel, setManageLevel] = useState(null); // selected level obj
+  const [manageLoading, setManageLoading] = useState(false);
+
+  // Inline create-form state
+  const [newLangName, setNewLangName] = useState('');
+  const [newLevelName, setNewLevelName] = useState('');
+  const [editingLangId, setEditingLangId] = useState(null);
+  const [editingLangName, setEditingLangName] = useState('');
+  const [editingLevelId, setEditingLevelId] = useState(null);
+  const [editingLevelName, setEditingLevelName] = useState('');
 
   // Fetch languages
   useEffect(() => {
@@ -201,8 +219,9 @@ const VideoLessons = () => {
   }, [isAdmin]);
 
   // Fetch all videos for Manage tab
-  const [allVideos, setAllVideos] = useState([]);
-  const [allVideosLoading, setAllVideosLoading] = useState(false);
+  const [allVideos, setAllVideos] = useState([]); // kept for legacy handleDeleteFromManage sync
+    // eslint-disable-next-line no-unused-vars
+    const [allVideosLoading, setAllVideosLoading] = useState(false);
   const loadAllVideos = async () => {
     setAllVideosLoading(true);
     try {
@@ -227,9 +246,130 @@ const VideoLessons = () => {
       await videoLessonAPI.remove(video._id);
       setAllVideos(prev => prev.filter(v => v._id !== video._id));
       setVideos(prev => prev.filter(v => v._id !== video._id));
+      setManageVideos(prev => prev.filter(v => v._id !== video._id));
     } catch (e) {
       alert(e.response?.data?.message || e.message);
     }
+  };
+
+  // ===== Manage tab: Subject (Language) CRUD =====
+  const loadManageLanguages = async () => {
+    setManageLoading(true);
+    try {
+      const res = await languageAPI.getAll();
+      if (res.data.success) setManageLanguages(res.data.data.languages || []);
+    } catch (e) {} finally { setManageLoading(false); }
+  };
+  useEffect(() => {
+    if (activeTab === 'manage' && isAdmin && manageView === 'languages') loadManageLanguages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAdmin, manageView]);
+
+  const handleCreateLanguage = async () => {
+    const name = newLangName.trim();
+    if (!name) return;
+    try {
+      await languageAPI.create({ name });
+      setNewLangName('');
+      loadManageLanguages();
+    } catch (e) {
+      alert(e.response?.data?.message || e.message);
+    }
+  };
+  const handleUpdateLanguage = async (id) => {
+    const name = editingLangName.trim();
+    if (!name) return;
+    try {
+      await languageAPI.update(id, { name });
+      setEditingLangId(null);
+      setEditingLangName('');
+      loadManageLanguages();
+    } catch (e) {
+      alert(e.response?.data?.message || e.message);
+    }
+  };
+  const handleDeleteLanguage = async (id, name) => {
+    if (!window.confirm(`Delete subject "${name}"? This may affect all levels and video lessons inside.`)) return;
+    try {
+      await languageAPI.delete(id);
+      loadManageLanguages();
+    } catch (e) {
+      alert(e.response?.data?.message || e.message);
+    }
+  };
+
+  // ===== Manage tab: Level CRUD =====
+  const loadManageLevels = async (langId) => {
+    setManageLoading(true);
+    try {
+      const res = await levelAPI.getByLanguage(langId);
+      if (res.data.success) {
+        const sorted = (res.data.data.levels || []).sort((a, b) =>
+          (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
+        );
+        setManageLevels(sorted);
+      }
+    } catch (e) {} finally { setManageLoading(false); }
+  };
+  const handleOpenLanguageLevels = async (lang) => {
+    setManageLanguage(lang);
+    setManageView('levels');
+    await loadManageLevels(lang._id);
+  };
+  const handleCreateLevel = async () => {
+    if (!manageLanguage) return;
+    const name = newLevelName.trim();
+    if (!name) return;
+    try {
+      await levelAPI.create({ name, languageId: manageLanguage._id });
+      setNewLevelName('');
+      loadManageLevels(manageLanguage._id);
+    } catch (e) {
+      alert(e.response?.data?.message || e.message);
+    }
+  };
+  const handleUpdateLevel = async (id) => {
+    const name = editingLevelName.trim();
+    if (!name) return;
+    try {
+      await levelAPI.update(id, { name });
+      setEditingLevelId(null);
+      setEditingLevelName('');
+      if (manageLanguage) loadManageLevels(manageLanguage._id);
+    } catch (e) {
+      alert(e.response?.data?.message || e.message);
+    }
+  };
+  const handleDeleteLevel = async (id, name) => {
+    if (!window.confirm(`Delete level "${name}"? This may affect all video lessons inside.`)) return;
+    try {
+      await levelAPI.delete(id);
+      if (manageLanguage) loadManageLevels(manageLanguage._id);
+    } catch (e) {
+      alert(e.response?.data?.message || e.message);
+    }
+  };
+
+  // ===== Manage tab: Videos under selected Level =====
+  const loadManageVideos = async (levelId) => {
+    setManageLoading(true);
+    try {
+      const res = await videoLessonAPI.getAll({ levelId });
+      if (res.data.success) setManageVideos((res.data.data.videoLessons || []).sort(sortByLevel));
+    } catch (e) {} finally { setManageLoading(false); }
+  };
+  const handleOpenLevelVideos = async (level) => {
+    setManageLevel(level);
+    setManageView('videos');
+    await loadManageVideos(level._id);
+  };
+  const handleCreateVideoInLevel = () => {
+    setEditVideo(null);
+    setPresetVideo({
+      languageId: manageLanguage?._id || '',
+      levelId: manageLevel?._id || ''
+    });
+    setFormOpen(true);
   };
 
   return (
@@ -393,64 +533,212 @@ const VideoLessons = () => {
         )}
 
         {activeTab === 'manage' && isAdmin && (
-          <div>
-            <div className="video-toolbar">
-              <h3 className="practice-section-title" style={{ margin: 0 }}>All Video Lessons ({allVideos.length})</h3>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="video-btn video-btn-ghost" onClick={loadAllVideos}>🔄 Refresh</button>
-                <button className="video-btn video-btn-primary" onClick={handleCreate}>+ Add Video Lesson</button>
-              </div>
+          <div className="manage-hierarchy">
+            {/* Breadcrumb */}
+            <div className="manage-breadcrumb">
+              <button
+                className={`crumb-btn ${manageView === 'languages' ? 'crumb-active' : ''}`}
+                onClick={() => { setManageView('languages'); setManageLanguage(null); setManageLevel(null); }}
+              >
+                📚 Subjects
+              </button>
+              {manageLanguage && (
+                <>
+                  <span className="crumb-sep">›</span>
+                  <button
+                    className={`crumb-btn ${manageView === 'levels' ? 'crumb-active' : ''}`}
+                    onClick={() => { setManageView('levels'); setManageLevel(null); }}
+                  >
+                    {manageLanguage.name}
+                  </button>
+                </>
+              )}
+              {manageLevel && (
+                <>
+                  <span className="crumb-sep">›</span>
+                  <button className={`crumb-btn ${manageView === 'videos' ? 'crumb-active' : ''}`}>
+                    {manageLevel.name}
+                  </button>
+                </>
+              )}
             </div>
-            {allVideosLoading ? (
-              <div className="video-empty">Loading...</div>
-            ) : allVideos.length === 0 ? (
-              <div className="video-empty">No video lessons yet. Click "+ Add Video Lesson" to create one.</div>
-            ) : (
-              <div className="manage-videos-table-wrap">
-                <table className="manage-videos-table">
-                  <thead>
-                    <tr>
-                      <th>Thumbnail</th>
-                      <th>Title</th>
-                      <th>Language</th>
-                      <th>Level</th>
-                      <th>Topic</th>
-                      <th>Difficulty</th>
-                      <th>Active</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allVideos.map(v => (
-                      <tr key={v._id}>
-                        <td>
-                          {v.thumbnail || v.youtubeVideoId ? (
-                            <img
-                              src={v.thumbnail || `https://img.youtube.com/vi/${v.youtubeVideoId}/default.jpg`}
-                              alt={v.title}
-                              className="manage-video-thumb"
+
+            {/* LEVEL 1: SUBJECTS (Languages) */}
+            {manageView === 'languages' && (
+              <>
+                <div className="video-toolbar">
+                  <h3 className="practice-section-title" style={{ margin: 0 }}>Subjects ({manageLanguages.length})</h3>
+                  <button className="video-btn video-btn-ghost" onClick={loadManageLanguages}>🔄 Refresh</button>
+                </div>
+                <div className="manage-add-form">
+                  <input
+                    type="text"
+                    className="manage-input"
+                    placeholder="New subject name (e.g. English, History, Math)"
+                    value={newLangName}
+                    onChange={(e) => setNewLangName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateLanguage()}
+                  />
+                  <button className="video-btn video-btn-primary" onClick={handleCreateLanguage}>+ Add Subject</button>
+                </div>
+                {manageLoading ? (
+                  <div className="video-empty">Loading...</div>
+                ) : manageLanguages.length === 0 ? (
+                  <div className="video-empty">No subjects yet. Create one above to get started.</div>
+                ) : (
+                  <div className="manage-grid">
+                    {manageLanguages.map(lang => (
+                      <div key={lang._id} className="manage-card">
+                        {editingLangId === lang._id ? (
+                          <>
+                            <input
+                              type="text"
+                              className="manage-input"
+                              value={editingLangName}
+                              onChange={(e) => setEditingLangName(e.target.value)}
+                              autoFocus
                             />
-                          ) : (
-                            <div className="manage-video-thumb manage-video-thumb-placeholder">▶</div>
-                          )}
-                        </td>
-                        <td className="manage-video-title">{v.title}</td>
-                        <td>{v.languageId?.name || '-'}</td>
-                        <td>{v.levelId?.name || '-'}</td>
-                        <td>{v.topic || '-'}</td>
-                        <td><span className={`video-card-chip video-card-chip-${v.difficulty || 'easy'}`}>{v.difficulty || 'easy'}</span></td>
-                        <td>{v.isActive ? '✅' : '❌'}</td>
-                        <td className="manage-video-actions">
-                          <button className="video-btn video-btn-ghost" onClick={() => { setCurrentVideo(v); setActiveTab('browse'); setView('player'); }} title="Preview">▶</button>
-                          <button className="video-btn video-btn-secondary" onClick={() => handleEdit(v)}>Edit</button>
-                          <button className="video-btn video-btn-accent" onClick={() => setTestBuilderVideo(v)}>Test</button>
-                          <button className="video-btn video-btn-danger" onClick={() => handleDeleteFromManage(v)}>Delete</button>
-                        </td>
-                      </tr>
+                            <div className="manage-card-actions">
+                              <button className="video-btn video-btn-primary" onClick={() => handleUpdateLanguage(lang._id)}>Save</button>
+                              <button className="video-btn video-btn-ghost" onClick={() => { setEditingLangId(null); setEditingLangName(''); }}>Cancel</button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="manage-card-title" onClick={() => handleOpenLanguageLevels(lang)} style={{ cursor: 'pointer' }}>
+                              📚 {lang.name}
+                            </div>
+                            <div className="manage-card-actions">
+                              <button className="video-btn video-btn-primary" onClick={() => handleOpenLanguageLevels(lang)}>Open ›</button>
+                              <button className="video-btn video-btn-secondary" onClick={() => { setEditingLangId(lang._id); setEditingLangName(lang.name); }}>Edit</button>
+                              <button className="video-btn video-btn-danger" onClick={() => handleDeleteLanguage(lang._id, lang.name)}>Delete</button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* LEVEL 2: LEVELS inside a Subject */}
+            {manageView === 'levels' && manageLanguage && (
+              <>
+                <div className="video-toolbar">
+                  <h3 className="practice-section-title" style={{ margin: 0 }}>Levels in {manageLanguage.name} ({manageLevels.length})</h3>
+                  <button className="video-btn video-btn-ghost" onClick={() => loadManageLevels(manageLanguage._id)}>🔄 Refresh</button>
+                </div>
+                <div className="manage-add-form">
+                  <input
+                    type="text"
+                    className="manage-input"
+                    placeholder="New level name (e.g. Blackhole 1, Beginner, Unit 1)"
+                    value={newLevelName}
+                    onChange={(e) => setNewLevelName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateLevel()}
+                  />
+                  <button className="video-btn video-btn-primary" onClick={handleCreateLevel}>+ Add Level</button>
+                </div>
+                {manageLoading ? (
+                  <div className="video-empty">Loading...</div>
+                ) : manageLevels.length === 0 ? (
+                  <div className="video-empty">No levels yet. Create the first level above.</div>
+                ) : (
+                  <div className="manage-grid">
+                    {manageLevels.map(lvl => (
+                      <div key={lvl._id} className="manage-card">
+                        {editingLevelId === lvl._id ? (
+                          <>
+                            <input
+                              type="text"
+                              className="manage-input"
+                              value={editingLevelName}
+                              onChange={(e) => setEditingLevelName(e.target.value)}
+                              autoFocus
+                            />
+                            <div className="manage-card-actions">
+                              <button className="video-btn video-btn-primary" onClick={() => handleUpdateLevel(lvl._id)}>Save</button>
+                              <button className="video-btn video-btn-ghost" onClick={() => { setEditingLevelId(null); setEditingLevelName(''); }}>Cancel</button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="manage-card-title" onClick={() => handleOpenLevelVideos(lvl)} style={{ cursor: 'pointer' }}>
+                              🎯 {lvl.name}
+                            </div>
+                            <div className="manage-card-actions">
+                              <button className="video-btn video-btn-primary" onClick={() => handleOpenLevelVideos(lvl)}>Open ›</button>
+                              <button className="video-btn video-btn-secondary" onClick={() => { setEditingLevelId(lvl._id); setEditingLevelName(lvl.name); }}>Edit</button>
+                              <button className="video-btn video-btn-danger" onClick={() => handleDeleteLevel(lvl._id, lvl.name)}>Delete</button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* LEVEL 3: VIDEOS inside a Level */}
+            {manageView === 'videos' && manageLevel && (
+              <>
+                <div className="video-toolbar">
+                  <h3 className="practice-section-title" style={{ margin: 0 }}>Videos in {manageLevel.name} ({manageVideos.length})</h3>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="video-btn video-btn-ghost" onClick={() => loadManageVideos(manageLevel._id)}>🔄 Refresh</button>
+                    <button className="video-btn video-btn-primary" onClick={handleCreateVideoInLevel}>+ Add Video Lesson</button>
+                  </div>
+                </div>
+                {manageLoading ? (
+                  <div className="video-empty">Loading...</div>
+                ) : manageVideos.length === 0 ? (
+                  <div className="video-empty">No video lessons yet. Click "+ Add Video Lesson" to create one.</div>
+                ) : (
+                  <div className="manage-videos-table-wrap">
+                    <table className="manage-videos-table">
+                      <thead>
+                        <tr>
+                          <th>Thumbnail</th>
+                          <th>Title</th>
+                          <th>Topic</th>
+                          <th>Difficulty</th>
+                          <th>Active</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {manageVideos.map(v => (
+                          <tr key={v._id}>
+                            <td>
+                              {v.thumbnail || v.youtubeVideoId ? (
+                                <img
+                                  src={v.thumbnail || `https://img.youtube.com/vi/${v.youtubeVideoId}/default.jpg`}
+                                  alt={v.title}
+                                  className="manage-video-thumb"
+                                />
+                              ) : (
+                                <div className="manage-video-thumb manage-video-thumb-placeholder">▶</div>
+                              )}
+                            </td>
+                            <td className="manage-video-title">{v.title}</td>
+                            <td>{v.topic || '-'}</td>
+                            <td><span className={`video-card-chip video-card-chip-${v.difficulty || 'easy'}`}>{v.difficulty || 'easy'}</span></td>
+                            <td>{v.isActive ? '✅' : '❌'}</td>
+                            <td className="manage-video-actions">
+                              <button className="video-btn video-btn-ghost" onClick={() => { setCurrentVideo(v); setActiveTab('browse'); setView('player'); }} title="Preview">▶</button>
+                              <button className="video-btn video-btn-secondary" onClick={() => handleEdit(v)}>Edit</button>
+                              <button className="video-btn video-btn-accent" onClick={() => setTestBuilderVideo(v)}>Test</button>
+                              <button className="video-btn video-btn-danger" onClick={() => handleDeleteFromManage(v)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -515,10 +803,13 @@ const VideoLessons = () => {
       {formOpen && (
         <VideoLessonFormModal
           editVideo={editVideo}
-          onClose={() => setFormOpen(false)}
+          preset={presetVideo}
+          onClose={() => { setFormOpen(false); setPresetVideo(null); }}
           onSaved={() => {
             setFormOpen(false);
+            setPresetVideo(null);
             if (view === 'videos') fetchVideos();
+            if (activeTab === 'manage' && manageView === 'videos' && manageLevel) loadManageVideos(manageLevel._id);
           }}
         />
       )}
