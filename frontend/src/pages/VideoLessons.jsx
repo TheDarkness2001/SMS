@@ -534,19 +534,19 @@ const VideoLessons = () => {
 
         {activeTab === 'manage' && isAdmin && (
           <div className="manage-hierarchy">
-            {/* Breadcrumb */}
-            <div className="manage-breadcrumb">
+            {/* Breadcrumb (matches Words/Sentences style) */}
+            <div className="breadcrumb">
               <button
-                className={`crumb-btn ${manageView === 'languages' ? 'crumb-active' : ''}`}
+                className={`breadcrumb-item ${manageView === 'languages' ? 'active' : ''}`}
                 onClick={() => { setManageView('languages'); setManageLanguage(null); setManageLevel(null); }}
               >
                 📚 Subjects
               </button>
               {manageLanguage && (
                 <>
-                  <span className="crumb-sep">›</span>
+                  <span className="breadcrumb-sep">/</span>
                   <button
-                    className={`crumb-btn ${manageView === 'levels' ? 'crumb-active' : ''}`}
+                    className={`breadcrumb-item ${manageView === 'levels' ? 'active' : ''}`}
                     onClick={() => { setManageView('levels'); setManageLevel(null); }}
                   >
                     {manageLanguage.name}
@@ -555,10 +555,8 @@ const VideoLessons = () => {
               )}
               {manageLevel && (
                 <>
-                  <span className="crumb-sep">›</span>
-                  <button className={`crumb-btn ${manageView === 'videos' ? 'crumb-active' : ''}`}>
-                    {manageLevel.name}
-                  </button>
+                  <span className="breadcrumb-sep">/</span>
+                  <span className="breadcrumb-item active">{manageLevel.name}</span>
                 </>
               )}
             </div>
@@ -566,53 +564,69 @@ const VideoLessons = () => {
             {/* LEVEL 1: SUBJECTS (Languages) */}
             {manageView === 'languages' && (
               <>
-                <div className="video-toolbar">
-                  <h3 className="practice-section-title" style={{ margin: 0 }}>Subjects ({manageLanguages.length})</h3>
-                  <button className="video-btn video-btn-ghost" onClick={loadManageLanguages}>🔄 Refresh</button>
-                </div>
-                <div className="manage-add-form">
-                  <input
-                    type="text"
-                    className="manage-input"
-                    placeholder="New subject name (e.g. English, History, Math)"
-                    value={newLangName}
-                    onChange={(e) => setNewLangName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateLanguage()}
-                  />
-                  <button className="video-btn video-btn-primary" onClick={handleCreateLanguage}>+ Add Subject</button>
-                </div>
+                <form className="word-form" onSubmit={(e) => { e.preventDefault(); handleCreateLanguage(); }}>
+                  <h3>Add Subject</h3>
+                  <div className="form-row">
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Subject name (e.g. English, History, Math)"
+                      value={newLangName}
+                      onChange={(e) => setNewLangName(e.target.value)}
+                      required
+                    />
+                    <button type="submit" className="btn btn-primary">Add</button>
+                  </div>
+                </form>
+
                 {manageLoading ? (
-                  <div className="video-empty">Loading...</div>
+                  <div className="loading">Loading...</div>
                 ) : manageLanguages.length === 0 ? (
-                  <div className="video-empty">No subjects yet. Create one above to get started.</div>
+                  <div className="no-data">No subjects yet. Create one above to get started.</div>
                 ) : (
-                  <div className="manage-grid">
+                  <div className="hierarchy-list">
                     {manageLanguages.map(lang => (
-                      <div key={lang._id} className="manage-card">
-                        {editingLangId === lang._id ? (
-                          <>
+                      <div
+                        key={lang._id}
+                        className="hierarchy-card"
+                        onClick={() => editingLangId !== lang._id && handleOpenLanguageLevels(lang)}
+                      >
+                        <div className="hierarchy-icon">🌐</div>
+                        <div className="hierarchy-info">
+                          {editingLangId === lang._id ? (
                             <input
                               type="text"
-                              className="manage-input"
+                              className="form-input"
                               value={editingLangName}
                               onChange={(e) => setEditingLangName(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
                               autoFocus
                             />
-                            <div className="manage-card-actions">
-                              <button className="video-btn video-btn-primary" onClick={() => handleUpdateLanguage(lang._id)}>Save</button>
-                              <button className="video-btn video-btn-ghost" onClick={() => { setEditingLangId(null); setEditingLangName(''); }}>Cancel</button>
-                            </div>
+                          ) : (
+                            <h4>{lang.name}</h4>
+                          )}
+                        </div>
+                        {editingLangId === lang._id ? (
+                          <>
+                            <button
+                              className="btn btn-small btn-primary"
+                              onClick={(e) => { e.stopPropagation(); handleUpdateLanguage(lang._id); }}
+                            >Save</button>
+                            <button
+                              className="btn btn-small btn-secondary"
+                              onClick={(e) => { e.stopPropagation(); setEditingLangId(null); setEditingLangName(''); }}
+                            >Cancel</button>
                           </>
                         ) : (
                           <>
-                            <div className="manage-card-title" onClick={() => handleOpenLanguageLevels(lang)} style={{ cursor: 'pointer' }}>
-                              📚 {lang.name}
-                            </div>
-                            <div className="manage-card-actions">
-                              <button className="video-btn video-btn-primary" onClick={() => handleOpenLanguageLevels(lang)}>Open ›</button>
-                              <button className="video-btn video-btn-secondary" onClick={() => { setEditingLangId(lang._id); setEditingLangName(lang.name); }}>Edit</button>
-                              <button className="video-btn video-btn-danger" onClick={() => handleDeleteLanguage(lang._id, lang.name)}>Delete</button>
-                            </div>
+                            <button
+                              className="btn btn-small btn-edit"
+                              onClick={(e) => { e.stopPropagation(); setEditingLangId(lang._id); setEditingLangName(lang.name); }}
+                            >Edit</button>
+                            <button
+                              className="btn btn-small btn-delete"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteLanguage(lang._id, lang.name); }}
+                            >Delete</button>
                           </>
                         )}
                       </div>
@@ -625,53 +639,72 @@ const VideoLessons = () => {
             {/* LEVEL 2: LEVELS inside a Subject */}
             {manageView === 'levels' && manageLanguage && (
               <>
-                <div className="video-toolbar">
-                  <h3 className="practice-section-title" style={{ margin: 0 }}>Levels in {manageLanguage.name} ({manageLevels.length})</h3>
-                  <button className="video-btn video-btn-ghost" onClick={() => loadManageLevels(manageLanguage._id)}>🔄 Refresh</button>
-                </div>
-                <div className="manage-add-form">
-                  <input
-                    type="text"
-                    className="manage-input"
-                    placeholder="New level name (e.g. Blackhole 1, Beginner, Unit 1)"
-                    value={newLevelName}
-                    onChange={(e) => setNewLevelName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateLevel()}
-                  />
-                  <button className="video-btn video-btn-primary" onClick={handleCreateLevel}>+ Add Level</button>
-                </div>
+                <form className="word-form" onSubmit={(e) => { e.preventDefault(); handleCreateLevel(); }}>
+                  <h3>Add Level</h3>
+                  <div className="form-row">
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Level name (e.g. Blackhole 1, Beginner, Unit 1)"
+                      value={newLevelName}
+                      onChange={(e) => setNewLevelName(e.target.value)}
+                      required
+                    />
+                    <button type="submit" className="btn btn-primary">Add</button>
+                  </div>
+                </form>
+
                 {manageLoading ? (
-                  <div className="video-empty">Loading...</div>
+                  <div className="loading">Loading...</div>
                 ) : manageLevels.length === 0 ? (
-                  <div className="video-empty">No levels yet. Create the first level above.</div>
+                  <div className="no-data">No levels yet. Create the first level above.</div>
                 ) : (
-                  <div className="manage-grid">
+                  <div className="hierarchy-list">
                     {manageLevels.map(lvl => (
-                      <div key={lvl._id} className="manage-card">
-                        {editingLevelId === lvl._id ? (
-                          <>
+                      <div
+                        key={lvl._id}
+                        className="hierarchy-card"
+                        onClick={() => editingLevelId !== lvl._id && handleOpenLevelVideos(lvl)}
+                      >
+                        <div className="hierarchy-icon">🎯</div>
+                        <div className="hierarchy-info">
+                          {editingLevelId === lvl._id ? (
                             <input
                               type="text"
-                              className="manage-input"
+                              className="form-input"
                               value={editingLevelName}
                               onChange={(e) => setEditingLevelName(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
                               autoFocus
                             />
-                            <div className="manage-card-actions">
-                              <button className="video-btn video-btn-primary" onClick={() => handleUpdateLevel(lvl._id)}>Save</button>
-                              <button className="video-btn video-btn-ghost" onClick={() => { setEditingLevelId(null); setEditingLevelName(''); }}>Cancel</button>
-                            </div>
+                          ) : (
+                            <>
+                              <h4>{lvl.name}</h4>
+                              <span className="hierarchy-meta">{manageLanguage.name}</span>
+                            </>
+                          )}
+                        </div>
+                        {editingLevelId === lvl._id ? (
+                          <>
+                            <button
+                              className="btn btn-small btn-primary"
+                              onClick={(e) => { e.stopPropagation(); handleUpdateLevel(lvl._id); }}
+                            >Save</button>
+                            <button
+                              className="btn btn-small btn-secondary"
+                              onClick={(e) => { e.stopPropagation(); setEditingLevelId(null); setEditingLevelName(''); }}
+                            >Cancel</button>
                           </>
                         ) : (
                           <>
-                            <div className="manage-card-title" onClick={() => handleOpenLevelVideos(lvl)} style={{ cursor: 'pointer' }}>
-                              🎯 {lvl.name}
-                            </div>
-                            <div className="manage-card-actions">
-                              <button className="video-btn video-btn-primary" onClick={() => handleOpenLevelVideos(lvl)}>Open ›</button>
-                              <button className="video-btn video-btn-secondary" onClick={() => { setEditingLevelId(lvl._id); setEditingLevelName(lvl.name); }}>Edit</button>
-                              <button className="video-btn video-btn-danger" onClick={() => handleDeleteLevel(lvl._id, lvl.name)}>Delete</button>
-                            </div>
+                            <button
+                              className="btn btn-small btn-edit"
+                              onClick={(e) => { e.stopPropagation(); setEditingLevelId(lvl._id); setEditingLevelName(lvl.name); }}
+                            >Edit</button>
+                            <button
+                              className="btn btn-small btn-delete"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteLevel(lvl._id, lvl.name); }}
+                            >Delete</button>
                           </>
                         )}
                       </div>
@@ -687,55 +720,42 @@ const VideoLessons = () => {
                 <div className="video-toolbar">
                   <h3 className="practice-section-title" style={{ margin: 0 }}>Videos in {manageLevel.name} ({manageVideos.length})</h3>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="video-btn video-btn-ghost" onClick={() => loadManageVideos(manageLevel._id)}>🔄 Refresh</button>
-                    <button className="video-btn video-btn-primary" onClick={handleCreateVideoInLevel}>+ Add Video Lesson</button>
+                    <button className="btn btn-secondary" onClick={() => loadManageVideos(manageLevel._id)}>🔄 Refresh</button>
+                    <button className="btn btn-primary" onClick={handleCreateVideoInLevel}>+ Add Video Lesson</button>
                   </div>
                 </div>
                 {manageLoading ? (
-                  <div className="video-empty">Loading...</div>
+                  <div className="loading">Loading...</div>
                 ) : manageVideos.length === 0 ? (
-                  <div className="video-empty">No video lessons yet. Click "+ Add Video Lesson" to create one.</div>
+                  <div className="no-data">No video lessons yet. Click "+ Add Video Lesson" to create one.</div>
                 ) : (
-                  <div className="manage-videos-table-wrap">
-                    <table className="manage-videos-table">
-                      <thead>
-                        <tr>
-                          <th>Thumbnail</th>
-                          <th>Title</th>
-                          <th>Topic</th>
-                          <th>Difficulty</th>
-                          <th>Active</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {manageVideos.map(v => (
-                          <tr key={v._id}>
-                            <td>
-                              {v.thumbnail || v.youtubeVideoId ? (
-                                <img
-                                  src={v.thumbnail || `https://img.youtube.com/vi/${v.youtubeVideoId}/default.jpg`}
-                                  alt={v.title}
-                                  className="manage-video-thumb"
-                                />
-                              ) : (
-                                <div className="manage-video-thumb manage-video-thumb-placeholder">▶</div>
-                              )}
-                            </td>
-                            <td className="manage-video-title">{v.title}</td>
-                            <td>{v.topic || '-'}</td>
-                            <td><span className={`video-card-chip video-card-chip-${v.difficulty || 'easy'}`}>{v.difficulty || 'easy'}</span></td>
-                            <td>{v.isActive ? '✅' : '❌'}</td>
-                            <td className="manage-video-actions">
-                              <button className="video-btn video-btn-ghost" onClick={() => { setCurrentVideo(v); setActiveTab('browse'); setView('player'); }} title="Preview">▶</button>
-                              <button className="video-btn video-btn-secondary" onClick={() => handleEdit(v)}>Edit</button>
-                              <button className="video-btn video-btn-accent" onClick={() => setTestBuilderVideo(v)}>Test</button>
-                              <button className="video-btn video-btn-danger" onClick={() => handleDeleteFromManage(v)}>Delete</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="hierarchy-list">
+                    {manageVideos.map(v => (
+                      <div key={v._id} className="hierarchy-card">
+                        <div className="hierarchy-icon hierarchy-icon-video">
+                          {v.thumbnail || v.youtubeVideoId ? (
+                            <img
+                              src={v.thumbnail || `https://img.youtube.com/vi/${v.youtubeVideoId}/default.jpg`}
+                              alt={v.title}
+                            />
+                          ) : (
+                            <span>▶</span>
+                          )}
+                        </div>
+                        <div className="hierarchy-info">
+                          <h4>{v.title}</h4>
+                          <span className="hierarchy-meta">
+                            {v.topic ? `${v.topic} · ` : ''}
+                            <span className={`video-card-chip video-card-chip-${v.difficulty || 'easy'}`}>{v.difficulty || 'easy'}</span>
+                            {' · '}{v.isActive ? '✅ Active' : '❌ Inactive'}
+                          </span>
+                        </div>
+                        <button className="btn btn-small btn-secondary" onClick={() => { setCurrentVideo(v); setActiveTab('browse'); setView('player'); }}>▶ Preview</button>
+                        <button className="btn btn-small btn-edit" onClick={() => handleEdit(v)}>Edit</button>
+                        <button className="btn btn-small btn-primary" onClick={() => setTestBuilderVideo(v)}>Test</button>
+                        <button className="btn btn-small btn-delete" onClick={() => handleDeleteFromManage(v)}>Delete</button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </>
