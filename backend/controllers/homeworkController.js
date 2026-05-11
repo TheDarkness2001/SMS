@@ -700,6 +700,39 @@ exports.getGroupStudentProgress = async (req, res) => {
       students: unassignedStudents.map(computeStudentStats)
     };
 
+    // ---- Build lessons per group (by matching language name) ----
+    // Fetch all lessons with level + language info
+    const allLessons = await Lesson.find().select('_id name order type levelId').sort({ order: 1 }).lean();
+    const levelIds = [...new Set(allLessons.map(l => l.levelId?.toString()).filter(Boolean))];
+    const allLevels = await Level.find({ _id: { $in: levelIds } }).select('_id name languageId').lean();
+    const levelMap = new Map(allLevels.map(l => [l._id.toString(), l]));
+    const languageIds = [...new Set(allLevels.map(l => l.languageId?.toString()).filter(Boolean))];
+    const allLanguages = await Language.find({ _id: { $in: languageIds } }).select('_id name').lean();
+    const langIdToName = new Map(allLanguages.map(l => [l._id.toString(), l.name]));
+
+    // Group lessons by language name (lowercased for match)
+    const lessonsByLang = new Map();
+    for (const lesson of allLessons) {
+      const lvl = levelMap.get(lesson.levelId?.toString());
+      const langName = langIdToName.get(lvl?.languageId?.toString());
+      if (!langName) continue;
+      const key = langName.toLowerCase().trim();
+      if (!lessonsByLang.has(key)) lessonsByLang.set(key, []);
+      lessonsByLang.get(key).push({
+        _id: lesson._id.toString(),
+        name: lesson.name,
+        order: lesson.order,
+        type: lesson.type || 'words',
+        levelName: lvl?.name || ''
+      });
+    }
+
+    // Attach lessons to each group
+    groupsData.forEach(g => {
+      const key = (g.subjectName || '').toLowerCase().trim();
+      g.lessons = lessonsByLang.get(key) || [];
+    });
+
     res.json({
       success: true,
       data: {
@@ -815,6 +848,75 @@ exports.getStudentLessonProgress = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching student lesson progress',
+      error: error.message
+    });
+  }
+};
+
+// Get per-student stats for a specific lesson (admin view, for per-group lesson filter)
+exports.getLessonStudentStats = async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const lesson = await Lesson.findById(lessonId).select('_id type').lean();
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+
+    const lessonObjId = new mongoose.Types.ObjectId(lessonId);
+    const lessonType = lesson.type || 'words';
+    const stats = {};
+
+    if (lessonType === 'sentences') {
+      // Find all sentences for this lesson
+      const sentences = await Sentence.find({ lessonId: lessonObjId }).select('_id').lean();
+      const sentenceIds = sentences.map(s => s._id);
+      if (sentenceIds.length === 0) {
+        return res.json({ success: true, data: { lessonId, type: 'sentences', stats: {} } });
+      }
+      // Aggregate per student
+      const progresses = await StudentSentenceProgress.find({ sentenceId: { $in: sentenceIds } }).lean();
+      for (const p of progresses) {
+        const sid = p.studentId.toString();
+        if (!stats[sid]) stats[sid] = { attempts: 0, correctCount: 0 };
+        stats[sid].attempts += p.attempts || 0;
+        stats[sid].correctCount += p.correctCount || 0;
+      }
+      for (const sid of Object.keys(stats)) {
+        const s = stats[sid];
+        s.accuracy = s.attempts > 0 ? Math.round((s.correctCount / s.attempts) * 100) : 0;
+      }
+    } else {
+      // Word lesson: pull StudentVocabProgress for this lesson
+      const progresses = await StudentVocabProgress.find({ lessonId: lessonObjId }).lean();
+      for (const p of progresses) {
+        const sid = p.studentId.toString();
+        const practiceAttempts = p.practiceAttempts || 0;
+        const practiceCorrect = p.practiceCorrect || 0;
+        const wordsTotal = p.wordsTotal || 0;
+        const wordsMemorized = p.wordsMemorized || 0;
+        stats[sid] = {
+          practiceAttempts,
+          practiceCorrect,
+          practiceAccuracy: practiceAttempts > 0 ? Math.round((practiceCorrect / practiceAttempts) * 100) : 0,
+          examAttempts: p.examAttempts || 0,
+          bestExamScore: p.bestExamScore || 0,
+          wordsMemorized,
+          wordsTotal,
+          memorizationPercent: wordsTotal > 0 ? Math.round((wordsMemorized / wordsTotal) * 100) : 0,
+          status: p.status || 'locked'
+        };
+      }
+    }
+
+    res.json({
+      success: true,
+      data: { lessonId, type: lessonType, stats }
+    });
+  } catch (error) {
+    console.error('Get lesson student stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching lesson student stats',
       error: error.message
     });
   }

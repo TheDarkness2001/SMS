@@ -46,6 +46,34 @@ const Homework = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailTab, setDetailTab] = useState('words');
 
+  // Per-group lesson filter state
+  const [groupLessonSelection, setGroupLessonSelection] = useState({});
+  const [groupLessonStats, setGroupLessonStats] = useState({});
+  const [groupLessonLoading, setGroupLessonLoading] = useState({});
+
+  const handleGroupLessonChange = async (groupId, lessonId) => {
+    setGroupLessonSelection(prev => ({ ...prev, [groupId]: lessonId }));
+    if (!lessonId || lessonId === 'all') {
+      setGroupLessonStats(prev => {
+        const next = { ...prev };
+        delete next[groupId];
+        return next;
+      });
+      return;
+    }
+    setGroupLessonLoading(prev => ({ ...prev, [groupId]: true }));
+    try {
+      const res = await homeworkAPI.getLessonStudentStats(lessonId);
+      if (res.data.success) {
+        setGroupLessonStats(prev => ({ ...prev, [groupId]: res.data.data.stats || {} }));
+      }
+    } catch (err) {
+      console.error('Error fetching lesson stats:', err);
+    } finally {
+      setGroupLessonLoading(prev => ({ ...prev, [groupId]: false }));
+    }
+  };
+
   const isStudent = user?.userType === 'student';
 
   const isAdmin = (() => {
@@ -438,6 +466,7 @@ const Homework = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleResetProgress = async (id) => {
     if (!window.confirm(t('homework.confirmReset') || 'Reset this student\'s progress?')) return;
     try {
@@ -448,6 +477,7 @@ const Homework = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleViewDetails = async (student) => {
     setDetailStudent(student);
     setDetailModalOpen(true);
@@ -1279,7 +1309,13 @@ const Homework = () => {
 
                   return (
                     <div className="progress-groups-list">
-                      {groupsWithStudents.map(group => (
+                      {groupsWithStudents.map(group => {
+                        const selectedLessonId = groupLessonSelection[group.groupId] || 'all';
+                        const lessonStats = groupLessonStats[group.groupId] || null;
+                        const isLessonLoading = groupLessonLoading[group.groupId];
+                        const wordLessons = (group.lessons || []).filter(l => l.type === 'words');
+                        const showLessonView = selectedLessonId !== 'all' && lessonStats;
+                        return (
                         <div key={group.groupId} className="progress-group-card">
                           <div className="progress-group-header-static">
                             <div className="progress-group-title">
@@ -1289,71 +1325,109 @@ const Homework = () => {
                                 <div className="progress-group-subject">{group.subjectName}</div>
                               </div>
                             </div>
+                            <div className="progress-group-filter">
+                              <select
+                                className="group-lesson-select"
+                                value={selectedLessonId}
+                                onChange={(e) => handleGroupLessonChange(group.groupId, e.target.value)}
+                              >
+                                <option value="all">{t('homework.allLessons') || 'All Lessons (Aggregate)'}</option>
+                                {wordLessons.map(l => (
+                                  <option key={l._id} value={l._id}>{l.levelName ? `${l.levelName} — ` : ''}{l.name}</option>
+                                ))}
+                              </select>
+                            </div>
                             <div className="progress-group-stats">
                               <span>{group.students.length} {t('homework.students') || 'students'}</span>
                             </div>
                           </div>
                           <div className="progress-group-body">
+                            {isLessonLoading ? (
+                              <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
+                            ) : (
                             <table className="progress-table">
                               <thead>
                                 <tr>
                                   <th>{t('homework.studentName') || 'Student Name'}</th>
-                                  <th>{t('homework.wordPractice') || 'Word Practice'}</th>
-                                  <th>{t('homework.wordExam') || 'Word Exam'}</th>
-                                  <th>{t('homework.sentencePractice') || 'Sentence Practice'}</th>
-                                  <th>{t('homework.actions') || 'Actions'}</th>
+                                  {showLessonView ? (
+                                    <>
+                                      <th>{t('homework.practiceAttempts') || 'Practice'}</th>
+                                      <th>{t('homework.practiceCorrect') || 'Correct'}</th>
+                                      <th>{t('homework.practiceAccuracy') || 'Practice %'}</th>
+                                      <th>{t('homework.examAttempts') || 'Exams'}</th>
+                                      <th>{t('homework.bestScore') || 'Best Score'}</th>
+                                      <th>{t('homework.memorization') || 'Memorized'}</th>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <th>{t('homework.wordPractice') || 'Word Practice'}</th>
+                                      <th>{t('homework.wordExam') || 'Word Exam'}</th>
+                                      <th>{t('homework.sentencePractice') || 'Sentence Practice'}</th>
+                                    </>
+                                  )}
                                 </tr>
                               </thead>
                               <tbody>
-                                {group.students.map(student => (
+                                {group.students.map(student => {
+                                  const s = showLessonView ? (lessonStats[student._id] || { practiceAttempts: 0, practiceCorrect: 0, practiceAccuracy: 0, examAttempts: 0, bestExamScore: 0, wordsMemorized: 0, wordsTotal: 0, memorizationPercent: 0 }) : null;
+                                  return (
                                   <tr key={student._id}>
                                     <td>
-                                                                          <div className="student-name-cell">
-                                                                            {student.profileImage ? (
-                                                                              <img src={getImageUrl(student.profileImage)} alt={student.name} className="student-avatar-small" />
-                                                                            ) : (
-                                                                              <div className="student-avatar-placeholder-small">{student.name?.charAt(0) || '?'}</div>
-                                                                            )}
-                                                                            <span>{student.name || 'Unknown'}</span>
-                                                                          </div>
-                                                                        </td>
-                                    <td>
-                                      <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                        {student.wordPracticeAccuracy}%
-                                      </span>
+                                      <div className="student-name-cell">
+                                        {student.profileImage ? (
+                                          <img src={getImageUrl(student.profileImage)} alt={student.name} className="student-avatar-small" />
+                                        ) : (
+                                          <div className="student-avatar-placeholder-small">{student.name?.charAt(0) || '?'}</div>
+                                        )}
+                                        <span>{student.name || 'Unknown'}</span>
+                                      </div>
                                     </td>
-                                    <td>
-                                      <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                        {student.wordExamAccuracy}%
-                                      </span>
-                                    </td>
-                                    <td>
-                                      <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
-                                        {student.sentencePracticeAccuracy}%
-                                      </span>
-                                    </td>
-                                    <td className="actions">
-                                      <button
-                                        onClick={() => handleViewDetails(student)}
-                                        className="btn btn-small btn-primary"
-                                        style={{ marginRight: '6px' }}
-                                      >
-                                        {t('homework.viewDetails') || 'View Details'}
-                                      </button>
-                                      <button
-                                        onClick={() => handleResetProgress(student._id)}
-                                        className="btn btn-small btn-delete"
-                                      >
-                                        {t('homework.reset') || 'Reset'}
-                                      </button>
-                                    </td>
+                                    {showLessonView ? (
+                                      <>
+                                        <td>{s.practiceAttempts}</td>
+                                        <td>{s.practiceCorrect}</td>
+                                        <td>
+                                          <span className={`progress-badge ${s.practiceAccuracy >= 70 ? 'good' : s.practiceAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                            {s.practiceAccuracy}%
+                                          </span>
+                                        </td>
+                                        <td>{s.examAttempts}</td>
+                                        <td>
+                                          <span className={`progress-badge ${s.bestExamScore >= 70 ? 'good' : s.bestExamScore >= 50 ? 'medium' : 'low'}`}>
+                                            {s.bestExamScore}%
+                                          </span>
+                                        </td>
+                                        <td>{s.wordsMemorized}/{s.wordsTotal} ({s.memorizationPercent}%)</td>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <td>
+                                          <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                            {student.wordPracticeAccuracy}%
+                                          </span>
+                                        </td>
+                                        <td>
+                                          <span className={`progress-badge ${student.wordExamAccuracy >= 70 ? 'good' : student.wordExamAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                            {student.wordExamAccuracy}%
+                                          </span>
+                                        </td>
+                                        <td>
+                                          <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
+                                            {student.sentencePracticeAccuracy}%
+                                          </span>
+                                        </td>
+                                      </>
+                                    )}
                                   </tr>
-                                ))}
+                                  );
+                                })}
                               </tbody>
                             </table>
+                            )}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
 
                       {/* Unassigned Students */}
                       {unassignedStudents.length > 0 && (
@@ -1375,22 +1449,21 @@ const Homework = () => {
                                   <th>{t('homework.wordPractice') || 'Word Practice'}</th>
                                   <th>{t('homework.wordExam') || 'Word Exam'}</th>
                                   <th>{t('homework.sentencePractice') || 'Sentence Practice'}</th>
-                                  <th>{t('homework.actions') || 'Actions'}</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {unassignedStudents.map(student => (
                                   <tr key={student._id}>
                                     <td>
-                                                                          <div className="student-name-cell">
-                                                                            {student.profileImage ? (
-                                                                              <img src={getImageUrl(student.profileImage)} alt={student.name} className="student-avatar-small" />
-                                                                            ) : (
-                                                                              <div className="student-avatar-placeholder-small">{student.name?.charAt(0) || '?'}</div>
-                                                                            )}
-                                                                            <span>{student.name || 'Unknown'}</span>
-                                                                          </div>
-                                                                        </td>
+                                      <div className="student-name-cell">
+                                        {student.profileImage ? (
+                                          <img src={getImageUrl(student.profileImage)} alt={student.name} className="student-avatar-small" />
+                                        ) : (
+                                          <div className="student-avatar-placeholder-small">{student.name?.charAt(0) || '?'}</div>
+                                        )}
+                                        <span>{student.name || 'Unknown'}</span>
+                                      </div>
+                                    </td>
                                     <td>
                                       <span className={`progress-badge ${student.wordPracticeAccuracy >= 70 ? 'good' : student.wordPracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
                                         {student.wordPracticeAccuracy}%
@@ -1405,21 +1478,6 @@ const Homework = () => {
                                       <span className={`progress-badge ${student.sentencePracticeAccuracy >= 70 ? 'good' : student.sentencePracticeAccuracy >= 50 ? 'medium' : 'low'}`}>
                                         {student.sentencePracticeAccuracy}%
                                       </span>
-                                    </td>
-                                    <td className="actions">
-                                      <button
-                                        onClick={() => handleViewDetails(student)}
-                                        className="btn btn-small btn-primary"
-                                        style={{ marginRight: '6px' }}
-                                      >
-                                        {t('homework.viewDetails') || 'View Details'}
-                                      </button>
-                                      <button
-                                        onClick={() => handleResetProgress(student._id)}
-                                        className="btn btn-small btn-delete"
-                                      >
-                                        {t('homework.reset') || 'Reset'}
-                                      </button>
                                     </td>
                                   </tr>
                                 ))}

@@ -23,6 +23,7 @@ router.get('/students/progress', protect, authorizeHomework(), homeworkControlle
 router.get('/students/group-progress', protect, authorizeHomework(), homeworkController.getGroupStudentProgress);
 router.get('/students/:id/progress', protect, authorizeHomework(), homeworkController.getStudentProgress);
 router.get('/students/:id/lesson-progress', protect, authorizeHomework(), homeworkController.getStudentLessonProgress);
+router.get('/lessons/:lessonId/student-stats', protect, authorizeHomework(), homeworkController.getLessonStudentStats);
 router.post('/students/:id/reset-progress', protect, authorizeHomework(), homeworkController.resetStudentProgress);
 
 // Leaderboard

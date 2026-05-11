@@ -2830,6 +2830,33 @@
   padding: 14px 18px;
   background: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.progress-group-filter {
+  flex: 1 1 260px;
+  min-width: 200px;
+  max-width: 380px;
+  display: flex;
+  justify-content: center;
+}
+
+.group-lesson-select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.group-lesson-select:hover,
+.group-lesson-select:focus {
+  border-color: #6366f1;
+  outline: none;
 }
 
 .subject-filter-bar {
