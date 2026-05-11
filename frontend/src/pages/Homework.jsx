@@ -35,6 +35,7 @@ const Homework = () => {
   // Admin state
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
 
@@ -421,13 +422,17 @@ const Homework = () => {
 
   const fetchStudentProgress = async () => {
     setAdminLoading(true);
+    setAdminError('');
     try {
       const response = await homeworkAPI.getGroupStudentProgress();
       if (response.data.success) {
         setStudentsProgress(response.data.data);
+      } else {
+        setAdminError(response.data.message || 'Failed to load student progress');
       }
     } catch (error) {
       console.error('Error fetching student progress:', error);
+      setAdminError(error.response?.data?.message || error.message || 'Failed to load student progress');
     } finally {
       setAdminLoading(false);
     }
@@ -1176,6 +1181,11 @@ const Homework = () => {
               <div className="loading-state">{t('homework.loading') || 'Loading...'}</div>
             ) : (
               <div className="progress-flat-container">
+                {adminError && (
+                  <div className="error-message" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', color: '#dc2626', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                    {adminError}
+                  </div>
+                )}
                 {/* Filters */}
                 <div className="filters-bar-modern">
                   <div className="filters-row">

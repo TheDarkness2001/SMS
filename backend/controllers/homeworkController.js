@@ -619,8 +619,10 @@ exports.getGroupStudentProgress = async (req, res) => {
       const vocab = vocabMap.get(sid) || [];
       const sentences = sentenceMap.get(sid) || [];
 
-      // Word practice accuracy from HomeworkProgress
-      const wordPracticeAccuracy = hw ? hw.getAccuracy() : 0;
+      // Word practice accuracy from HomeworkProgress (inline calc since .lean() strips methods)
+      const wordPracticeAccuracy = hw && hw.totalAttempts > 0
+        ? Math.round((hw.correctAnswers / hw.totalAttempts) * 100)
+        : 0;
 
       // Word exam accuracy: average bestExamScore across all lessons
       const wordExamScores = vocab
@@ -666,7 +668,7 @@ exports.getGroupStudentProgress = async (req, res) => {
     // Build group-based response (only active students)
     const groupsData = languageGroups.map(group => {
       const activeStudents = (group.students || [])
-        .filter(s => s.status === 'active')
+        .filter(s => s && s.status === 'active')
         .map(computeStudentStats);
       const avgAccuracy = activeStudents.length > 0
         ? Math.round(activeStudents.reduce((sum, s) => sum + s.wordPracticeAccuracy + s.wordExamAccuracy + s.sentencePracticeAccuracy, 0) / (activeStudents.length * 3))
@@ -684,7 +686,9 @@ exports.getGroupStudentProgress = async (req, res) => {
 
     // Get unassigned active students (students not in any language group)
     const allGroupStudentIds = new Set();
-    languageGroups.forEach(g => g.students.forEach(s => allGroupStudentIds.add(s._id.toString())));
+    languageGroups.forEach(g => g.students.forEach(s => {
+      if (s && s._id) allGroupStudentIds.add(s._id.toString());
+    }));
 
     const unassignedStudents = await Student.find({
       _id: { $nin: Array.from(allGroupStudentIds).map(id => new mongoose.Types.ObjectId(id)) },
