@@ -91,6 +91,13 @@ const videoLessonSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ExamGroup'
   }],
+  // Per-group "watch unlock": only groups listed here can browse/watch this video.
+  // Enforced "one video per group per level" — unlocking a new video auto-locks
+  // the previously unlocked one in the same level for that group.
+  watchUnlockedFor: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ExamGroup'
+  }],
   isActive: {
     type: Boolean,
     default: true

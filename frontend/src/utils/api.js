@@ -326,7 +326,9 @@ export const videoLessonAPI = {
   deleteTest: (id) => api.delete(`/video-lessons/${id}/test`),
   submitAttempt: (id, data) => api.post(`/video-lessons/${id}/test/attempt`, data),
   reportWarning: (id, data) => api.post(`/video-lessons/${id}/test/warning`, data),
-  getLeaderboard: (id) => api.get(`/video-lessons/${id}/test/leaderboard`)
+  getLeaderboard: (id) => api.get(`/video-lessons/${id}/test/leaderboard`),
+  // Per-group watch unlock (only one video unlocked at a time per level per group)
+  toggleWatchUnlock: (id, groupId) => api.post(`/video-lessons/${id}/toggle-watch-unlock`, { groupId })
 };
 
 // Sentence API

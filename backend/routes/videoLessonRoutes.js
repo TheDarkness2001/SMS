@@ -19,6 +19,9 @@ router.delete('/:id', protect, authorizeVideoLessons(), videoLessonController.de
 router.post('/:id/track', protect, videoLessonController.trackWatchProgress);
 router.post('/:id/complete', protect, videoLessonController.markAsCompleted);
 
+// Admin: per-group watch unlock (one-at-a-time per level)
+router.post('/:id/toggle-watch-unlock', protect, authorizeVideoLessons(), videoLessonController.toggleWatchUnlock);
+
 // Topic test
 router.get('/:id/test', protect, topicTestController.getTopicTest);
 router.put('/:id/test', protect, authorizeVideoLessons(), topicTestController.createOrUpdateTopicTest);

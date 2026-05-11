@@ -82,6 +82,18 @@ const VideoLessons = () => {
   const [editingLevelId, setEditingLevelId] = useState(null);
   const [editingLevelName, setEditingLevelName] = useState('');
 
+  // ===== Permissions tab state (Groups → Language → Level → Videos) =====
+  const [permView, setPermView] = useState('groups'); // groups | languages | levels | videos
+  const [permGroups, setPermGroups] = useState([]);
+  const [permGroup, setPermGroup] = useState(null);
+  const [permLanguages, setPermLanguages] = useState([]);
+  const [permLanguage, setPermLanguage] = useState(null);
+  const [permLevels, setPermLevels] = useState([]);
+  const [permLevel, setPermLevel] = useState(null);
+  const [permVideos, setPermVideos] = useState([]);
+  const [permLoading, setPermLoading] = useState(false);
+  const [togglingVideoId, setTogglingVideoId] = useState(null);
+
   // Fetch languages
   useEffect(() => {
     const run = async () => {
@@ -214,6 +226,7 @@ const VideoLessons = () => {
     const base = [{ id: 'browse', label: 'Browse' }];
     if (!isAdmin) base.push({ id: 'continue', label: 'Continue Watching' });
     if (isAdmin) base.push({ id: 'manage', label: 'Manage All' });
+    if (isAdmin) base.push({ id: 'permissions', label: 'Permissions' });
     if (isAdmin) base.push({ id: 'progress', label: 'Student Progress' });
     return base;
   }, [isAdmin]);
@@ -370,6 +383,86 @@ const VideoLessons = () => {
       levelId: manageLevel?._id || ''
     });
     setFormOpen(true);
+  };
+
+  // ===== Permissions tab loaders =====
+  const loadPermGroups = async () => {
+    setPermLoading(true);
+    try {
+      const res = await examGroupsAPI.getAll();
+      if (res.data.success) setPermGroups(res.data.data || []);
+    } catch (e) {} finally { setPermLoading(false); }
+  };
+  useEffect(() => {
+    if (activeTab === 'permissions' && isAdmin && permView === 'groups') loadPermGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAdmin, permView]);
+
+  const handlePermPickGroup = async (g) => {
+    setPermGroup(g);
+    setPermLanguage(null);
+    setPermLevel(null);
+    setPermView('languages');
+    setPermLoading(true);
+    try {
+      const res = await languageAPI.getAll();
+      if (res.data.success) setPermLanguages(res.data.data.languages || []);
+    } catch (e) {} finally { setPermLoading(false); }
+  };
+  const handlePermPickLanguage = async (lang) => {
+    setPermLanguage(lang);
+    setPermLevel(null);
+    setPermView('levels');
+    setPermLoading(true);
+    try {
+      const res = await levelAPI.getByLanguage(lang._id);
+      if (res.data.success) {
+        const sorted = (res.data.data.levels || []).sort((a, b) =>
+          (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
+        );
+        setPermLevels(sorted);
+      }
+    } catch (e) {} finally { setPermLoading(false); }
+  };
+  const handlePermPickLevel = async (lvl) => {
+    setPermLevel(lvl);
+    setPermView('videos');
+    setPermLoading(true);
+    try {
+      const res = await videoLessonAPI.getAll({ levelId: lvl._id });
+      if (res.data.success) setPermVideos((res.data.data.videoLessons || []).sort(sortByLevel));
+    } catch (e) {} finally { setPermLoading(false); }
+  };
+
+  const isVideoWatchUnlockedForGroup = (video) => {
+    if (!permGroup) return false;
+    const gid = String(permGroup._id);
+    return (video.watchUnlockedFor || []).some(g => String(g) === gid);
+  };
+
+  const handleToggleWatchUnlock = async (video) => {
+    if (!permGroup) return;
+    setTogglingVideoId(video._id);
+    try {
+      const res = await videoLessonAPI.toggleWatchUnlock(video._id, permGroup._id);
+      if (res.data.success) {
+        const updatedArr = res.data.data.video.watchUnlockedFor || [];
+        const gid = String(permGroup._id);
+        const isUnlockedNow = updatedArr.some(g => String(g) === gid);
+        // If we just unlocked this video, all OTHER videos in same level must be locked for this group
+        setPermVideos(prev => prev.map(v => {
+          if (v._id === video._id) return { ...v, watchUnlockedFor: updatedArr };
+          if (isUnlockedNow && v.levelId?._id === video.levelId?._id) {
+            return { ...v, watchUnlockedFor: (v.watchUnlockedFor || []).filter(g => String(g) !== gid) };
+          }
+          return v;
+        }));
+      }
+    } catch (e) {
+      alert(e.response?.data?.message || e.message);
+    } finally {
+      setTogglingVideoId(null);
+    }
   };
 
   return (
@@ -756,6 +849,178 @@ const VideoLessons = () => {
                         <button className="btn btn-small btn-delete" onClick={() => handleDeleteFromManage(v)}>Delete</button>
                       </div>
                     ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'permissions' && isAdmin && (
+          <div className="manage-hierarchy">
+            {/* Breadcrumb */}
+            <div className="breadcrumb">
+              <button
+                className={`breadcrumb-item ${permView === 'groups' ? 'active' : ''}`}
+                onClick={() => { setPermView('groups'); setPermGroup(null); setPermLanguage(null); setPermLevel(null); }}
+              >
+                👥 Groups
+              </button>
+              {permGroup && (
+                <>
+                  <span className="breadcrumb-sep">/</span>
+                  <button
+                    className={`breadcrumb-item ${permView === 'languages' ? 'active' : ''}`}
+                    onClick={() => { setPermView('languages'); setPermLanguage(null); setPermLevel(null); }}
+                  >
+                    {permGroup.groupName}
+                  </button>
+                </>
+              )}
+              {permLanguage && (
+                <>
+                  <span className="breadcrumb-sep">/</span>
+                  <button
+                    className={`breadcrumb-item ${permView === 'levels' ? 'active' : ''}`}
+                    onClick={() => { setPermView('levels'); setPermLevel(null); }}
+                  >
+                    {permLanguage.name}
+                  </button>
+                </>
+              )}
+              {permLevel && (
+                <>
+                  <span className="breadcrumb-sep">/</span>
+                  <span className="breadcrumb-item active">{permLevel.name}</span>
+                </>
+              )}
+            </div>
+
+            {/* Info banner */}
+            <div className="video-admin-bar" style={{ marginBottom: 16 }}>
+              <span className="video-admin-bar-label">ℹ️</span>
+              <span>Pick a group, then a subject → level → video. You can unlock <b>only one video at a time per level</b> for a group — unlocking a new one automatically locks the previous one.</span>
+            </div>
+
+            {/* GROUPS */}
+            {permView === 'groups' && (
+              <>
+                <h3 className="practice-section-title">Select a Group</h3>
+                {permLoading ? (
+                  <div className="loading">Loading...</div>
+                ) : permGroups.length === 0 ? (
+                  <div className="no-data">No groups found.</div>
+                ) : (
+                  <div className="hierarchy-list">
+                    {permGroups.map(g => (
+                      <div key={g._id} className="hierarchy-card" onClick={() => handlePermPickGroup(g)}>
+                        <div className="hierarchy-icon">👥</div>
+                        <div className="hierarchy-info">
+                          <h4>{g.groupName}</h4>
+                          <span className="hierarchy-meta">
+                            {g.subjectName || '—'} · {(g.students || []).length} students
+                          </span>
+                        </div>
+                        <button className="btn btn-small btn-primary">Open ›</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* LANGUAGES */}
+            {permView === 'languages' && permGroup && (
+              <>
+                <h3 className="practice-section-title">Select a Subject</h3>
+                {permLoading ? (
+                  <div className="loading">Loading...</div>
+                ) : permLanguages.length === 0 ? (
+                  <div className="no-data">No subjects found.</div>
+                ) : (
+                  <div className="hierarchy-list">
+                    {permLanguages.map(lang => (
+                      <div key={lang._id} className="hierarchy-card" onClick={() => handlePermPickLanguage(lang)}>
+                        <div className="hierarchy-icon">🌐</div>
+                        <div className="hierarchy-info">
+                          <h4>{lang.name}</h4>
+                        </div>
+                        <button className="btn btn-small btn-primary">Open ›</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* LEVELS */}
+            {permView === 'levels' && permLanguage && (
+              <>
+                <h3 className="practice-section-title">Select a Level</h3>
+                {permLoading ? (
+                  <div className="loading">Loading...</div>
+                ) : permLevels.length === 0 ? (
+                  <div className="no-data">No levels found in this subject.</div>
+                ) : (
+                  <div className="hierarchy-list">
+                    {permLevels.map(lvl => (
+                      <div key={lvl._id} className="hierarchy-card" onClick={() => handlePermPickLevel(lvl)}>
+                        <div className="hierarchy-icon">🎯</div>
+                        <div className="hierarchy-info">
+                          <h4>{lvl.name}</h4>
+                        </div>
+                        <button className="btn btn-small btn-primary">Open ›</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* VIDEOS with unlock toggle */}
+            {permView === 'videos' && permLevel && permGroup && (
+              <>
+                <h3 className="practice-section-title">
+                  Videos in {permLevel.name} — unlock for {permGroup.groupName}
+                </h3>
+                {permLoading ? (
+                  <div className="loading">Loading...</div>
+                ) : permVideos.length === 0 ? (
+                  <div className="no-data">No videos in this level yet.</div>
+                ) : (
+                  <div className="hierarchy-list">
+                    {permVideos.map(v => {
+                      const unlocked = isVideoWatchUnlockedForGroup(v);
+                      const busy = togglingVideoId === v._id;
+                      return (
+                        <div key={v._id} className={`hierarchy-card ${unlocked ? 'unlocked' : 'locked'}`}>
+                          <div className="hierarchy-icon hierarchy-icon-video">
+                            {v.thumbnail || v.youtubeVideoId ? (
+                              <img
+                                src={v.thumbnail || `https://img.youtube.com/vi/${v.youtubeVideoId}/default.jpg`}
+                                alt={v.title}
+                              />
+                            ) : (
+                              <span>▶</span>
+                            )}
+                          </div>
+                          <div className="hierarchy-info">
+                            <h4>{v.title}</h4>
+                            <span className="hierarchy-meta">
+                              {unlocked ? '🔓 Unlocked for this group' : '🔒 Locked'}
+                              {v.topic ? ` · ${v.topic}` : ''}
+                            </span>
+                          </div>
+                          <button
+                            className={`btn btn-small ${unlocked ? 'btn-delete' : 'btn-primary'}`}
+                            disabled={busy}
+                            onClick={() => handleToggleWatchUnlock(v)}
+                          >
+                            {busy ? '...' : unlocked ? 'Lock' : 'Unlock'}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </>

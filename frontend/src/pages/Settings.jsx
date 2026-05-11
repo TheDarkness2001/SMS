@@ -6,6 +6,17 @@ import '../styles/Settings.css';
 
 const Settings = () => {
   const { t } = useLanguage();
+  // Safe translate: falls back if translator returns the key unchanged (missing entry)
+  const tt = (key, fallback) => {
+    const v = t(key);
+    return !v || v === key ? fallback : v;
+  };
+  // Humanize a camelCase permission key, e.g. canManageVideoLessons → Manage Video Lessons
+  const humanizePermission = (p) => p
+    .replace(/^can/, '')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^\s+/, '')
+    .replace(/^./, s => s.toUpperCase());
   const { getBranchFilter } = useBranch();
   const [settings, setSettings] = useState(null);
   const [staff, setStaff] = useState([]);
@@ -315,9 +326,9 @@ const Settings = () => {
                         disabled={(permission === 'canManageHomework' || permission === 'canManageVideoLessons') && !isFounder}
                       />
                       <label htmlFor={`${role}-${permission}`}>
-                        {t(`settings.permissions.${permission}`) || permission.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        {tt(`settings.permissions.${permission}`, humanizePermission(permission))}
                         {(permission === 'canManageHomework' || permission === 'canManageVideoLessons') && !isFounder && (
-                          <span className="text-muted" style={{ fontSize: '0.8em', marginLeft: '4px' }}>({t('settings.founderOnly') || 'Founder only'})</span>
+                          <span className="text-muted" style={{ fontSize: '0.8em', marginLeft: '4px' }}>({tt('settings.founderOnly', 'Founder only')})</span>
                         )}
                       </label>
                     </div>
@@ -537,9 +548,9 @@ const Settings = () => {
                           disabled={(permission === 'canManageHomework' || permission === 'canManageVideoLessons') && !isFounder}
                         />
                         <label htmlFor={`permission-${permission}`}>
-                          {t(`settings.permissions.${permission}`) || permission.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                          {tt(`settings.permissions.${permission}`, humanizePermission(permission))}
                           {(permission === 'canManageHomework' || permission === 'canManageVideoLessons') && !isFounder && (
-                            <span className="text-muted" style={{ fontSize: '0.8em', marginLeft: '4px' }}>({t('settings.founderOnly') || 'Founder only'})</span>
+                            <span className="text-muted" style={{ fontSize: '0.8em', marginLeft: '4px' }}>({tt('settings.founderOnly', 'Founder only')})</span>
                           )}
                         </label>
                       </div>

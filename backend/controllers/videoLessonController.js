@@ -26,6 +26,12 @@ async function getStudentAccessibleLanguageIds(studentId) {
     .map(l => l._id);
 }
 
+// Helper: get all ExamGroup IDs the student is enrolled in
+async function getStudentGroupIds(studentId) {
+  const groups = await ExamGroup.find({ students: studentId }).select('_id').lean();
+  return groups.map(g => g._id);
+}
+
 // GET /api/video-lessons
 exports.getAllVideoLessons = async (req, res) => {
   try {
@@ -50,6 +56,12 @@ exports.getAllVideoLessons = async (req, res) => {
       } else {
         filter.languageId = { $in: allowedLangIds };
       }
+      // Student watch-unlock filter: only show videos unlocked for any of their groups
+      const studentGroupIds = await getStudentGroupIds(req.user.id);
+      if (!studentGroupIds.length) {
+        return res.json({ success: true, data: { videoLessons: [] } });
+      }
+      filter.watchUnlockedFor = { $in: studentGroupIds };
     }
 
     const videoLessons = await VideoLesson.find(filter)
@@ -424,6 +436,53 @@ exports.getGroupVideoProgress = async (req, res) => {
     res.json({ success: true, data: { groups: groupsData } });
   } catch (error) {
     console.error('getGroupVideoProgress error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/video-lessons/:id/toggle-watch-unlock
+// Body: { groupId }
+// Enforces "one unlocked video per group per level":
+//   - If already unlocked for this group → remove groupId (lock)
+//   - If not unlocked → first remove groupId from all OTHER videos in same level,
+//     then add to this video (so only ONE video stays unlocked for the group).
+exports.toggleWatchUnlock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { groupId } = req.body || {};
+    if (!groupId) {
+      return res.status(400).json({ success: false, message: 'groupId is required' });
+    }
+    const video = await VideoLesson.findById(id);
+    if (!video) {
+      return res.status(404).json({ success: false, message: 'Video not found' });
+    }
+    const alreadyUnlocked = (video.watchUnlockedFor || []).some(g => String(g) === String(groupId));
+    if (alreadyUnlocked) {
+      // Lock: remove this groupId from the current video
+      video.watchUnlockedFor = (video.watchUnlockedFor || []).filter(g => String(g) !== String(groupId));
+      await video.save();
+      return res.json({
+        success: true,
+        data: { video: { _id: video._id, watchUnlockedFor: video.watchUnlockedFor } },
+        message: 'Video locked for this group'
+      });
+    }
+    // Unlock: first lock all OTHER videos in the same level for this group
+    await VideoLesson.updateMany(
+      { levelId: video.levelId, _id: { $ne: video._id }, watchUnlockedFor: groupId },
+      { $pull: { watchUnlockedFor: groupId } }
+    );
+    // Then add groupId to current video
+    video.watchUnlockedFor = [...(video.watchUnlockedFor || []), groupId];
+    await video.save();
+    return res.json({
+      success: true,
+      data: { video: { _id: video._id, watchUnlockedFor: video.watchUnlockedFor } },
+      message: 'Video unlocked (previous video in this level auto-locked)'
+    });
+  } catch (error) {
+    console.error('toggleWatchUnlock error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
