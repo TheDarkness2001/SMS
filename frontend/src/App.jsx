@@ -45,6 +45,8 @@ import AdminEarningsPanel from './pages/AdminEarningsPanel';
 import AdminPayoutPanel from './pages/AdminPayoutPanel';
 import Homework from './pages/Homework';
 import SentencesPage from './pages/SentencesPage';
+import VideoLessons from './pages/VideoLessons';
+import VideoTest from './pages/VideoTest';
 import TeacherPenalties from './pages/TeacherPenalties';
 import TeacherPresentations from './pages/TeacherPresentations';
 import BonusDashboard from './pages/BonusDashboard';
@@ -112,6 +114,8 @@ function App() {
             <Route path="/admin/payouts" element={<PrivateRoute><AdminPayoutPanel /></PrivateRoute>} />
             <Route path="/homework" element={<PrivateRoute><Homework /></PrivateRoute>} />
             <Route path="/sentences" element={<PrivateRoute><SentencesPage /></PrivateRoute>} />
+            <Route path="/video-lessons" element={<PrivateRoute><VideoLessons /></PrivateRoute>} />
+            <Route path="/video-lessons/:id/test" element={<PrivateRoute><VideoTest /></PrivateRoute>} />
             <Route path="/penalties" element={<PrivateRoute><TeacherPenalties /></PrivateRoute>} />
             <Route path="/presentations" element={<PrivateRoute><TeacherPresentations /></PrivateRoute>} />
             <Route path="/bonuses" element={<PrivateRoute><BonusDashboard /></PrivateRoute>} />

@@ -21,7 +21,8 @@ import {
   AiOutlineEdit,
   AiOutlineWarning,
   AiOutlineStar,
-  AiOutlineTrophy
+  AiOutlineTrophy,
+  AiOutlinePlayCircle
 } from 'react-icons/ai';
 import { IoSchoolOutline } from 'react-icons/io5';
 import './Sidebar.css';
@@ -33,7 +34,7 @@ const Sidebar = ({ user, isOpen, onClose }) => {
     attendance: location.pathname.includes('attendance'),
     people: location.pathname === '/teachers' || location.pathname === '/students',
     finance: ['/payments', '/revenue', '/admin/earnings', '/admin/payouts'].includes(location.pathname),
-    learning: location.pathname === '/homework' || location.pathname === '/sentences',
+    learning: location.pathname === '/homework' || location.pathname === '/sentences' || location.pathname.startsWith('/video-lessons'),
     competition: ['/penalties', '/presentations', '/bonuses'].includes(location.pathname)
   });
   
@@ -183,6 +184,12 @@ const Sidebar = ({ user, isOpen, onClose }) => {
                   <Link to="/sentences">
                     <span className="icon"><AiOutlineEdit size={18} /></span>
                     <span>{t('sidebar.sentences') || 'Sentences'}</span>
+                  </Link>
+                </li>
+                <li className={location.pathname.startsWith('/video-lessons') ? 'active' : ''}>
+                  <Link to="/video-lessons">
+                    <span className="icon"><AiOutlinePlayCircle size={18} /></span>
+                    <span>{t('sidebar.videoLessons') || 'Video Lessons'}</span>
                   </Link>
                 </li>
               </ul>

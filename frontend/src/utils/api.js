@@ -309,6 +309,26 @@ export const homeworkAPI = {
   getLeaderboard: () => api.get('/homework/leaderboard')
 };
 
+// Video Lesson API
+export const videoLessonAPI = {
+  getAll: (params) => api.get('/video-lessons', { params: params || {} }),
+  getById: (id) => api.get(`/video-lessons/${id}`),
+  create: (data) => api.post('/video-lessons', data),
+  update: (id, data) => api.put(`/video-lessons/${id}`, data),
+  remove: (id) => api.delete(`/video-lessons/${id}`),
+  trackWatch: (id, body) => api.post(`/video-lessons/${id}/track`, body),
+  markComplete: (id) => api.post(`/video-lessons/${id}/complete`),
+  getAnalytics: (params) => api.get('/video-lessons/analytics', { params: params || {} }),
+  getGroupProgress: () => api.get('/video-lessons/group-progress'),
+  // Topic tests
+  getTest: (id, mode) => api.get(`/video-lessons/${id}/test`, { params: mode ? { mode } : {} }),
+  saveTest: (id, data) => api.put(`/video-lessons/${id}/test`, data),
+  deleteTest: (id) => api.delete(`/video-lessons/${id}/test`),
+  submitAttempt: (id, data) => api.post(`/video-lessons/${id}/test/attempt`, data),
+  reportWarning: (id, data) => api.post(`/video-lessons/${id}/test/warning`, data),
+  getLeaderboard: (id) => api.get(`/video-lessons/${id}/test/leaderboard`)
+};
+
 // Sentence API
 export const sentenceAPI = {
   getAll: (params) => api.get('/sentences', { params: params || {} }),
