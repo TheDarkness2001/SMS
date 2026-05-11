@@ -1313,7 +1313,14 @@ const Homework = () => {
                         const selectedLessonId = groupLessonSelection[group.groupId] || 'all';
                         const lessonStats = groupLessonStats[group.groupId] || null;
                         const isLessonLoading = groupLessonLoading[group.groupId];
-                        const wordLessons = (group.lessons || []).filter(l => l.type === 'words');
+                        const wordLessons = (group.lessons || [])
+                          .filter(l => l.type === 'words')
+                          .slice()
+                          .sort((a, b) => {
+                            const lc = (a.levelName || '').localeCompare(b.levelName || '', undefined, { numeric: true, sensitivity: 'base' });
+                            if (lc !== 0) return lc;
+                            return (a.order || 0) - (b.order || 0);
+                          });
                         const showLessonView = selectedLessonId !== 'all' && lessonStats;
                         return (
                         <div key={group.groupId} className="progress-group-card">
@@ -1331,7 +1338,7 @@ const Homework = () => {
                                 value={selectedLessonId}
                                 onChange={(e) => handleGroupLessonChange(group.groupId, e.target.value)}
                               >
-                                <option value="all">{t('homework.allLessons') || 'All Lessons (Aggregate)'}</option>
+                                <option value="all">All Lessons (Aggregate)</option>
                                 {wordLessons.map(l => (
                                   <option key={l._id} value={l._id}>{l.levelName ? `${l.levelName} — ` : ''}{l.name}</option>
                                 ))}

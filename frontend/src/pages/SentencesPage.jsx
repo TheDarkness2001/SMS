@@ -984,7 +984,14 @@ const SentencesPage = () => {
                         const selectedLessonId = groupLessonSelection[group.groupId] || 'all';
                         const lessonStats = groupLessonStats[group.groupId] || null;
                         const isLessonLoading = groupLessonLoading[group.groupId];
-                        const sentenceLessons = (group.lessons || []).filter(l => l.type === 'sentences');
+                        const sentenceLessons = (group.lessons || [])
+                          .filter(l => l.type === 'sentences')
+                          .slice()
+                          .sort((a, b) => {
+                            const lc = (a.levelName || '').localeCompare(b.levelName || '', undefined, { numeric: true, sensitivity: 'base' });
+                            if (lc !== 0) return lc;
+                            return (a.order || 0) - (b.order || 0);
+                          });
                         const showLessonView = selectedLessonId !== 'all' && lessonStats;
                         return (
                         <div key={group.groupId} className="progress-group-card">
@@ -1002,7 +1009,7 @@ const SentencesPage = () => {
                                 value={selectedLessonId}
                                 onChange={(e) => handleGroupLessonChange(group.groupId, e.target.value)}
                               >
-                                <option value="all">{t('sentences.allLessons') || 'All Lessons (Aggregate)'}</option>
+                                <option value="all">All Lessons (Aggregate)</option>
                                 {sentenceLessons.map(l => (
                                   <option key={l._id} value={l._id}>{l.levelName ? `${l.levelName} — ` : ''}{l.name}</option>
                                 ))}
