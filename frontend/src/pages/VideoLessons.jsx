@@ -16,6 +16,12 @@ const sortByLevel = (a, b) => {
   return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
 };
 
+// Safe translation: return fallback if key is missing (t() returns the key itself on miss)
+const tt = (t, key, fallback) => {
+  const v = t(key);
+  return !v || v === key ? fallback : v;
+};
+
 const VideoLessons = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -187,14 +193,47 @@ const VideoLessons = () => {
   const tabs = useMemo(() => {
     const base = [{ id: 'browse', label: 'Browse' }];
     if (!isAdmin) base.push({ id: 'continue', label: 'Continue Watching' });
+    if (isAdmin) base.push({ id: 'manage', label: 'Manage All' });
     if (isAdmin) base.push({ id: 'progress', label: 'Student Progress' });
     return base;
   }, [isAdmin]);
 
+  // Fetch all videos for Manage tab
+  const [allVideos, setAllVideos] = useState([]);
+  const [allVideosLoading, setAllVideosLoading] = useState(false);
+  const loadAllVideos = async () => {
+    setAllVideosLoading(true);
+    try {
+      const res = await videoLessonAPI.getAll();
+      if (res.data.success) {
+        setAllVideos((res.data.data.videoLessons || []).sort(sortByLevel));
+      }
+    } catch (e) {
+      // ignore
+    } finally {
+      setAllVideosLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (activeTab === 'manage' && isAdmin) loadAllVideos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAdmin]);
+
+  const handleDeleteFromManage = async (video) => {
+    if (!window.confirm(`Delete "${video.title}"? This removes all student progress and the topic test.`)) return;
+    try {
+      await videoLessonAPI.remove(video._id);
+      setAllVideos(prev => prev.filter(v => v._id !== video._id));
+      setVideos(prev => prev.filter(v => v._id !== video._id));
+    } catch (e) {
+      alert(e.response?.data?.message || e.message);
+    }
+  };
+
   return (
     <div className="homework-page video-lessons-page">
       <div className="page-header">
-        <h1>{t('sidebar.videoLessons') || 'Video Lessons'}</h1>
+        <h1>{tt(t, 'sidebar.videoLessons', 'Video Lessons')}</h1>
         <p className="page-subtitle">Watch topic explanation videos and test your understanding.</p>
       </div>
 
@@ -217,6 +256,17 @@ const VideoLessons = () => {
       <div className="tab-content">
         {activeTab === 'browse' && (
           <>
+            {isAdmin && (
+              <div className="video-admin-bar">
+                <span className="video-admin-bar-label">👑 Admin Controls</span>
+                <button className="video-btn video-btn-primary" onClick={handleCreate}>
+                  + Add Video Lesson
+                </button>
+                <button className="video-btn video-btn-secondary" onClick={() => setActiveTab('manage')}>
+                  📂 Manage All Videos
+                </button>
+              </div>
+            )}
             {view !== 'languages' && (
               <div className="video-breadcrumb">
                 <button className="video-btn video-btn-ghost" onClick={goBack}>← Back</button>
@@ -335,6 +385,69 @@ const VideoLessons = () => {
                     }}
                   />
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'manage' && isAdmin && (
+          <div>
+            <div className="video-toolbar">
+              <h3 className="practice-section-title" style={{ margin: 0 }}>All Video Lessons ({allVideos.length})</h3>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="video-btn video-btn-ghost" onClick={loadAllVideos}>🔄 Refresh</button>
+                <button className="video-btn video-btn-primary" onClick={handleCreate}>+ Add Video Lesson</button>
+              </div>
+            </div>
+            {allVideosLoading ? (
+              <div className="video-empty">Loading...</div>
+            ) : allVideos.length === 0 ? (
+              <div className="video-empty">No video lessons yet. Click "+ Add Video Lesson" to create one.</div>
+            ) : (
+              <div className="manage-videos-table-wrap">
+                <table className="manage-videos-table">
+                  <thead>
+                    <tr>
+                      <th>Thumbnail</th>
+                      <th>Title</th>
+                      <th>Language</th>
+                      <th>Level</th>
+                      <th>Lesson</th>
+                      <th>Difficulty</th>
+                      <th>Active</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allVideos.map(v => (
+                      <tr key={v._id}>
+                        <td>
+                          {v.thumbnail || v.youtubeVideoId ? (
+                            <img
+                              src={v.thumbnail || `https://img.youtube.com/vi/${v.youtubeVideoId}/default.jpg`}
+                              alt={v.title}
+                              className="manage-video-thumb"
+                            />
+                          ) : (
+                            <div className="manage-video-thumb manage-video-thumb-placeholder">▶</div>
+                          )}
+                        </td>
+                        <td className="manage-video-title">{v.title}</td>
+                        <td>{v.languageId?.name || '-'}</td>
+                        <td>{v.levelId?.name || '-'}</td>
+                        <td>{v.lessonId?.name || '-'}</td>
+                        <td><span className={`video-card-chip video-card-chip-${v.difficulty || 'easy'}`}>{v.difficulty || 'easy'}</span></td>
+                        <td>{v.isActive ? '✅' : '❌'}</td>
+                        <td className="manage-video-actions">
+                          <button className="video-btn video-btn-ghost" onClick={() => { setCurrentVideo(v); setActiveTab('browse'); setView('player'); }} title="Preview">▶</button>
+                          <button className="video-btn video-btn-secondary" onClick={() => handleEdit(v)}>Edit</button>
+                          <button className="video-btn video-btn-accent" onClick={() => setTestBuilderVideo(v)}>Test</button>
+                          <button className="video-btn video-btn-danger" onClick={() => handleDeleteFromManage(v)}>Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

@@ -12,7 +12,8 @@ import {
   AiOutlineBook,
   AiOutlineEdit,
   AiOutlineWarning,
-  AiOutlineStar
+  AiOutlineStar,
+  AiOutlinePlayCircle
 } from 'react-icons/ai';
 import './StudentSidebar.css';
 
@@ -78,6 +79,12 @@ const StudentSidebar = ({ isOpen, onClose }) => {
       icon: <AiOutlineEdit size={20} />,
       label: t('sidebar.sentences') || 'Sentences',
       key: 'sentences'
+    },
+    {
+      path: '/video-lessons',
+      icon: <AiOutlinePlayCircle size={20} />,
+      label: t('sidebar.videoLessons') || 'Video Lessons',
+      key: 'videoLessons'
     },
     {
       path: '/student/payments',

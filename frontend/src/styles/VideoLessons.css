@@ -191,6 +191,103 @@
 }
 .video-btn-rate.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
 
+/* ===== Admin bar ===== */
+.video-admin-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 10px;
+}
+.video-admin-bar-label {
+  font-weight: 700;
+  color: #78350f;
+  font-size: 14px;
+  margin-right: auto;
+}
+[data-theme="dark"] .video-admin-bar {
+  background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+  border-color: #f59e0b;
+}
+[data-theme="dark"] .video-admin-bar-label { color: #fde68a; }
+
+/* ===== Manage All table ===== */
+.manage-videos-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+}
+.manage-videos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.manage-videos-table th,
+.manage-videos-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+.manage-videos-table thead th {
+  background: #f9fafb;
+  font-weight: 700;
+  color: #374151;
+  position: sticky;
+  top: 0;
+}
+.manage-videos-table tbody tr:hover { background: #f9fafb; }
+.manage-video-thumb {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #e5e7eb;
+}
+.manage-video-thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 18px;
+}
+.manage-video-title {
+  font-weight: 600;
+  color: #111827;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.manage-video-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.manage-video-actions .video-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+[data-theme="dark"] .manage-videos-table-wrap {
+  background: #1f2937;
+  border-color: #374151;
+}
+[data-theme="dark"] .manage-videos-table thead th {
+  background: #111827;
+  color: #e5e7eb;
+}
+[data-theme="dark"] .manage-videos-table th,
+[data-theme="dark"] .manage-videos-table td {
+  border-bottom-color: #374151;
+}
+[data-theme="dark"] .manage-videos-table tbody tr:hover { background: #111827; }
+[data-theme="dark"] .manage-video-title { color: #f3f4f6; }
+
 /* ===== Toolbar & layout ===== */
 .video-toolbar {
   display: flex;
