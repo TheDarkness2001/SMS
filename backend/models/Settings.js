@@ -27,7 +27,8 @@ const settingsSchema = new mongoose.Schema({
       canProcessRefunds: { type: Boolean, default: true },
       canMakeAdjustments: { type: Boolean, default: true },
       canLockWallets: { type: Boolean, default: true },
-      canManageHomework: { type: Boolean, default: false }
+      canManageHomework: { type: Boolean, default: false },
+      canManageVideoLessons: { type: Boolean, default: false }
     },
     teacher: {
       canViewStudents: { type: Boolean, default: true },
@@ -53,7 +54,8 @@ const settingsSchema = new mongoose.Schema({
       canProcessRefunds: { type: Boolean, default: false },
       canMakeAdjustments: { type: Boolean, default: false },
       canLockWallets: { type: Boolean, default: false },
-      canManageHomework: { type: Boolean, default: false }
+      canManageHomework: { type: Boolean, default: false },
+      canManageVideoLessons: { type: Boolean, default: false }
     },
     sales: {
       canViewStudents: { type: Boolean, default: false },
@@ -79,7 +81,8 @@ const settingsSchema = new mongoose.Schema({
       canProcessRefunds: { type: Boolean, default: false },
       canMakeAdjustments: { type: Boolean, default: false },
       canLockWallets: { type: Boolean, default: false },
-      canManageHomework: { type: Boolean, default: false }
+      canManageHomework: { type: Boolean, default: false },
+      canManageVideoLessons: { type: Boolean, default: false }
     },
     receptionist: {
       canViewStudents: { type: Boolean, default: true },
@@ -105,7 +108,8 @@ const settingsSchema = new mongoose.Schema({
       canProcessRefunds: { type: Boolean, default: false },
       canMakeAdjustments: { type: Boolean, default: false },
       canLockWallets: { type: Boolean, default: false },
-      canManageHomework: { type: Boolean, default: false }
+      canManageHomework: { type: Boolean, default: false },
+      canManageVideoLessons: { type: Boolean, default: false }
     },
     manager: {
       canViewStudents: { type: Boolean, default: true },
@@ -131,7 +135,8 @@ const settingsSchema = new mongoose.Schema({
       canProcessRefunds: { type: Boolean, default: false },
       canMakeAdjustments: { type: Boolean, default: false },
       canLockWallets: { type: Boolean, default: false },
-      canManageHomework: { type: Boolean, default: false }
+      canManageHomework: { type: Boolean, default: false },
+      canManageVideoLessons: { type: Boolean, default: false }
     },
     founder: {
       canViewStudents: { type: Boolean, default: true },
@@ -157,7 +162,8 @@ const settingsSchema = new mongoose.Schema({
       canProcessRefunds: { type: Boolean, default: true },
       canMakeAdjustments: { type: Boolean, default: true },
       canLockWallets: { type: Boolean, default: true },
-      canManageHomework: { type: Boolean, default: true }
+      canManageHomework: { type: Boolean, default: true },
+      canManageVideoLessons: { type: Boolean, default: true }
     }
   },
   

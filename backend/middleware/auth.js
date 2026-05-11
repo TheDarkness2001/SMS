@@ -101,6 +101,62 @@ exports.authorize = (...roles) => {
   };
 };
 
+// Check video lesson management access
+// Founder has full control. Others need canManageVideoLessons OR canManageHomework
+// (canManageHomework grants combined Learning module access as a fallback).
+exports.authorizeVideoLessons = () => {
+  return async (req, res, next) => {
+    try {
+      const userRole = req.user?.role || null;
+      if (!userRole) {
+        return res.status(403).json({
+          success: false,
+          message: 'User role undefined. Access denied.'
+        });
+      }
+      if (userRole === 'founder') return next();
+
+      if (req.userType === 'student' || req.userType === 'parent') {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to manage video lessons'
+        });
+      }
+
+      const Settings = require('../models/Settings');
+      let settings = await Settings.findOne();
+      if (!settings) settings = await Settings.create({});
+
+      const rolePermissions = settings.rolePermissions?.[userRole] || {};
+      const roleVideoPerm = rolePermissions.canManageVideoLessons;
+      const roleHomeworkPerm = rolePermissions.canManageHomework;
+
+      if (roleVideoPerm === true || roleHomeworkPerm === true) return next();
+      if (roleVideoPerm === false && roleHomeworkPerm === false) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to manage video lessons. Contact the founder for access.'
+        });
+      }
+
+      const individualVideoPerm = req.user.permissions?.canManageVideoLessons;
+      const individualHomeworkPerm = req.user.permissions?.canManageHomework;
+      if (individualVideoPerm === true || individualHomeworkPerm === true) return next();
+
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to manage video lessons. Contact the founder for access.'
+      });
+    } catch (error) {
+      console.error('[VIDEO_LESSON_AUTH] Error checking video lesson permission:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error checking video lesson permissions'
+      });
+    }
+  };
+};
+
 // Check homework management access
 // Only founder has full control; others need canManageHomework permission granted by founder
 exports.authorizeHomework = () => {

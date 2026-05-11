@@ -31,11 +31,13 @@ const VideoLessons = () => {
   const isAdmin = (() => {
     const role = (user?.role || '').toLowerCase().trim();
     if (role === 'founder') return true;
+    if (user?.permissions?.canManageVideoLessons === true) return true;
     if (user?.permissions?.canManageHomework === true) return true;
     try {
       const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
       const storedRole = (stored.role || '').toLowerCase().trim();
       if (storedRole === 'founder') return true;
+      if (stored.permissions?.canManageVideoLessons === true) return true;
       if (stored.permissions?.canManageHomework === true) return true;
     } catch (e) {}
     return false;
