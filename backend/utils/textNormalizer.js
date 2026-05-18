@@ -23,10 +23,13 @@
 // U+201A  ‚   Single low-9 quotation mark
 // U+201B  ‛   Single high-reversed-9 quotation mark
 // U+0060  `   Grave accent / backtick            (some keyboards)
+// U+02BB  ʻ   Modifier letter turned comma       (Uzbek oʻ/gʻ — CRITICAL missing char)
 // U+02BC  ʼ   Modifier letter apostrophe         (Unicode preferred for glottal stop)
 // U+02BD  ҅   Modifier letter reversed comma
 // U+02BE  ҆   Modifier letter right half ring
 // U+02BF  ҇   Modifier letter left half ring
+// U+A78B  Ꞌ   Latin capital letter saltillo
+// U+A78C  ꞌ   Latin small letter saltillo
 // U+0313  ̓   Combining comma above
 // U+0314  ̔   Combining reversed comma above
 // U+0315  ̕   Combining comma above right
@@ -44,7 +47,7 @@
 // U+301D  〝   Reversed double prime quotation mark
 // U+301E  〞   Double prime quotation mark
 // U+301F  〟   Low double prime quotation mark
-const APOSTROPHE_LIKE = /[\u2018\u2019\u201A\u201B\u0060\u02BC\u02BD\u02BE\u02BF\u0313\u0314\u0315\u0374\u0375\u055A\u055B\u055D\u0670\uFF07\u2032\u2035\u2039\u203A\u301D\u301E\u301F]/g;
+const APOSTROPHE_LIKE = /[\u2018\u2019\u201A\u201B\u0060\u02BB\u02BC\u02BD\u02BE\u02BF\u0313\u0314\u0315\u0374\u0375\u055A\u055B\u055D\u0670\uFF07\u2032\u2035\u2039\u203A\u301D\u301E\u301F\uA78B\uA78C]/g;
 
 // ------------------------------------------------------------------
 // 2. Double-quote-like characters → ASCII double quote (")

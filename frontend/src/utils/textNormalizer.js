@@ -7,7 +7,8 @@
  */
 
 // Apostrophe-like characters → ASCII apostrophe (')
-const APOSTROPHE_LIKE = /[\u2018\u2019\u201A\u201B\u0060\u02BC\u02BD\u02BE\u02BF\u0313\u0314\u0315\u0374\u0375\u055A\u055B\u055D\u0670\uFF07\u2032\u2035\u2039\u203A\u301D\u301E\u301F]/g;
+// Includes U+02BB (Uzbek oʻ/gʻ), U+A78B/U+A78C (saltillo letters)
+const APOSTROPHE_LIKE = /[\u2018\u2019\u201A\u201B\u0060\u02BB\u02BC\u02BD\u02BE\u02BF\u0313\u0314\u0315\u0374\u0375\u055A\u055B\u055D\u0670\uFF07\u2032\u2035\u2039\u203A\u301D\u301E\u301F\uA78B\uA78C]/g;
 
 // Double-quote-like characters → ASCII double quote (")
 const QUOTE_LIKE = /[\u201C\u201D\u201E\u201F\u2033\u2036\uFF02]/g;
