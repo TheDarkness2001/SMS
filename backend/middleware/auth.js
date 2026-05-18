@@ -55,6 +55,31 @@ exports.protect = async (req, res, next) => {
       });
     }
 
+    // Block inactive students from most endpoints except allowed ones
+    // Allowed for inactive students: auth, payments, results, feedback, and their own student data
+    if (req.userType === 'student' && req.user.status && req.user.status !== 'active') {
+      const allowedPatterns = [
+        '/api/auth/',           // Auth endpoints (login, logout, me)
+        '/api/payments/',       // Payment viewing
+        '/api/exams/results',   // Exam results
+        '/api/exams/',          // Exam data (for results page)
+        '/api/feedback/',       // Feedback viewing
+        '/api/students/',       // Student profile data
+      ];
+      
+      const isAllowedEndpoint = allowedPatterns.some(pattern => 
+        req.originalUrl.startsWith(pattern)
+      );
+      
+      if (!isAllowedEndpoint) {
+        return res.status(403).json({
+          success: false,
+          code: 'STUDENT_INACTIVE',
+          message: 'Your account is inactive. Please contact TechRen Academy to reactivate it.'
+        });
+      }
+    }
+
     console.log('[AUTH] Authentication successful for user:', req.user._id);
     next();
   } catch (error) {

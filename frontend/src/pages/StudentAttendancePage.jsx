@@ -133,7 +133,7 @@ const StudentAttendancePage = () => {
     return data;
   }, [attendanceRecords, t]);
 
-  if (loading) return <div className="student-page"><div className="loading-spinner">{t('common.loading')}</div></div>;
+  if (loading) return <div className="student-page"><div className="loading-container"><div className="loading-spinner"></div><p className="loading-text">{t('common.loading')}</p></div></div>;
 
   return (
     <div className="student-page student-attendance-page">

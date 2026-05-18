@@ -88,6 +88,57 @@
   flex: 1;
 }
 
+/* Locked menu items for inactive students */
+.student-menu-item.locked {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.student-menu-link.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.student-menu-link.locked:hover {
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  padding-left: 20px;
+  border-left-color: transparent;
+}
+
+.lock-icon {
+  font-size: 14px;
+  margin-left: 8px;
+  opacity: 0.7;
+}
+
+/* Inactive mode sidebar notice */
+.student-sidebar.inactive-mode {
+  border-top: 3px solid #ff6b6b;
+}
+
+.student-sidebar-inactive-notice {
+  margin: 20px 16px;
+  padding: 12px;
+  background: rgba(255, 107, 107, 0.15);
+  border-left: 3px solid #ff6b6b;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.student-sidebar-inactive-notice p {
+  color: #ff6b6b;
+  font-weight: 600;
+  font-size: 13px;
+  margin: 0 0 4px 0;
+}
+
+.student-sidebar-inactive-notice small {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+}
+
 /* Group dropdown styles */
 .student-group-header {
   margin-bottom: 4px;

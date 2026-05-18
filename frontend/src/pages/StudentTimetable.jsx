@@ -91,7 +91,10 @@ const StudentTimetable = () => {
   if (loading) {
     return (
       <div className="student-page">
-        <div className="loading-spinner">{t('studentTimetable.loadingTimetable')}...</div>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p className="loading-text">{t('studentTimetable.loadingTimetable')}...</p>
+        </div>
       </div>
     );
   }

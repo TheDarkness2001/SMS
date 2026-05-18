@@ -20,6 +20,7 @@ const StudentDashboard = () => {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [user] = useState(JSON.parse(sessionStorage.getItem('user') || '{}'));
+  const isInactive = user.status === 'inactive';
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [studentData, setStudentData] = useState(null);
   const [stats, setStats] = useState({
@@ -37,10 +38,9 @@ const StudentDashboard = () => {
   const [sentencesLeaderboard, setSentencesLeaderboard] = useState([]);
   const [presentationsLeaderboard, setPresentationsLeaderboard] = useState([]);
 
-  // Other students pagination
-  const [allStudents, setAllStudents] = useState([]);
-  const [otherStudentsPage, setOtherStudentsPage] = useState(1);
-  const otherStudentsPerPage = 10;
+  // Top 100 Students Leaderboard
+  const [topStudents, setTopStudents] = useState([]);
+  const [topStudentsLoading, setTopStudentsLoading] = useState(true);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -122,7 +122,7 @@ const StudentDashboard = () => {
         totalPendingAmount
       });
 
-      // Fetch leaderboards
+      // Fetch Top 100 Students Leaderboard
       try {
         const [wordsRes, sentencesRes, allStudentsRes] = await Promise.all([
           homeworkAPI.getLeaderboard(),
@@ -131,10 +131,34 @@ const StudentDashboard = () => {
         ]);
         setWordsLeaderboard(wordsRes.data.data?.leaderboard || []);
         setSentencesLeaderboard(sentencesRes.data.data?.leaderboard || []);
+        
+        // Create Top 100 leaderboard from all students
         const studentsList = allStudentsRes.data.data || [];
-        setAllStudents(studentsList.filter(s => s._id !== user.id && s._id !== user._id));
+        const activeStudents = studentsList.filter(s => s.status === 'active');
+        
+        // Sort by a combination of metrics (you can adjust this logic)
+        const sortedStudents = activeStudents
+          .map(student => {
+            // Calculate a score based on available metrics
+            const wordScore = wordsRes.data.data?.leaderboard?.find(w => w._id === student._id)?.score || 0;
+            const sentenceScore = sentencesRes.data.data?.leaderboard?.find(s => s._id === student._id)?.score || 0;
+            const totalScore = wordScore + sentenceScore;
+            
+            return {
+              ...student,
+              totalScore,
+              wordScore,
+              sentenceScore
+            };
+          })
+          .sort((a, b) => b.totalScore - a.totalScore)
+          .slice(0, 100); // Top 100 only
+        
+        setTopStudents(sortedStudents);
+        setTopStudentsLoading(false);
       } catch (leaderboardError) {
         console.error('[StudentDashboard] Leaderboard fetch error:', leaderboardError);
+        setTopStudentsLoading(false);
       }
 
       // Fetch top presentations (current month)
@@ -293,7 +317,10 @@ const StudentDashboard = () => {
   if (loading) {
     return (
       <div className="student-page">
-        <div className="loading-spinner">{t('common.loading')}</div>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p className="loading-text">{t('common.loading')}</p>
+        </div>
       </div>
     );
   }
@@ -306,6 +333,19 @@ const StudentDashboard = () => {
           studentId={user.id || user._id} 
           onComplete={() => setShowNotificationModal(false)} 
         />
+      )}
+
+      {/* Inactive Student Banner */}
+      {isInactive && (
+        <div className="inactive-student-banner">
+          <div className="banner-content">
+            <span className="banner-icon">⚠️</span>
+            <div className="banner-text">
+              <h3>{t('common.accountInactive') || 'Account Inactive'}</h3>
+              <p>{t('common.inactiveMessage') || 'Your account is currently inactive. You can only view payments, results, and feedback. Please contact TechRen Academy to reactivate your account.'}</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Welcome Section */}
@@ -464,52 +504,61 @@ const StudentDashboard = () => {
         </div>
       )}
 
-      {/* Other Students Section */}
-      <div className="other-students-section">
-        <h2 className="section-title">{t('dashboard.otherStudents')}</h2>
-        {allStudents.length === 0 ? (
+      {/* Top 100 Students Leaderboard */}
+      <div className="top-students-section">
+        <div className="section-header">
+          <h2 className="section-title">
+            <AiOutlineTrophy size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+            {t('dashboard.topStudents') || 'Top 100 Students'}
+          </h2>
+          <p className="section-subtitle">{t('dashboard.topStudentsSubtitle') || 'Based on words and sentences practice scores'}</p>
+        </div>
+        
+        {topStudentsLoading ? (
+          <div className="leaderboard-loading">
+            <div className="loading-spinner"></div>
+            <p>{t('common.loading')}</p>
+          </div>
+        ) : topStudents.length === 0 ? (
           <p className="leaderboard-empty">{t('common.noData')}</p>
         ) : (
-          <>
-            <div className="other-students-grid">
-              {allStudents
-                .slice((otherStudentsPage - 1) * otherStudentsPerPage, otherStudentsPage * otherStudentsPerPage)
-                .map((student) => (
-                  <div key={student._id} className="other-student-card">
-                    <div className="other-student-avatar">
+          <div className="top-students-grid">
+            {topStudents.map((student, index) => {
+              const rank = index + 1;
+              const isTop3 = rank <= 3;
+              const medalEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+              
+              return (
+                <div 
+                  key={student._id} 
+                  className={`top-student-card ${isTop3 ? `rank-${rank}` : ''} ${student._id === user.id || student._id === user._id ? 'is-current-user' : ''}`}
+                >
+                  <div className="rank-badge">
+                    {medalEmoji || `#${rank}`}
+                  </div>
+                  <div className="top-student-info">
+                    <div className="top-student-avatar">
                       {student.profileImage ? (
                         <img src={student.profileImage} alt={student.name} />
                       ) : (
-                        <div className="avatar-placeholder">{student.name?.charAt(0) || '?'}</div>
+                        <div className="top-student-avatar-placeholder">
+                          {student.name.charAt(0)}
+                        </div>
                       )}
                     </div>
-                    <div className="other-student-info">
-                      <span className="other-student-name">{student.name}</span>
-                      <span className="other-student-id">{student.studentId}</span>
+                    <div className="top-student-details">
+                      <span className="top-student-name">{student.name}</span>
+                      <span className="top-student-id">{student.studentId}</span>
                     </div>
                   </div>
-                ))}
-            </div>
-            <div className="pagination-controls">
-              <button
-                className="pagination-btn"
-                onClick={() => setOtherStudentsPage(p => Math.max(1, p - 1))}
-                disabled={otherStudentsPage === 1}
-              >
-                <AiOutlineArrowLeft /> {t('dashboard.prev')}
-              </button>
-              <span className="pagination-page">
-                {otherStudentsPage} / {Math.ceil(allStudents.length / otherStudentsPerPage)}
-              </span>
-              <button
-                className="pagination-btn"
-                onClick={() => setOtherStudentsPage(p => Math.min(Math.ceil(allStudents.length / otherStudentsPerPage), p + 1))}
-                disabled={otherStudentsPage >= Math.ceil(allStudents.length / otherStudentsPerPage)}
-              >
-                {t('dashboard.next')} <AiOutlineArrowRight />
-              </button>
-            </div>
-          </>
+                  <div className="top-student-score">
+                    <span className="score-value">{student.totalScore.toLocaleString()}</span>
+                    <span className="score-label">{t('dashboard.points') || 'pts'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 

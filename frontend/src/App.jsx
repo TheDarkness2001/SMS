@@ -54,6 +54,7 @@ import StudentPenalties from './pages/StudentPenalties';
 import StudentPresentations from './pages/StudentPresentations';
 import NotFound from './components/NotFound';
 import PrivateRoute from './components/PrivateRoute';
+import InactiveStudentGuard from './components/InactiveStudentGuard';
 import './styles/App.css';
 
 function App() {
@@ -97,13 +98,13 @@ function App() {
             <Route path="/teacher-earnings" element={<PrivateRoute><StaffEarnings /></PrivateRoute>} />
             <Route path="/scheduler" element={<PrivateRoute><Scheduler /></PrivateRoute>} />
             <Route path="/branches" element={<PrivateRoute><Branches /></PrivateRoute>} />
-            <Route path="/student/dashboard" element={<PrivateRoute><StudentDashboard /></PrivateRoute>} />
-            <Route path="/student/timetable" element={<PrivateRoute><StudentTimetable /></PrivateRoute>} />
-            <Route path="/student/attendance" element={<PrivateRoute><StudentAttendancePage /></PrivateRoute>} />
-            <Route path="/student/feedback" element={<PrivateRoute><StudentFeedbackPage /></PrivateRoute>} />
-            <Route path="/student/exams" element={<PrivateRoute><StudentExamsPage /></PrivateRoute>} />
-            <Route path="/student/results" element={<PrivateRoute><StudentResultsPage /></PrivateRoute>} />
-            <Route path="/student/payments" element={<PrivateRoute><StudentPaymentsPage /></PrivateRoute>} />
+            <Route path="/student/dashboard" element={<PrivateRoute><InactiveStudentGuard><StudentDashboard /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/student/timetable" element={<PrivateRoute><InactiveStudentGuard><StudentTimetable /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/student/attendance" element={<PrivateRoute><InactiveStudentGuard><StudentAttendancePage /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/student/feedback" element={<PrivateRoute><InactiveStudentGuard><StudentFeedbackPage /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/student/exams" element={<PrivateRoute><InactiveStudentGuard><StudentExamsPage /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/student/results" element={<PrivateRoute><InactiveStudentGuard><StudentResultsPage /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/student/payments" element={<PrivateRoute><InactiveStudentGuard><StudentPaymentsPage /></InactiveStudentGuard></PrivateRoute>} />
             <Route path="/teacher-timetable" element={<PrivateRoute><TeacherTimetable /></PrivateRoute>} />
             <Route path="/teacher-attendance" element={<PrivateRoute><TeacherAttendance /></PrivateRoute>} />
             <Route path="/revenue" element={<PrivateRoute><Revenue /></PrivateRoute>} />
@@ -112,15 +113,15 @@ function App() {
             */}
             <Route path="/admin/earnings" element={<PrivateRoute><AdminEarningsPanel /></PrivateRoute>} />
             <Route path="/admin/payouts" element={<PrivateRoute><AdminPayoutPanel /></PrivateRoute>} />
-            <Route path="/homework" element={<PrivateRoute><Homework /></PrivateRoute>} />
-            <Route path="/sentences" element={<PrivateRoute><SentencesPage /></PrivateRoute>} />
-            <Route path="/video-lessons" element={<PrivateRoute><VideoLessons /></PrivateRoute>} />
+            <Route path="/homework" element={<PrivateRoute><InactiveStudentGuard><Homework /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/sentences" element={<PrivateRoute><InactiveStudentGuard><SentencesPage /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/video-lessons" element={<PrivateRoute><InactiveStudentGuard><VideoLessons /></InactiveStudentGuard></PrivateRoute>} />
             <Route path="/video-lessons/:id/test" element={<PrivateRoute><VideoTest /></PrivateRoute>} />
             <Route path="/penalties" element={<PrivateRoute><TeacherPenalties /></PrivateRoute>} />
             <Route path="/presentations" element={<PrivateRoute><TeacherPresentations /></PrivateRoute>} />
             <Route path="/bonuses" element={<PrivateRoute><BonusDashboard /></PrivateRoute>} />
-            <Route path="/student/penalties" element={<PrivateRoute><StudentPenalties /></PrivateRoute>} />
-            <Route path="/student/presentations" element={<PrivateRoute><StudentPresentations /></PrivateRoute>} />
+            <Route path="/student/penalties" element={<PrivateRoute><InactiveStudentGuard><StudentPenalties /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/student/presentations" element={<PrivateRoute><InactiveStudentGuard><StudentPresentations /></InactiveStudentGuard></PrivateRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
