@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { languageAPI, levelAPI, lessonAPI, examGroupsAPI, sentenceAPI, homeworkAPI, getImageUrl } from '../utils/api';
+import { normalizeText } from '../utils/textNormalizer';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import SentenceLeaderboard from '../components/sentences/SentenceLeaderboard';
@@ -209,7 +210,7 @@ const SentencesPage = () => {
     try {
       const response = await sentenceAPI.checkAnswer({
         sentenceId: currentSentence._id,
-        answer: userAnswer,
+        answer: normalizeText(userAnswer),
         direction: currentSentence.direction === 'en-to-uz' ? 'enToUz' : 'uzToEn'
       });
       if (response.data.success) {

@@ -3,6 +3,7 @@ const StudentSentenceProgress = require('../models/StudentSentenceProgress');
 const Student = require('../models/Student');
 const Lesson = require('../models/Lesson');
 const { analyzeSentenceAnswer } = require('../utils/sentenceValidator');
+const { normalizeText } = require('../utils/textNormalizer');
 
 // Get all sentences (filtered by lessonId or levelId)
 exports.getAllSentences = async (req, res) => {
@@ -67,8 +68,8 @@ exports.createSentence = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Lesson ID is required' });
     }
     const sentence = new Sentence({
-      english: english.trim(),
-      uzbek: uzbek.trim(),
+      english: normalizeText(english),
+      uzbek: normalizeText(uzbek),
       lessonId
     });
     await sentence.save();
@@ -84,8 +85,8 @@ exports.updateSentence = async (req, res) => {
   try {
     const { english, uzbek, lessonId } = req.body;
     const updateData = {};
-    if (english?.trim()) updateData.english = english.trim();
-    if (uzbek?.trim()) updateData.uzbek = uzbek.trim();
+    if (english?.trim()) updateData.english = normalizeText(english);
+    if (uzbek?.trim()) updateData.uzbek = normalizeText(uzbek);
     if (lessonId) updateData.lessonId = lessonId;
 
     const sentence = await Sentence.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -131,7 +132,7 @@ exports.checkSentenceAnswer = async (req, res) => {
     }
 
     const correctAnswer = direction === 'uzToEn' ? sentence.english : sentence.uzbek;
-    const analysis = analyzeSentenceAnswer(correctAnswer, answer.trim());
+    const analysis = analyzeSentenceAnswer(correctAnswer, normalizeText(answer));
 
     // Update progress if student
     if (studentId) {

@@ -8,6 +8,7 @@ const StudentVocabProgress = require('../models/StudentVocabProgress');
 const Student = require('../models/Student');
 const ClassSchedule = require('../models/ClassSchedule');
 const ExamGroup = require('../models/ExamGroup');
+const { normalizeText, normalizeForComparison } = require('../utils/textNormalizer');
 
 // Helper: Check if current time is within class hours (Uzbekistan UTC+5)
 const isWithinClassHours = async (studentId) => {
@@ -521,34 +522,44 @@ exports.submitExam = async (req, res) => {
       let correctAnswer = '';
 
       if (ans.direction === 'en-to-uz') {
-        const meanings = word.uzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
-        correctAnswer = word.uzbek;
+        const meanings = word.uzbek
+          .split(',')
+          .map(m => normalizeForComparison(m))
+          .filter(Boolean);
+        correctAnswer = normalizeText(word.uzbek);
 
         // Support array of answers for multiple meanings
         if (Array.isArray(ans.answers) && ans.answers.length > 0) {
-          const studentAnswers = ans.answers.map(a => String(a).trim().toLowerCase()).filter(Boolean);
+          const studentAnswers = ans.answers
+            .map(a => normalizeForComparison(a))
+            .filter(Boolean);
           // All meanings must be matched by student answers (order-independent, no duplicates allowed)
           const sortedMeanings = [...meanings].sort();
           const sortedAnswers = [...studentAnswers].sort();
           isCorrect = sortedMeanings.length === sortedAnswers.length &&
             sortedMeanings.every((m, i) => m === sortedAnswers[i]);
         } else {
-          const normalizedAnswer = String(ans.answer || '').trim().toLowerCase();
+          const normalizedAnswer = normalizeForComparison(ans.answer || '');
           isCorrect = meanings.some(m => m === normalizedAnswer);
         }
       } else {
         // uz-to-en direction
-        const englishForms = word.english.split(',').map(f => f.trim().toLowerCase()).filter(Boolean);
-        correctAnswer = word.english;
+        const englishForms = word.english
+          .split(',')
+          .map(f => normalizeForComparison(f))
+          .filter(Boolean);
+        correctAnswer = normalizeText(word.english);
 
         if (Array.isArray(ans.answers) && ans.answers.length > 0) {
-          const studentAnswers = ans.answers.map(a => String(a).trim().toLowerCase()).filter(Boolean);
+          const studentAnswers = ans.answers
+            .map(a => normalizeForComparison(a))
+            .filter(Boolean);
           const sortedForms = [...englishForms].sort();
           const sortedAnswers = [...studentAnswers].sort();
           isCorrect = sortedForms.length === sortedAnswers.length &&
             sortedForms.every((f, i) => f === sortedAnswers[i]);
         } else {
-          const normalizedAnswer = String(ans.answer || '').trim().toLowerCase();
+          const normalizedAnswer = normalizeForComparison(ans.answer || '');
           isCorrect = englishForms.some(form => form === normalizedAnswer);
         }
       }

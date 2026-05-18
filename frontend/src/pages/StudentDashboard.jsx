@@ -41,6 +41,8 @@ const StudentDashboard = () => {
   // Top 100 Students Leaderboard
   const [topStudents, setTopStudents] = useState([]);
   const [topStudentsLoading, setTopStudentsLoading] = useState(true);
+  const [leaderboardPage, setLeaderboardPage] = useState(1);
+  const STUDENTS_PER_PAGE = 12;
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -522,43 +524,68 @@ const StudentDashboard = () => {
         ) : topStudents.length === 0 ? (
           <p className="leaderboard-empty">{t('common.noData')}</p>
         ) : (
-          <div className="top-students-grid">
-            {topStudents.map((student, index) => {
-              const rank = index + 1;
-              const isTop3 = rank <= 3;
-              const medalEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
-              
-              return (
-                <div 
-                  key={student._id} 
-                  className={`top-student-card ${isTop3 ? `rank-${rank}` : ''} ${student._id === user.id || student._id === user._id ? 'is-current-user' : ''}`}
-                >
-                  <div className="rank-badge">
-                    {medalEmoji || `#${rank}`}
-                  </div>
-                  <div className="top-student-info">
-                    <div className="top-student-avatar">
-                      {student.profileImage ? (
-                        <img src={student.profileImage} alt={student.name} />
-                      ) : (
-                        <div className="top-student-avatar-placeholder">
-                          {student.name.charAt(0)}
+          <>
+            <div className="top-students-grid">
+              {topStudents
+                .slice((leaderboardPage - 1) * STUDENTS_PER_PAGE, leaderboardPage * STUDENTS_PER_PAGE)
+                .map((student, index) => {
+                  const rank = (leaderboardPage - 1) * STUDENTS_PER_PAGE + index + 1;
+                  const isTop3 = rank <= 3;
+                  const medalEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+
+                  return (
+                    <div
+                      key={student._id}
+                      className={`top-student-card ${isTop3 ? `rank-${rank}` : ''} ${student._id === user.id || student._id === user._id ? 'is-current-user' : ''}`}
+                    >
+                      <div className="rank-badge">
+                        {medalEmoji || `#${rank}`}
+                      </div>
+                      <div className="top-student-info">
+                        <div className="top-student-avatar">
+                          {student.profileImage ? (
+                            <img src={student.profileImage} alt={student.name} />
+                          ) : (
+                            <div className="top-student-avatar-placeholder">
+                              {student.name.charAt(0)}
+                            </div>
+                          )}
                         </div>
-                      )}
+                        <div className="top-student-details">
+                          <span className="top-student-name">{student.name}</span>
+                          <span className="top-student-id">{student.studentId}</span>
+                        </div>
+                      </div>
+                      <div className="top-student-score">
+                        <span className="score-value">{student.totalScore.toLocaleString()}</span>
+                        <span className="score-label">{t('dashboard.points') || 'pts'}</span>
+                      </div>
                     </div>
-                    <div className="top-student-details">
-                      <span className="top-student-name">{student.name}</span>
-                      <span className="top-student-id">{student.studentId}</span>
-                    </div>
-                  </div>
-                  <div className="top-student-score">
-                    <span className="score-value">{student.totalScore.toLocaleString()}</span>
-                    <span className="score-label">{t('dashboard.points') || 'pts'}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+            </div>
+            {topStudents.length > STUDENTS_PER_PAGE && (
+              <div className="leaderboard-pagination">
+                <button
+                  className="pagination-btn"
+                  onClick={() => setLeaderboardPage(p => Math.max(1, p - 1))}
+                  disabled={leaderboardPage === 1}
+                >
+                  ← Prev
+                </button>
+                <span className="pagination-info">
+                  Page {leaderboardPage} of {Math.ceil(topStudents.length / STUDENTS_PER_PAGE)}
+                </span>
+                <button
+                  className="pagination-btn"
+                  onClick={() => setLeaderboardPage(p => Math.min(Math.ceil(topStudents.length / STUDENTS_PER_PAGE), p + 1))}
+                  disabled={leaderboardPage === Math.ceil(topStudents.length / STUDENTS_PER_PAGE)}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

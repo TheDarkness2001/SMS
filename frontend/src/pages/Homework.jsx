@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { homeworkAPI, lessonAPI, languageAPI, levelAPI, examGroupsAPI, getImageUrl } from '../utils/api';
+import { normalizeText, normalizeArray } from '../utils/textNormalizer';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import LessonsTab from '../components/homework/LessonsTab';
@@ -286,9 +287,9 @@ const Homework = () => {
       const isMultiEnToUz = currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1;
       const isMultiUzToEn = currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1;
       if (isMultiEnToUz || isMultiUzToEn) {
-        payload.answers = userAnswers;
+        payload.answers = normalizeArray(userAnswers);
       } else {
-        payload.answer = userAnswers[0];
+        payload.answer = normalizeText(userAnswers[0]);
       }
       const response = await homeworkAPI.checkAnswer(payload);
       if (response.data.success) {

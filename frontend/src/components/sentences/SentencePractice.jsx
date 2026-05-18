@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { sentenceAPI } from '../../utils/api';
+import { normalizeText } from '../../utils/textNormalizer';
 
 const SentencePractice = ({ t, lessonId, levelId }) => {
   const [sentence, setSentence] = useState(null);
@@ -38,7 +39,7 @@ const SentencePractice = ({ t, lessonId, levelId }) => {
     try {
       const res = await sentenceAPI.checkAnswer({
         sentenceId: sentence._id,
-        answer: answer.trim(),
+        answer: normalizeText(answer),
         direction
       });
       if (res.data.success) {

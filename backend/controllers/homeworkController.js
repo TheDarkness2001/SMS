@@ -9,6 +9,7 @@ const ExamGroup = require('../models/ExamGroup');
 const StudentVocabProgress = require('../models/StudentVocabProgress');
 const StudentSentenceProgress = require('../models/StudentSentenceProgress');
 const Sentence = require('../models/Sentence');
+const { normalizeText, normalizeForComparison } = require('../utils/textNormalizer');
 
 // Get random word for practice
 exports.getRandomWord = async (req, res) => {
@@ -101,12 +102,18 @@ exports.checkAnswer = async (req, res) => {
     let userAnswer = '';
 
     if (direction === 'en-to-uz') {
-      const meanings = word.uzbek.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
-      correctAnswer = word.uzbek;
+      // Normalize stored meanings AND student answers so apostrophe differences don't matter
+      const meanings = word.uzbek
+        .split(',')
+        .map(m => normalizeForComparison(m))
+        .filter(Boolean);
+      correctAnswer = normalizeText(word.uzbek);
 
       // Support array of answers for multiple meanings
       if (Array.isArray(answers) && answers.length > 0) {
-        const studentAnswers = answers.map(a => String(a).trim().toLowerCase()).filter(Boolean);
+        const studentAnswers = answers
+          .map(a => normalizeForComparison(a))
+          .filter(Boolean);
         userAnswer = studentAnswers.join(', ');
         // All meanings must be matched by student answers (order-independent, no duplicates allowed)
         const sortedMeanings = [...meanings].sort();
@@ -115,17 +122,23 @@ exports.checkAnswer = async (req, res) => {
           sortedMeanings.every((m, i) => m === sortedAnswers[i]);
       } else if (answer) {
         // Backward compatibility: single answer
-        const normalizedAnswer = String(answer).trim().toLowerCase();
+        const normalizedAnswer = normalizeForComparison(answer);
         userAnswer = normalizedAnswer;
         isCorrect = meanings.some(m => m === normalizedAnswer);
       }
     } else if (direction === 'uz-to-en') {
-      const englishForms = word.english.split(',').map(f => f.trim().toLowerCase()).filter(Boolean);
-      correctAnswer = word.english;
+      // Normalize stored English forms AND student answers
+      const englishForms = word.english
+        .split(',')
+        .map(f => normalizeForComparison(f))
+        .filter(Boolean);
+      correctAnswer = normalizeText(word.english);
 
       // Support array of answers for irregular verbs (e.g., "go, went, gone")
       if (Array.isArray(answers) && answers.length > 0) {
-        const studentAnswers = answers.map(a => String(a).trim().toLowerCase()).filter(Boolean);
+        const studentAnswers = answers
+          .map(a => normalizeForComparison(a))
+          .filter(Boolean);
         userAnswer = studentAnswers.join(', ');
         // All English forms must be matched by student answers (order-independent, no duplicates)
         const sortedForms = [...englishForms].sort();
@@ -133,7 +146,7 @@ exports.checkAnswer = async (req, res) => {
         isCorrect = sortedForms.length === sortedAnswers.length &&
           sortedForms.every((f, i) => f === sortedAnswers[i]);
       } else if (answer) {
-        const normalizedAnswer = String(answer).trim().toLowerCase();
+        const normalizedAnswer = normalizeForComparison(answer);
         userAnswer = normalizedAnswer;
         isCorrect = englishForms.some(form => form === normalizedAnswer);
       }
@@ -337,8 +350,8 @@ exports.addWord = async (req, res) => {
       });
     }
 
-    const trimmedEnglish = english.trim().toLowerCase();
-    const trimmedUzbek = uzbek.trim().toLowerCase();
+    const trimmedEnglish = normalizeText(english).toLowerCase();
+    const trimmedUzbek = normalizeText(uzbek).toLowerCase();
 
     // Only check for exact duplicate (same english + same uzbek) in SAME lesson
     const existingInLesson = await Word.findOne({
@@ -399,8 +412,8 @@ exports.updateWord = async (req, res) => {
       });
     }
 
-    if (english !== undefined) word.english = english.trim().toLowerCase();
-    if (uzbek !== undefined) word.uzbek = uzbek.trim().toLowerCase();
+    if (english !== undefined) word.english = normalizeText(english).toLowerCase();
+    if (uzbek !== undefined) word.uzbek = normalizeText(uzbek).toLowerCase();
 
     await word.save();
 

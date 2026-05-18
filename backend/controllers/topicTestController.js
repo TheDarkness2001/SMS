@@ -2,14 +2,16 @@ const TopicTest = require('../models/TopicTest');
 const StudentTestResult = require('../models/StudentTestResult');
 const StudentVideoProgress = require('../models/StudentVideoProgress');
 const VideoLesson = require('../models/VideoLesson');
+const { normalizeText } = require('../utils/textNormalizer');
 
 // Normalize free-text answers for translation/short-answer/fill-blank.
+// First fixes Unicode apostrophes/quotes, then strips punctuation for lenient matching.
 function normalize(s) {
-  return String(s || '')
+  return normalizeText(String(s || ''))
     .toLowerCase()
-    .trim()
-    .replace(/[.,!?;:"'`]/g, '')
-    .replace(/\s+/g, ' ');
+    .replace(/[.,!?;:"']/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function isAnswerCorrect(question, userAnswer) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { normalizeText, normalizeArray } from '../../utils/textNormalizer';
 import { lessonAPI } from '../../utils/api';
 
 const QUESTION_TIME_LIMIT = 35; // 35 seconds per question
@@ -109,9 +110,9 @@ const ClassExam = ({ lessonId, lessonName, onFinish, onCancel, t }) => {
     const isMultiEnToUz = currentWord.direction === 'en-to-uz' && currentWord.uzbekMeanings?.length > 1;
     const isMultiUzToEn = currentWord.direction === 'uz-to-en' && currentWord.englishForms?.length > 1;
     if (isMultiEnToUz || isMultiUzToEn) {
-      payload.answers = currentAnswers;
+      payload.answers = normalizeArray(currentAnswers);
     } else {
-      payload.answer = currentAnswers[0]?.trim() || '';
+      payload.answer = normalizeText(currentAnswers[0] || '');
     }
     const newAnswers = [...answers, payload];
     setAnswers(newAnswers);
