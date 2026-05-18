@@ -8,6 +8,21 @@ const { normalizeText } = require('./textNormalizer');
 const ARTICLES = new Set(['a', 'an', 'the']);
 const PUNCTUATION_REGEX = /[.,!?;:"']$/;
 
+// Pronoun equivalence groups: words in the same group are treated as correct matches.
+// This allows gender-neutral acceptance for language-learning sentences.
+const PRONOUN_GROUPS = [
+  new Set(['he', 'she']),
+  new Set(['his', 'her']),
+  new Set(['him', 'her'])
+];
+
+function arePronounEquivalents(a, b) {
+  for (const group of PRONOUN_GROUPS) {
+    if (group.has(a) && group.has(b)) return true;
+  }
+  return false;
+}
+
 function tokenize(text) {
   return normalizeText(text)
     .toLowerCase()
@@ -70,6 +85,11 @@ function computeDiff(correctTokens, userTokens) {
       j++;
     } else if (cStripped === uStripped) {
       // Words match when ignoring non-period punctuation (comma, semicolon, etc.)
+      diff.push({ type: 'correct', word: c });
+      i++;
+      j++;
+    } else if (arePronounEquivalents(normalizeWord(c), normalizeWord(u))) {
+      // Accept he/she, his/her, him/her as equivalent
       diff.push({ type: 'correct', word: c });
       i++;
       j++;
