@@ -408,7 +408,11 @@ exports.getExamWords = async (req, res) => {
     }
 
     // Check if exam is unlocked for any of the student's groups
-    const studentGroups = await ExamGroup.find({ students: studentId }).select('_id');
+    // Use $in with both ObjectId and string forms to handle legacy mixed-type data
+    const studentIdObj = req.user._id;
+    const studentGroups = await ExamGroup.find({
+      students: { $in: [studentIdObj, studentIdObj.toString()] }
+    }).select('_id');
     const studentGroupIds = studentGroups.map(g => g._id.toString());
     const isUnlockedForStudent = lesson.examUnlockedFor.some(g => studentGroupIds.includes(g.toString()));
 
@@ -642,9 +646,13 @@ exports.submitExam = async (req, res) => {
 exports.getStudentProgress = async (req, res) => {
   try {
     const studentId = req.user.id;
+    const studentIdObj = req.user._id;
 
     // Get student's groups for exam unlock checking
-    const studentGroups = await ExamGroup.find({ students: studentId }).select('_id');
+    // Use $in with both ObjectId and string forms to handle legacy mixed-type data
+    const studentGroups = await ExamGroup.find({
+      students: { $in: [studentIdObj, studentIdObj.toString()] }
+    }).select('_id');
     const studentGroupIds = studentGroups.map(g => g._id.toString());
 
     // Get all levels for practiceUnlocked info

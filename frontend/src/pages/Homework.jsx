@@ -121,21 +121,30 @@ const Homework = () => {
   const wordTimerRef = useRef(null);
   const autoAdvanceRef = useRef(null);
 
-  // Fetch student lesson progress
-  useEffect(() => {
+  // Fetch student lesson progress (callable so we can refresh on tab/level navigation)
+  const fetchMyProgress = useCallback(async () => {
     if (!isStudent) return;
-    const fetchMyProgress = async () => {
-      try {
-        const res = await lessonAPI.getMyLessonProgress();
-        if (res.data.success) {
-          setMyProgress(res.data.data.progress);
-        }
-      } catch (error) {
-        console.error('Error fetching lesson progress:', error);
+    try {
+      const res = await lessonAPI.getMyLessonProgress();
+      if (res.data.success) {
+        setMyProgress(res.data.data.progress);
       }
-    };
-    fetchMyProgress();
+    } catch (error) {
+      console.error('Error fetching lesson progress:', error);
+    }
   }, [isStudent]);
+
+  useEffect(() => {
+    fetchMyProgress();
+  }, [fetchMyProgress]);
+
+  // Refresh progress every time the student enters the Exam tab
+  // (so newly unlocked exams show up without a hard reload)
+  useEffect(() => {
+    if (isStudent && activeTab === 'exam') {
+      fetchMyProgress();
+    }
+  }, [isStudent, activeTab, fetchMyProgress]);
 
   // Fetch languages for all users (students see only their subject language)
   useEffect(() => {
@@ -180,24 +189,32 @@ const Homework = () => {
     fetchLanguages();
   }, [isStudent]);
 
-  // Fetch levels when language selected
-  useEffect(() => {
+  // Fetch levels when language selected (callable so we can refresh on tab navigation)
+  const fetchLevels = useCallback(async () => {
     if (!selectedLanguageId) return;
-    const fetchLevels = async () => {
-      try {
-        const res = await levelAPI.getByLanguage(selectedLanguageId);
-        if (res.data.success) {
-          setLevelsList(res.data.data.levels);
-          if (res.data.data.levels.length > 0) {
-            setSelectedLevelId(res.data.data.levels[0]._id);
-          }
+    try {
+      const res = await levelAPI.getByLanguage(selectedLanguageId);
+      if (res.data.success) {
+        setLevelsList(res.data.data.levels);
+        if (res.data.data.levels.length > 0) {
+          setSelectedLevelId(prev => prev || res.data.data.levels[0]._id);
         }
-      } catch (error) {
-        console.error('Error fetching levels:', error);
       }
-    };
-    fetchLevels();
+    } catch (error) {
+      console.error('Error fetching levels:', error);
+    }
   }, [selectedLanguageId]);
+
+  useEffect(() => {
+    fetchLevels();
+  }, [fetchLevels]);
+
+  // Refresh levels (and their examUnlockedForMe flags) when student enters Exam tab
+  useEffect(() => {
+    if (isStudent && activeTab === 'exam') {
+      fetchLevels();
+    }
+  }, [isStudent, activeTab, fetchLevels]);
 
   // Fetch lessons when level selected
   useEffect(() => {
@@ -668,6 +685,10 @@ const Homework = () => {
   const selectLevelForExam = async (levelId) => {
     setSelectedLevelId(levelId);
     setExamView('classes');
+    // Refresh progress so newly unlocked exams are reflected immediately
+    if (isStudent) {
+      fetchMyProgress();
+    }
     // Fetch lessons for this level
     setLessonsLoading(true);
     try {
@@ -692,6 +713,11 @@ const Homework = () => {
     setExamView('levels');
     setShowClassExam(false);
     setActiveExamLesson(null);
+    // Refresh levels and progress so newly unlocked content shows up
+    if (isStudent) {
+      fetchLevels();
+      fetchMyProgress();
+    }
   };
 
   // eslint-disable-next-line no-unused-vars
