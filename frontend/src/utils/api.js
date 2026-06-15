@@ -344,6 +344,22 @@ export const sentenceAPI = {
   getLeaderboard: () => api.get('/sentences/leaderboard')
 };
 
+// Listening API
+export const listeningAPI = {
+  getAll: (params) => api.get('/listening', { params: params || {} }),
+  getRandom: (params) => api.get('/listening/random', { params: params || {} }),
+  create: (formData) => api.post('/listening', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update: (id, formData) => api.put(`/listening/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  delete: (id) => api.delete(`/listening/${id}`),
+  checkAnswer: (data) => api.post('/listening/check', data),
+  getProgress: () => api.get('/listening/progress'),
+  getAudioUrl: (filename) => getImageUrl(filename)
+};
+
 // Language API
 export const languageAPI = {
   getAll: () => api.get('/homework/languages'),

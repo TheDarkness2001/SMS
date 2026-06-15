@@ -4,6 +4,8 @@ const Level = require('../models/Level');
 const Language = require('../models/Language');
 const Word = require('../models/Word');
 const Sentence = require('../models/Sentence');
+const ListeningExercise = require('../models/ListeningExercise');
+const StudentListeningProgress = require('../models/StudentListeningProgress');
 const StudentVocabProgress = require('../models/StudentVocabProgress');
 const Student = require('../models/Student');
 const ClassSchedule = require('../models/ClassSchedule');
@@ -54,6 +56,8 @@ exports.getAllLessons = async (req, res) => {
     // Backward compatibility: lessons without type are treated as 'words'
     if (type === 'sentences') {
       filter.type = 'sentences';
+    } else if (type === 'listening') {
+      filter.type = 'listening';
     } else if (type === 'words') {
       filter.$or = [{ type: 'words' }, { type: { $exists: false } }];
     }
@@ -61,6 +65,7 @@ exports.getAllLessons = async (req, res) => {
 
     // Attach sentence counts for sentence-type lessons
     const sentenceLessons = lessons.filter(l => l.type === 'sentences');
+    const listeningLessons = lessons.filter(l => l.type === 'listening');
     if (sentenceLessons.length > 0) {
       const lessonIds = sentenceLessons.map(l => l._id.toString());
       const counts = await Sentence.aggregate([
@@ -71,6 +76,22 @@ exports.getAllLessons = async (req, res) => {
       for (const lesson of lessons) {
         if (lesson.type === 'sentences') {
           lesson.sentenceCount = countMap.get(lesson._id.toString()) || 0;
+        } else if (lesson.type === 'listening') {
+          lesson.listeningCount = 0;
+        } else {
+          lesson.wordCount = (lesson.wordIds || []).length;
+        }
+      }
+    } else if (listeningLessons.length > 0) {
+      const lessonIds = listeningLessons.map(l => l._id.toString());
+      const counts = await ListeningExercise.aggregate([
+        { $match: { lessonId: { $in: lessonIds.map(id => new mongoose.Types.ObjectId(id)) } } },
+        { $group: { _id: '$lessonId', count: { $sum: 1 } } }
+      ]);
+      const countMap = new Map(counts.map(c => [c._id.toString(), c.count]));
+      for (const lesson of lessons) {
+        if (lesson.type === 'listening') {
+          lesson.listeningCount = countMap.get(lesson._id.toString()) || 0;
         } else {
           lesson.wordCount = (lesson.wordIds || []).length;
         }
@@ -112,6 +133,9 @@ exports.getLesson = async (req, res) => {
     if (lesson.type === 'sentences') {
       const sentences = await Sentence.find({ lessonId: lesson._id });
       data.sentences = sentences;
+    } else if (lesson.type === 'listening') {
+      const exercises = await ListeningExercise.find({ lessonId: lesson._id }).sort({ order: 1, createdAt: 1 });
+      data.exercises = exercises;
     } else {
       const words = await Word.find({ _id: { $in: lesson.wordIds } });
       data.words = words;
@@ -273,8 +297,13 @@ exports.deleteLesson = async (req, res) => {
 
     // Delete all words or sentences in this lesson
     if (lesson.type === 'sentences') {
-      const Sentence = require('../models/Sentence');
       await Sentence.deleteMany({ lessonId: id });
+    } else if (lesson.type === 'listening') {
+      const exercises = await ListeningExercise.find({ lessonId: id });
+      for (const ex of exercises) {
+        await StudentListeningProgress.deleteMany({ listeningId: ex._id });
+      }
+      await ListeningExercise.deleteMany({ lessonId: id });
     } else {
       await Word.deleteMany({ _id: { $in: lesson.wordIds } });
     }

@@ -1,0 +1,236 @@
+.listening-page .listening-practice-card {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--card-bg, #fff);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.listening-audio-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.listening-audio-controls audio {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.listening-play-btn {
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #4f46e5;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+.listening-play-btn:hover {
+  background: #4338ca;
+}
+
+.listening-play-btn.playing {
+  background: #dc2626;
+}
+
+.listening-play-btn.playing:hover {
+  background: #b91c1c;
+}
+
+.listening-hint {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.listening-answer-input {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  line-height: 1.5;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.listening-answer-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+.accuracy-display {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.accuracy-percent {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #4f46e5;
+}
+
+.feedback-box.correct .accuracy-percent {
+  color: #16a34a;
+}
+
+.feedback-box.incorrect .accuracy-percent {
+  color: #ea580c;
+}
+
+.accuracy-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.accuracy-detail {
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.script-comparison {
+  text-align: left;
+  margin: 16px 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+}
+
+.script-text {
+  margin: 4px 0 12px;
+  line-height: 1.6;
+}
+
+.script-text.your-answer {
+  color: #64748b;
+}
+
+.listening-exercise-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 600px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.listening-exercise-form input[type="text"],
+.listening-exercise-form textarea {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.listening-exercise-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.listening-exercise-card {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.exercise-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.exercise-script-preview {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 8px 0 12px;
+  white-space: pre-wrap;
+}
+
+.listening-exercise-card audio {
+  width: 100%;
+}
+
+.add-form-inline {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.add-form-inline input {
+  flex: 1;
+  min-width: 160px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.lesson-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.session-stats-banner {
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.exercise-title {
+  margin: 8px 0 0;
+}
+
+.file-input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-input-row label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.edit-exercise-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .listening-page .listening-practice-card {
+    padding: 16px;
+  }
+
+  .accuracy-percent {
+    font-size: 2rem;
+  }
+}

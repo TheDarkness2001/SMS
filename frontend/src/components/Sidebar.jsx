@@ -22,7 +22,8 @@ import {
   AiOutlineWarning,
   AiOutlineStar,
   AiOutlineTrophy,
-  AiOutlinePlayCircle
+  AiOutlinePlayCircle,
+  AiOutlineSound
 } from 'react-icons/ai';
 import { IoSchoolOutline } from 'react-icons/io5';
 import './Sidebar.css';
@@ -34,7 +35,7 @@ const Sidebar = ({ user, isOpen, onClose }) => {
     attendance: location.pathname.includes('attendance'),
     people: location.pathname === '/teachers' || location.pathname === '/students',
     finance: ['/payments', '/revenue', '/admin/earnings', '/admin/payouts'].includes(location.pathname),
-    learning: location.pathname === '/homework' || location.pathname === '/sentences' || location.pathname.startsWith('/video-lessons'),
+    learning: location.pathname === '/homework' || location.pathname === '/sentences' || location.pathname === '/listening' || location.pathname.startsWith('/video-lessons'),
     competition: ['/penalties', '/presentations', '/bonuses'].includes(location.pathname)
   });
   
@@ -184,6 +185,12 @@ const Sidebar = ({ user, isOpen, onClose }) => {
                   <Link to="/sentences">
                     <span className="icon"><AiOutlineEdit size={18} /></span>
                     <span>{t('sidebar.sentences') || 'Sentences'}</span>
+                  </Link>
+                </li>
+                <li className={isActive('/listening')}>
+                  <Link to="/listening">
+                    <span className="icon"><AiOutlineSound size={18} /></span>
+                    <span>{t('sidebar.listening') || 'Listening'}</span>
                   </Link>
                 </li>
                 <li className={location.pathname.startsWith('/video-lessons') ? 'active' : ''}>

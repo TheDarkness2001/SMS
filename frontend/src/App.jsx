@@ -47,6 +47,7 @@ import Homework from './pages/Homework';
 import SentencesPage from './pages/SentencesPage';
 import VideoLessons from './pages/VideoLessons';
 import VideoTest from './pages/VideoTest';
+import ListeningPage from './pages/ListeningPage';
 import TeacherPenalties from './pages/TeacherPenalties';
 import TeacherPresentations from './pages/TeacherPresentations';
 import BonusDashboard from './pages/BonusDashboard';
@@ -115,6 +116,7 @@ function App() {
             <Route path="/admin/payouts" element={<PrivateRoute><AdminPayoutPanel /></PrivateRoute>} />
             <Route path="/homework" element={<PrivateRoute><InactiveStudentGuard><Homework /></InactiveStudentGuard></PrivateRoute>} />
             <Route path="/sentences" element={<PrivateRoute><InactiveStudentGuard><SentencesPage /></InactiveStudentGuard></PrivateRoute>} />
+            <Route path="/listening" element={<PrivateRoute><InactiveStudentGuard><ListeningPage /></InactiveStudentGuard></PrivateRoute>} />
             <Route path="/video-lessons" element={<PrivateRoute><InactiveStudentGuard><VideoLessons /></InactiveStudentGuard></PrivateRoute>} />
             <Route path="/video-lessons/:id/test" element={<PrivateRoute><VideoTest /></PrivateRoute>} />
             <Route path="/penalties" element={<PrivateRoute><TeacherPenalties /></PrivateRoute>} />

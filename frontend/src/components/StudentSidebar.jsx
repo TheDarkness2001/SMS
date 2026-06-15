@@ -13,7 +13,8 @@ import {
   AiOutlineEdit,
   AiOutlineWarning,
   AiOutlineStar,
-  AiOutlinePlayCircle
+  AiOutlinePlayCircle,
+  AiOutlineSound
 } from 'react-icons/ai';
 import './StudentSidebar.css';
 
@@ -88,6 +89,13 @@ const StudentSidebar = ({ isOpen, onClose }) => {
       icon: <AiOutlineEdit size={20} />,
       label: t('sidebar.sentences') || 'Sentences',
       key: 'sentences',
+      locked: isInactive
+    },
+    {
+      path: '/listening',
+      icon: <AiOutlineSound size={20} />,
+      label: t('sidebar.listening') || 'Listening',
+      key: 'listening',
       locked: isInactive
     },
     {
