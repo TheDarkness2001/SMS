@@ -1,6 +1,9 @@
 export const DEFAULT_START_HOUR = 7;
 export const DEFAULT_END_HOUR = 21;
-export const DEFAULT_HOUR_HEIGHT = 100;
+export const BASE_HOUR_HEIGHT = 72;
+export const DEFAULT_HOUR_HEIGHT = BASE_HOUR_HEIGHT;
+export const CARD_GAP = 4;
+export const MIN_CARD_HEIGHT = 44;
 
 export const SUBJECT_THEMES = [
   { accent: '#22c55e', bg: '#ecfdf5' },
@@ -105,12 +108,79 @@ export function getTimetableBounds(schedules, startHour = DEFAULT_START_HOUR, en
   };
 }
 
-export function timeToOffset(timeStr, startHour, hourHeight = DEFAULT_HOUR_HEIGHT) {
-  const totalMinutes = parseTimeToMinutes(timeStr) - startHour * 60;
-  return Math.max(0, (totalMinutes / 60) * hourHeight);
+function countClassesInHourRange(schedules, day, hourStartMin, hourEndMin) {
+  return (schedules || []).filter((schedule) => {
+    if (!schedule.scheduledDays?.includes(day)) return false;
+    const start = parseTimeToMinutes(schedule.startTime);
+    const end = parseTimeToMinutes(schedule.endTime);
+    return start < hourEndMin && end > hourStartMin;
+  }).length;
 }
 
-function assignOverlapColumns(events) {
+export function computeHourHeights(
+  schedules,
+  days,
+  startHour,
+  endHour,
+  baseHeight = BASE_HOUR_HEIGHT
+) {
+  const slotCount = endHour - startHour;
+  const heights = [];
+
+  for (let i = 0; i < slotCount; i += 1) {
+    const hourStart = (startHour + i) * 60;
+    const hourEnd = hourStart + 60;
+    let maxInHour = 1;
+
+    (days || []).forEach((day) => {
+      const count = countClassesInHourRange(schedules, day, hourStart, hourEnd);
+      maxInHour = Math.max(maxInHour, count);
+    });
+
+    heights.push(baseHeight * maxInHour);
+  }
+
+  return heights;
+}
+
+export function getTotalScheduleHeight(hourHeights) {
+  return (hourHeights || []).reduce((sum, height) => sum + height, 0);
+}
+
+export function getHourSlotOffsets(hourHeights) {
+  const offsets = [0];
+  for (let i = 0; i < hourHeights.length; i += 1) {
+    offsets.push(offsets[i] + hourHeights[i]);
+  }
+  return offsets;
+}
+
+export function minutesToOffset(minutes, startHour, hourHeights) {
+  let offset = 0;
+
+  for (let i = 0; i < hourHeights.length; i += 1) {
+    const hourStart = (startHour + i) * 60;
+    const hourEnd = hourStart + 60;
+
+    if (minutes <= hourStart) break;
+
+    if (minutes >= hourEnd) {
+      offset += hourHeights[i];
+      continue;
+    }
+
+    offset += ((minutes - hourStart) / 60) * hourHeights[i];
+    break;
+  }
+
+  return Math.max(0, offset);
+}
+
+export function timeToOffset(timeStr, startHour, hourHeights) {
+  return minutesToOffset(parseTimeToMinutes(timeStr), startHour, hourHeights);
+}
+
+function assignOverlapRows(events) {
   if (events.length === 0) return [];
 
   const sorted = [...events].sort(
@@ -137,39 +207,58 @@ function assignOverlapColumns(events) {
   const laidOut = [];
 
   clusters.forEach((cluster) => {
-    const columns = [];
+    const rows = [];
 
     cluster.forEach((event) => {
-      let placedColumn = -1;
+      let placedRow = -1;
 
-      for (let col = 0; col < columns.length; col += 1) {
-        const columnEvents = columns[col];
-        const lastEvent = columnEvents[columnEvents.length - 1];
+      for (let row = 0; row < rows.length; row += 1) {
+        const rowEvents = rows[row];
+        const lastEvent = rowEvents[rowEvents.length - 1];
         if (lastEvent.endMinutes <= event.startMinutes) {
-          columnEvents.push(event);
-          placedColumn = col;
+          rowEvents.push(event);
+          placedRow = row;
           break;
         }
       }
 
-      if (placedColumn === -1) {
-        placedColumn = columns.length;
-        columns.push([event]);
+      if (placedRow === -1) {
+        placedRow = rows.length;
+        rows.push([event]);
       }
 
-      event.columnIndex = placedColumn;
+      event.rowIndex = placedRow;
     });
 
-    const columnCount = Math.max(columns.length, 1);
-    const widthPercent = 100 / columnCount;
-    const gapPercent = columnCount > 1 ? 1 : 0;
+    const rowCount = Math.max(rows.length, 1);
+    const clusterTop = Math.min(...cluster.map((event) => event.layoutTop));
+    const clusterBottom = Math.max(...cluster.map((event) => event.layoutBottom));
+    const clusterHeight = Math.max(clusterBottom - clusterTop, MIN_CARD_HEIGHT);
+    const totalGap = CARD_GAP * (rowCount - 1);
+    const rowHeight = Math.max((clusterHeight - totalGap) / rowCount, MIN_CARD_HEIGHT);
 
     cluster.forEach((event) => {
+      if (rowCount === 1) {
+        laidOut.push({
+          ...event,
+          top: event.layoutTop,
+          height: Math.max(event.layoutHeight - CARD_GAP, MIN_CARD_HEIGHT),
+          leftPercent: 0,
+          widthPercent: 100,
+          rowCount: 1,
+          rowIndex: 0
+        });
+        return;
+      }
+
       laidOut.push({
         ...event,
-        columnCount,
-        leftPercent: event.columnIndex * widthPercent + gapPercent / 2,
-        widthPercent: widthPercent - gapPercent
+        top: clusterTop + event.rowIndex * (rowHeight + CARD_GAP),
+        height: rowHeight,
+        leftPercent: 0,
+        widthPercent: 100,
+        rowCount,
+        rowIndex: event.rowIndex
       });
     });
   });
@@ -177,35 +266,35 @@ function assignOverlapColumns(events) {
   return laidOut;
 }
 
-export function layoutDayClasses(daySchedules, startHour, hourHeight = DEFAULT_HOUR_HEIGHT) {
+export function layoutDayClasses(daySchedules, startHour, hourHeights) {
   const events = (daySchedules || [])
     .filter((schedule) => schedule?.startTime && schedule?.endTime)
     .map((schedule) => {
       const startMinutes = parseTimeToMinutes(schedule.startTime);
       const endMinutes = parseTimeToMinutes(schedule.endTime);
-      const top = timeToOffset(schedule.startTime, startHour, hourHeight);
-      const bottom = timeToOffset(schedule.endTime, startHour, hourHeight);
-      const duration = bottom - top;
-      const minHeight = Math.min(hourHeight - 6, hourHeight * 0.88);
+      const layoutTop = timeToOffset(schedule.startTime, startHour, hourHeights);
+      const layoutBottom = timeToOffset(schedule.endTime, startHour, hourHeights);
+      const layoutHeight = layoutBottom - layoutTop;
 
       return {
         ...schedule,
         startMinutes,
         endMinutes,
-        top,
-        height: Math.max(duration - 4, minHeight)
+        layoutTop,
+        layoutBottom,
+        layoutHeight
       };
     })
     .filter((event) => event.endMinutes > event.startMinutes);
 
-  return assignOverlapColumns(events);
+  return assignOverlapRows(events);
 }
 
-export function getClassesForDay(schedules, day, startHour, hourHeight) {
+export function getClassesForDay(schedules, day, startHour, hourHeights) {
   return layoutDayClasses(
     (schedules || []).filter((schedule) => schedule.scheduledDays?.includes(day)),
     startHour,
-    hourHeight
+    hourHeights
   ).map((schedule) => ({
     ...schedule,
     theme: getSubjectTheme(schedule)

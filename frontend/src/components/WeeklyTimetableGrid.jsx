@@ -6,14 +6,17 @@ import {
   AiOutlineClockCircle
 } from 'react-icons/ai';
 import {
-  DEFAULT_HOUR_HEIGHT,
+  BASE_HOUR_HEIGHT,
   DEFAULT_END_HOUR,
   DEFAULT_START_HOUR,
   getTimetableBounds,
   getClassesForDay,
   getWeekDates,
   getTimetableSummary,
-  getSubjectTheme
+  getSubjectTheme,
+  computeHourHeights,
+  getTotalScheduleHeight,
+  getHourSlotOffsets
 } from '../utils/timetableLayout';
 
 function resolveTheme(classItem, getClassColor) {
@@ -39,7 +42,7 @@ const WeeklyTimetableGrid = ({
   daysOfWeek,
   getClassColor,
   t,
-  hourHeight = DEFAULT_HOUR_HEIGHT,
+  baseHourHeight = BASE_HOUR_HEIGHT,
   minStartHour = DEFAULT_START_HOUR,
   maxEndHour = DEFAULT_END_HOUR,
   showSummary = true
@@ -49,11 +52,16 @@ const WeeklyTimetableGrid = ({
     [schedules, minStartHour, maxEndHour]
   );
 
+  const hourHeights = useMemo(
+    () => computeHourHeights(schedules, daysOfWeek, startHour, endHour, baseHourHeight),
+    [schedules, daysOfWeek, startHour, endHour, baseHourHeight]
+  );
+
+  const hourSlotOffsets = useMemo(() => getHourSlotOffsets(hourHeights), [hourHeights]);
   const weekDates = useMemo(() => getWeekDates(), []);
   const summary = useMemo(() => getTimetableSummary(schedules), [schedules]);
   const locale = getLocale();
-  const hourSlots = endHour - startHour;
-  const scheduleHeight = hourSlots * hourHeight;
+  const scheduleHeight = getTotalScheduleHeight(hourHeights);
 
   const formatDayDate = (date) =>
     date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
@@ -66,11 +74,11 @@ const WeeklyTimetableGrid = ({
       <div className="timetable-grid">
         <div className="time-column">
           <div className="time-header">{t('timetable.time')}</div>
-          {Array.from({ length: hourSlots }, (_, i) => (
+          {hourHeights.map((slotHeight, i) => (
             <div
               key={i}
               className="time-slot"
-              style={{ height: `${hourHeight}px` }}
+              style={{ height: `${slotHeight}px` }}
             >
               {String(startHour + i).padStart(2, '0')}:00
             </div>
@@ -78,7 +86,7 @@ const WeeklyTimetableGrid = ({
         </div>
 
         {daysOfWeek.map((day, dayIndex) => {
-          const dayClasses = getClassesForDay(schedules, day, startHour, hourHeight);
+          const dayClasses = getClassesForDay(schedules, day, startHour, hourHeights);
           const headerClass = dayIndex === 5
             ? 'day-header day-header--saturday'
             : dayIndex === 6
@@ -92,13 +100,13 @@ const WeeklyTimetableGrid = ({
                 <span className="day-header-date">{formatDayDate(weekDates[dayIndex])}</span>
               </div>
               <div className="day-schedule" style={{ height: `${scheduleHeight}px` }}>
-                {Array.from({ length: hourSlots }, (_, i) => (
+                {hourHeights.map((slotHeight, i) => (
                   <div
                     key={`grid-${i}`}
                     className="grid-line"
                     style={{
-                      top: `${i * hourHeight}px`,
-                      height: `${hourHeight}px`
+                      top: `${hourSlotOffsets[i]}px`,
+                      height: `${slotHeight}px`
                     }}
                   />
                 ))}
@@ -112,16 +120,16 @@ const WeeklyTimetableGrid = ({
 
                   return (
                     <div
-                      key={`${classItem._id || classItem.id}-${day}-${classItem.startTime}-${classItem.columnIndex}`}
+                      key={`${classItem._id || classItem.id}-${day}-${classItem.startTime}-${classItem.rowIndex}`}
                       className="class-block"
                       style={{
                         top: `${classItem.top + 3}px`,
-                        height: `${Math.max(classItem.height - 6, hourHeight * 0.42)}px`,
-                        left: `calc(${classItem.leftPercent}% + 4px)`,
-                        width: `calc(${classItem.widthPercent}% - 8px)`,
+                        height: `${classItem.height}px`,
+                        left: 'calc(4px)',
+                        width: 'calc(100% - 8px)',
                         backgroundColor: theme.bg,
                         borderLeftColor: theme.accent,
-                        zIndex: classItem.columnCount > 1 ? classItem.columnIndex + 2 : 2
+                        zIndex: classItem.rowCount > 1 ? classItem.rowIndex + 2 : 2
                       }}
                       title={`${getSubjectTitle(classItem)}\n${classItem.startTime} - ${classItem.endTime}${groupLabel ? `\n${groupLabel}` : ''}`}
                     >
