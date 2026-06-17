@@ -355,7 +355,7 @@ const Sidebar = ({ user, isOpen, onClose }) => {
           <li className={isActive('/groups')}>
             <Link to="/groups">
               <span className="icon"><AiOutlineAppstore size={20} /></span>
-              <span>{t('sidebar.groups')}</span>
+              <span>{t('sidebar.groups') || 'Groups'}</span>
             </Link>
           </li>
         )}

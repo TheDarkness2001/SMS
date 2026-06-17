@@ -214,7 +214,7 @@ exports.getLeaderboard = async (req, res) => {
     const students = await Student.find({ _id: { $in: studentIds } }).select('name studentId profileImage');
     const studentInfoMap = new Map(students.map(s => [s._id.toString(), s]));
 
-    const leaderboard = Array.from(studentMap.values())
+    const allRanked = Array.from(studentMap.values())
       .map(s => ({
         studentId: s.studentId,
         name: studentInfoMap.get(s.studentId)?.name || 'Unknown',
@@ -225,10 +225,20 @@ exports.getLeaderboard = async (req, res) => {
         accuracy: s.totalAttempts > 0 ? Math.round((s.totalCorrect / s.totalAttempts) * 100) : 0
       }))
       .filter(s => s.totalAttempts > 0)
-      .sort((a, b) => b.accuracy - a.accuracy || b.totalCorrect - a.totalCorrect)
-      .slice(0, 10);
+      .sort((a, b) => b.accuracy - a.accuracy || b.totalCorrect - a.totalCorrect);
 
-    res.json({ success: true, data: { leaderboard } });
+    const leaderboard = allRanked.slice(0, 10).map((s, i) => ({ ...s, rank: i + 1 }));
+
+    let currentStudent = null;
+    if (req.userType === 'student' && req.user?._id) {
+      const sid = req.user._id.toString();
+      const idx = allRanked.findIndex(s => s.studentId === sid);
+      if (idx >= 0) {
+        currentStudent = { ...allRanked[idx], rank: idx + 1, totalStudents: allRanked.length };
+      }
+    }
+
+    res.json({ success: true, data: { leaderboard, currentStudent } });
   } catch (error) {
     console.error('Get leaderboard error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });

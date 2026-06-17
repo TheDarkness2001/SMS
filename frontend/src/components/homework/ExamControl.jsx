@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { lessonAPI, levelAPI, languageAPI, examGroupsAPI, getImageUrl } from '../../utils/api';
 
-const ExamControl = ({ t, noExam = false }) => {
-  const lessonType = noExam ? 'sentences' : 'words';
+const ExamControl = ({ t, noExam = false, lessonType: lessonTypeProp }) => {
+  const lessonType = lessonTypeProp || (noExam ? 'sentences' : 'words');
   // Navigation state: groups -> languages -> levels -> classes
   const [view, setView] = useState('groups');
 

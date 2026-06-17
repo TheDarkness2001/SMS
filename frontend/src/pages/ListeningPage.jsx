@@ -4,6 +4,9 @@ import { normalizeText } from '../utils/textNormalizer';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import ListeningManageTab from '../components/listening/ListeningManageTab';
+import ListeningLeaderboard from '../components/listening/ListeningLeaderboard';
+import ListeningProgressTab from '../components/listening/ListeningProgressTab';
+import ExamControl from '../components/homework/ExamControl';
 import '../styles/Homework.css';
 import '../styles/Listening.css';
 
@@ -202,9 +205,16 @@ const ListeningPage = () => {
     return t('listening.keepPracticing') || 'Keep practicing!';
   };
 
-  const tabs = [{ id: 'practice', label: t('listening.practice') || 'Practice' }];
+  const tabs = [
+    { id: 'practice', label: t('listening.practice') || 'Practice' },
+    { id: 'leaderboard', label: t('listening.leaderboard') || 'Leaderboard' }
+  ];
   if (isAdmin) {
-    tabs.push({ id: 'manage', label: t('listening.manage') || 'Manage' });
+    tabs.push(
+      { id: 'lessons', label: t('listening.lessons') || 'Lessons' },
+      { id: 'permissions', label: t('listening.permissions') || 'Permissions' },
+      { id: 'progress', label: t('listening.studentProgress') || 'Student Progress' }
+    );
   }
 
   const sessionAvg = sessionStats.total > 0
@@ -233,8 +243,20 @@ const ListeningPage = () => {
       </div>
 
       <div className="tab-content">
-        {activeTab === 'manage' && isAdmin && (
+        {activeTab === 'leaderboard' && (
+          <ListeningLeaderboard t={t} />
+        )}
+
+        {activeTab === 'lessons' && isAdmin && (
           <ListeningManageTab t={t} />
+        )}
+
+        {activeTab === 'permissions' && isAdmin && (
+          <ExamControl t={t} noExam lessonType="listening" />
+        )}
+
+        {activeTab === 'progress' && isAdmin && (
+          <ListeningProgressTab t={t} />
         )}
 
         {activeTab === 'practice' && (
@@ -263,15 +285,22 @@ const ListeningPage = () => {
                 </button>
                 <h3 className="practice-section-title">{t('listening.selectLevel') || 'Select a Level'}</h3>
                 <div className="practice-levels-grid">
-                  {levelsList.map(level => (
-                    <button
-                      key={level._id}
-                      className="practice-level-card"
-                      onClick={() => selectLevelForPractice(level._id)}
-                    >
-                      {level.name}
-                    </button>
-                  ))}
+                  {levelsList.map(level => {
+                    const isUnlocked = isStudent ? (level.practiceUnlockedForMe || false) : true;
+                    return (
+                      <button
+                        key={level._id}
+                        className={`practice-level-card ${isUnlocked ? '' : 'locked'}`}
+                        onClick={() => isUnlocked && selectLevelForPractice(level._id)}
+                        disabled={!isUnlocked}
+                      >
+                        <span>{level.name}</span>
+                        {!isUnlocked && (
+                          <small>{t('listening.practiceLocked') || 'Locked'}</small>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}

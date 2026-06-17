@@ -4,6 +4,10 @@ const path = require('path');
 const ListeningExercise = require('../models/ListeningExercise');
 const StudentListeningProgress = require('../models/StudentListeningProgress');
 const Lesson = require('../models/Lesson');
+const Level = require('../models/Level');
+const Language = require('../models/Language');
+const ExamGroup = require('../models/ExamGroup');
+const Student = require('../models/Student');
 const { analyzeListeningAnswer } = require('../utils/listeningValidator');
 const { normalizeText } = require('../utils/textNormalizer');
 
@@ -207,6 +211,216 @@ exports.getStudentProgress = async (req, res) => {
     });
   } catch (error) {
     console.error('Get listening progress error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+function buildListeningStudentStats(progressRecords) {
+  const studentMap = new Map();
+  for (const record of progressRecords) {
+    const sid = record.studentId.toString();
+    if (!studentMap.has(sid)) {
+      studentMap.set(sid, { studentId: sid, totalAttempts: 0, totalExercises: 0, bestSum: 0 });
+    }
+    const s = studentMap.get(sid);
+    s.totalAttempts += record.attempts || 0;
+    s.totalExercises += 1;
+    s.bestSum += record.bestAccuracy || 0;
+    if (record.lastPracticeDate) {
+      const d = new Date(record.lastPracticeDate);
+      if (!s.lastActivityDate || d > new Date(s.lastActivityDate)) {
+        s.lastActivityDate = d.toISOString();
+      }
+    }
+  }
+  return studentMap;
+}
+
+exports.getLeaderboard = async (req, res) => {
+  try {
+    const progressRecords = await StudentListeningProgress.find().lean();
+    const studentMap = buildListeningStudentStats(progressRecords);
+
+    const studentIds = Array.from(studentMap.keys());
+    const students = await Student.find({ _id: { $in: studentIds } }).select('name studentId profileImage');
+    const studentInfoMap = new Map(students.map(s => [s._id.toString(), s]));
+
+    const allRanked = Array.from(studentMap.values())
+      .map(s => ({
+        studentId: s.studentId,
+        name: studentInfoMap.get(s.studentId)?.name || 'Unknown',
+        studentRoll: studentInfoMap.get(s.studentId)?.studentId || '',
+        profileImage: studentInfoMap.get(s.studentId)?.profileImage || null,
+        totalAttempts: s.totalAttempts,
+        totalExercises: s.totalExercises,
+        avgBestAccuracy: s.totalExercises > 0 ? Math.round(s.bestSum / s.totalExercises) : 0
+      }))
+      .filter(s => s.totalAttempts > 0)
+      .sort((a, b) => b.avgBestAccuracy - a.avgBestAccuracy || b.totalAttempts - a.totalAttempts);
+
+    const leaderboard = allRanked.slice(0, 10).map((s, i) => ({ ...s, rank: i + 1 }));
+
+    let currentStudent = null;
+    if (req.userType === 'student' && req.user?._id) {
+      const sid = req.user._id.toString();
+      const idx = allRanked.findIndex(s => s.studentId === sid);
+      if (idx >= 0) {
+        currentStudent = { ...allRanked[idx], rank: idx + 1, totalStudents: allRanked.length };
+      }
+    }
+
+    res.json({ success: true, data: { leaderboard, currentStudent } });
+  } catch (error) {
+    console.error('Get listening leaderboard error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+exports.getGroupStudentProgress = async (req, res) => {
+  try {
+    const languages = await Language.find().select('name').lean();
+    const languageNames = new Set(languages.map(l => l.name.toLowerCase().trim()));
+
+    const groups = await ExamGroup.find()
+      .populate('students', '_id name studentId profileImage status')
+      .populate('subject', 'name')
+      .select('_id groupId groupName subjectName subject students')
+      .sort({ groupName: 1 });
+
+    const languageGroups = groups.filter(group => {
+      const subjName = group.subject?.name || group.subjectName || '';
+      return languageNames.has(subjName.toLowerCase().trim());
+    });
+
+    const listeningProgress = await StudentListeningProgress.find().lean();
+    const listeningMap = new Map();
+    for (const p of listeningProgress) {
+      const sid = p.studentId.toString();
+      if (!listeningMap.has(sid)) listeningMap.set(sid, []);
+      listeningMap.get(sid).push(p);
+    }
+
+    const computeStudentStats = (student) => {
+      const sid = student._id.toString();
+      const records = listeningMap.get(sid) || [];
+      const totalAttempts = records.reduce((sum, p) => sum + (p.attempts || 0), 0);
+      const avgBestAccuracy = records.length > 0
+        ? Math.round(records.reduce((sum, p) => sum + (p.bestAccuracy || 0), 0) / records.length)
+        : 0;
+      const dates = records.map(p => p.lastPracticeDate).filter(Boolean).map(d => new Date(d));
+      const lastActivityDate = dates.length > 0 ? new Date(Math.max(...dates)).toISOString() : null;
+
+      return {
+        _id: student._id,
+        name: student.name,
+        studentId: student.studentId,
+        profileImage: student.profileImage,
+        listeningPracticeAccuracy: avgBestAccuracy,
+        listeningAttempts: totalAttempts,
+        lastActivityDate
+      };
+    };
+
+    const groupsData = languageGroups.map(group => {
+      const activeStudents = (group.students || [])
+        .filter(s => s && s.status === 'active')
+        .map(computeStudentStats);
+      const avgAccuracy = activeStudents.length > 0
+        ? Math.round(activeStudents.reduce((sum, s) => sum + s.listeningPracticeAccuracy, 0) / activeStudents.length)
+        : 0;
+
+      return {
+        groupId: group._id,
+        groupName: group.groupName,
+        subjectName: group.subject?.name || group.subjectName || '',
+        studentCount: activeStudents.length,
+        avgAccuracy,
+        students: activeStudents
+      };
+    }).filter(g => g.studentCount > 0);
+
+    const allGroupStudentIds = new Set();
+    languageGroups.forEach(g => g.students.forEach(s => {
+      if (s && s._id) allGroupStudentIds.add(s._id.toString());
+    }));
+
+    const unassignedStudents = await Student.find({
+      _id: { $nin: Array.from(allGroupStudentIds).map(id => new mongoose.Types.ObjectId(id)) },
+      status: 'active'
+    }).select('_id name studentId profileImage status').sort({ name: 1 });
+
+    const allLessons = await Lesson.find({ type: 'listening' }).select('_id name order type levelId').sort({ order: 1 }).lean();
+    const levelIds = [...new Set(allLessons.map(l => l.levelId?.toString()).filter(Boolean))];
+    const allLevels = await Level.find({ _id: { $in: levelIds } }).select('_id name languageId').lean();
+    const levelMap = new Map(allLevels.map(l => [l._id.toString(), l]));
+    const languageIds = [...new Set(allLevels.map(l => l.languageId?.toString()).filter(Boolean))];
+    const allLanguages = await Language.find({ _id: { $in: languageIds } }).select('_id name').lean();
+    const langIdToName = new Map(allLanguages.map(l => [l._id.toString(), l.name]));
+
+    const lessonsByLang = new Map();
+    for (const lesson of allLessons) {
+      const lvl = levelMap.get(lesson.levelId?.toString());
+      const langName = langIdToName.get(lvl?.languageId?.toString());
+      if (!langName) continue;
+      const key = langName.toLowerCase().trim();
+      if (!lessonsByLang.has(key)) lessonsByLang.set(key, []);
+      lessonsByLang.get(key).push({
+        _id: lesson._id.toString(),
+        name: lesson.name,
+        order: lesson.order,
+        type: 'listening',
+        levelName: lvl?.name || ''
+      });
+    }
+
+    groupsData.forEach(g => {
+      const key = (g.subjectName || '').toLowerCase().trim();
+      g.lessons = lessonsByLang.get(key) || [];
+    });
+
+    res.json({
+      success: true,
+      data: {
+        groups: groupsData,
+        unassigned: {
+          studentCount: unassignedStudents.length,
+          students: unassignedStudents.map(computeStudentStats)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get listening group progress error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+exports.getLessonStudentStats = async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const exercises = await ListeningExercise.find({ lessonId }).select('_id').lean();
+    const exerciseIds = exercises.map(e => e._id);
+    const stats = {};
+
+    if (exerciseIds.length === 0) {
+      return res.json({ success: true, data: { lessonId, type: 'listening', stats: {} } });
+    }
+
+    const progresses = await StudentListeningProgress.find({ listeningId: { $in: exerciseIds } }).lean();
+    for (const p of progresses) {
+      const sid = p.studentId.toString();
+      if (!stats[sid]) stats[sid] = { attempts: 0, bestAccuracy: 0, exerciseCount: 0, accuracySum: 0 };
+      stats[sid].attempts += p.attempts || 0;
+      stats[sid].exerciseCount += 1;
+      stats[sid].accuracySum += p.bestAccuracy || 0;
+    }
+    for (const sid of Object.keys(stats)) {
+      const s = stats[sid];
+      s.accuracy = s.exerciseCount > 0 ? Math.round(s.accuracySum / s.exerciseCount) : 0;
+    }
+
+    res.json({ success: true, data: { lessonId, type: 'listening', stats } });
+  } catch (error) {
+    console.error('Get listening lesson stats error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

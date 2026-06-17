@@ -7,6 +7,9 @@ const { protect } = require('../middleware/auth');
 router.get('/random', protect, listeningController.getRandomExercise);
 router.post('/check', protect, listeningController.checkAnswer);
 router.get('/progress', protect, listeningController.getStudentProgress);
+router.get('/leaderboard', protect, listeningController.getLeaderboard);
+router.get('/students/group-progress', protect, listeningController.getGroupStudentProgress);
+router.get('/lessons/:lessonId/student-stats', protect, listeningController.getLessonStudentStats);
 
 router.get('/', protect, listeningController.getAllExercises);
 router.post('/', protect, audioUpload.single('audio'), listeningController.createExercise);

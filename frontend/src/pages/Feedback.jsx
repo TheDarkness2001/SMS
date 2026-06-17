@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
@@ -227,6 +228,15 @@ const Feedback = () => {
     });
     setError('');
   };
+
+  useEffect(() => {
+    if (!showModal) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showModal]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -679,22 +689,22 @@ const Feedback = () => {
       </div>
 
       {/* Feedback Modal */}
-      {showModal && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+      {showModal && createPortal(
+        <div className="feedback-modal-overlay" onClick={handleCloseModal}>
+          <div className="feedback-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="feedback-modal-header">
               <h2>{formData._id ? t('feedback.editFeedback') : t('feedback.addDailyFeedback')}</h2>
               <button className="close-btn" onClick={handleCloseModal}>&times;</button>
             </div>
 
-            <div className="modal-body">
+            <div className="feedback-modal-body">
               {error && <div className="alert alert-error">{error}</div>}
 
               <div className="feedback-info">
                 <p><strong>{t('students.student')}:</strong> {selectedStudent?.name} ({selectedStudent?.studentId})</p>
                 <p><strong>{t('attendance.subject')}:</strong> {
-                  selectedClass?.subject?.name || 
-                  selectedClass?.subject || 
+                  selectedClass?.subject?.name ||
+                  selectedClass?.subject ||
                   selectedClass?.subjectGroup?.subject ||
                   selectedClass?.subjectGroup?.groupName ||
                   t('feedback.notSpecifiedSubject')
@@ -702,8 +712,7 @@ const Feedback = () => {
                 <p><strong>{t('students.class')}:</strong> {selectedClass?.className}</p>
               </div>
 
-              <form onSubmit={handleSubmit}>
-                {/* Date Selection */}
+              <form id="feedback-form" onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label>
                     <AiOutlineCalendar style={{ marginRight: '6px', verticalAlign: 'middle' }} />
@@ -723,7 +732,6 @@ const Feedback = () => {
                   </small>
                 </div>
 
-                {/* Exam Day Toggle */}
                 <div className="form-group exam-toggle-container">
                   <label className="checkbox-label">
                     <input
@@ -841,19 +849,20 @@ const Feedback = () => {
                     className="form-textarea"
                   />
                 </div>
-
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
-                    {t('common.cancel')}
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    {t('feedback.submitFeedback')}
-                  </button>
-                </div>
               </form>
             </div>
+
+            <div className="feedback-modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
+                {t('common.cancel')}
+              </button>
+              <button type="submit" form="feedback-form" className="btn btn-primary">
+                {t('feedback.submitFeedback')}
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

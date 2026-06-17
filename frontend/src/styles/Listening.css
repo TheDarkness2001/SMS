@@ -204,6 +204,48 @@
   font-weight: 600;
 }
 
+.current-student-rank-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border: 2px solid #818cf8;
+  border-radius: 10px;
+}
+
+.current-rank-label {
+  font-weight: 600;
+  color: #4338ca;
+}
+
+.current-rank-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #4f46e5;
+}
+
+.current-rank-of {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.leaderboard-table tr.current-student-row {
+  background: #eef2ff;
+  outline: 2px solid #818cf8;
+}
+
+.leaderboard-table tr.current-student-row td {
+  font-weight: 600;
+}
+
+.practice-level-card.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .exercise-title {
   margin: 8px 0 0;
 }

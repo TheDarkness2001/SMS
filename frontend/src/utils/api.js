@@ -1,7 +1,11 @@
 import axios from 'axios';
 
-// Use environment variable for API URL, fallback to Railway production backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://sms-production-5f19.up.railway.app/api';
+// Use environment variable for API URL; in dev default to local backend
+const API_BASE_URL = process.env.REACT_APP_API_URL || (
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5002/api'
+    : 'https://sms-production-5f19.up.railway.app/api'
+);
 
 // Create axios instance with default config
 const api = axios.create({
@@ -357,6 +361,9 @@ export const listeningAPI = {
   delete: (id) => api.delete(`/listening/${id}`),
   checkAnswer: (data) => api.post('/listening/check', data),
   getProgress: () => api.get('/listening/progress'),
+  getLeaderboard: () => api.get('/listening/leaderboard'),
+  getGroupProgress: () => api.get('/listening/students/group-progress'),
+  getLessonStudentStats: (lessonId) => api.get(`/listening/lessons/${lessonId}/student-stats`),
   getAudioUrl: (filename) => getImageUrl(filename)
 };
 

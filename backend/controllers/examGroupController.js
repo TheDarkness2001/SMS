@@ -155,6 +155,8 @@ exports.getGroups = async (req, res) => {
       const lessonFilter = {};
       if (lessonType === 'sentences') {
         lessonFilter.type = 'sentences';
+      } else if (lessonType === 'listening') {
+        lessonFilter.type = 'listening';
       } else if (lessonType === 'words') {
         lessonFilter.$or = [{ type: 'words' }, { type: { $exists: false } }];
       }
