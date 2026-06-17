@@ -1,10 +1,18 @@
+.listening-page.homework-page {
+  max-width: none;
+  width: 100%;
+  padding: 20px 24px;
+}
+
 .listening-page .listening-practice-card {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 24px;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 28px 32px;
   background: var(--card-bg, #fff);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
 }
 
 .listening-audio-controls {
@@ -16,6 +24,14 @@
   padding: 16px;
   background: #f8f9fa;
   border-radius: 10px;
+}
+
+.listening-page .listening-audio-controls {
+  padding: 20px 24px;
+}
+
+.listening-page .listening-answer-input {
+  min-height: 180px;
 }
 
 .listening-audio-controls audio {
