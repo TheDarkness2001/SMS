@@ -23,30 +23,6 @@
   width: 100%;
 }
 
-.listening-play-btn {
-  padding: 12px 28px;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  background: #4f46e5;
-  color: #fff;
-  transition: background 0.2s;
-}
-
-.listening-play-btn:hover {
-  background: #4338ca;
-}
-
-.listening-play-btn.playing {
-  background: #dc2626;
-}
-
-.listening-play-btn.playing:hover {
-  background: #b91c1c;
-}
-
 .listening-hint {
   color: #64748b;
   font-size: 0.9rem;
@@ -241,9 +217,12 @@
   font-weight: 600;
 }
 
-.practice-level-card.locked {
-  opacity: 0.6;
-  cursor: not-allowed;
+.listening-page .listening-practice-card .btn {
+  margin-top: 12px;
+}
+
+.listening-page .practice-game-bar {
+  margin-bottom: 16px;
 }
 
 .exercise-title {

@@ -2294,6 +2294,26 @@
   color: var(--text-secondary);
 }
 
+.leaderboard-your-rank-section {
+  margin-top: 24px;
+}
+
+.leaderboard-your-rank-label {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+.leaderboard-table tr.current-student-row {
+  background: #eef2ff;
+  outline: 2px solid #818cf8;
+}
+
+.leaderboard-table tr.current-student-row td {
+  font-weight: 600;
+}
+
 .accuracy-badge {
   display: inline-block;
   padding: 4px 12px;

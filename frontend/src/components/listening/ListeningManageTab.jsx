@@ -90,6 +90,26 @@ const ListeningManageTab = ({ t }) => {
     }
   };
 
+  const handleDeleteLanguage = async (id) => {
+    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
+    try {
+      await languageAPI.delete(id);
+      if (selectedLanguage?._id === id) {
+        setSelectedLanguage(null);
+        setView('languages');
+      }
+      fetchLanguages();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error deleting language');
+    }
+  };
+
+  const selectLanguage = (lang) => {
+    setSelectedLanguage(lang);
+    fetchLevels(lang._id);
+    setView('levels');
+  };
+
   const handleAddLevel = async (e) => {
     e.preventDefault();
     if (!newLevel.trim() || !selectedLanguage) return;
@@ -102,6 +122,26 @@ const ListeningManageTab = ({ t }) => {
     } catch (err) {
       alert(err.response?.data?.message || 'Error adding level');
     }
+  };
+
+  const handleDeleteLevel = async (id) => {
+    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
+    try {
+      await levelAPI.delete(id);
+      if (selectedLevel?._id === id) {
+        setSelectedLevel(null);
+        setView('levels');
+      }
+      fetchLevels(selectedLanguage._id);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error deleting level');
+    }
+  };
+
+  const selectLevel = (level) => {
+    setSelectedLevel(level);
+    fetchLessons(level._id);
+    setView('classes');
   };
 
   const handleAddLesson = async (e) => {
@@ -121,6 +161,12 @@ const ListeningManageTab = ({ t }) => {
     } catch (err) {
       alert(err.response?.data?.message || 'Error adding class');
     }
+  };
+
+  const selectLesson = (lesson) => {
+    setSelectedLesson(lesson);
+    fetchExercises(lesson._id);
+    setView('exercises');
   };
 
   const handleDeleteLesson = async (lessonId) => {
@@ -201,205 +247,327 @@ const ListeningManageTab = ({ t }) => {
     }
   };
 
-  if (loading && view === 'languages' && languages.length === 0) {
-    return <div className="loading-state">{t('listening.loading') || 'Loading...'}</div>;
-  }
+  const renderBreadcrumb = () => {
+    const items = [];
+    items.push(
+      <button
+        key="lang"
+        type="button"
+        className="breadcrumb-item"
+        onClick={() => {
+          setView('languages');
+          setSelectedLesson(null);
+        }}
+      >
+        {t('homework.languages') || 'Languages'}
+      </button>
+    );
+    if (selectedLanguage) {
+      items.push(
+        <span key="sep1" className="breadcrumb-sep">/</span>,
+        <button
+          key="lvl"
+          type="button"
+          className="breadcrumb-item"
+          onClick={() => {
+            setView('levels');
+            setSelectedLesson(null);
+          }}
+        >
+          {selectedLanguage.name}
+        </button>
+      );
+    }
+    if (selectedLevel && (view === 'classes' || view === 'exercises')) {
+      items.push(
+        <span key="sep2" className="breadcrumb-sep">/</span>,
+        <button
+          key="cls"
+          type="button"
+          className="breadcrumb-item"
+          onClick={() => setView('classes')}
+        >
+          {selectedLevel.name}
+        </button>
+      );
+    }
+    if (selectedLesson && view === 'exercises') {
+      items.push(
+        <span key="sep3" className="breadcrumb-sep">/</span>,
+        <span key="ex" className="breadcrumb-item active">{selectedLesson.name}</span>
+      );
+    }
+    return <div className="breadcrumb">{items}</div>;
+  };
 
   return (
-    <div className="lessons-tab listening-manage-tab">
+    <div className="lessons-section">
+      {renderBreadcrumb()}
+
       {view === 'languages' && (
         <>
-          <h3>{t('listening.selectLanguage') || 'Select Language'}</h3>
-          <div className="practice-levels-grid">
-            {languages.map(lang => (
-              <button
-                key={lang._id}
-                className="practice-level-card"
-                onClick={() => {
-                  setSelectedLanguage(lang);
-                  fetchLevels(lang._id);
-                  setView('levels');
-                }}
-              >
-                {lang.name}
-              </button>
-            ))}
-          </div>
-          <form className="add-form-inline" onSubmit={handleAddLanguage}>
-            <input
-              type="text"
-              placeholder={t('listening.newLanguage') || 'New language name'}
-              value={newLanguage}
-              onChange={e => setNewLanguage(e.target.value)}
-            />
-            <button type="submit" className="btn-primary">{t('listening.add') || 'Add'}</button>
+          <form onSubmit={handleAddLanguage} className="word-form">
+            <h3>{t('homework.addLanguage') || 'Add Language'}</h3>
+            <div className="form-row">
+              <input
+                type="text"
+                placeholder={t('homework.languageName') || 'Language name (e.g., English)'}
+                value={newLanguage}
+                onChange={e => setNewLanguage(e.target.value)}
+                className="form-input"
+                required
+              />
+              <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
+            </div>
           </form>
+
+          {loading ? (
+            <div className="loading">{t('listening.loading') || 'Loading...'}</div>
+          ) : (
+            <div className="hierarchy-list">
+              {languages.length === 0 ? (
+                <div className="no-data">{t('homework.noLanguages') || 'No languages yet.'}</div>
+              ) : (
+                languages.map(lang => (
+                  <div key={lang._id} className="hierarchy-card" onClick={() => selectLanguage(lang)}>
+                    <div className="hierarchy-icon">🌐</div>
+                    <div className="hierarchy-info">
+                      <h4>{lang.name}</h4>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-small btn-delete"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteLanguage(lang._id); }}
+                    >
+                      {t('homework.delete') || 'Delete'}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </>
       )}
 
       {view === 'levels' && selectedLanguage && (
         <>
-          <button className="back-btn" onClick={() => setView('languages')}>← {t('listening.back') || 'Back'}</button>
-          <h3>{selectedLanguage.name} — {t('listening.selectLevel') || 'Select Level'}</h3>
-          <div className="practice-levels-grid">
-            {levels.map(level => (
-              <button
-                key={level._id}
-                className="practice-level-card"
-                onClick={() => {
-                  setSelectedLevel(level);
-                  fetchLessons(level._id);
-                  setView('classes');
-                }}
-              >
-                {level.name}
-              </button>
-            ))}
-          </div>
-          <form className="add-form-inline" onSubmit={handleAddLevel}>
-            <input
-              type="text"
-              placeholder={t('listening.newLevel') || 'New level name'}
-              value={newLevel}
-              onChange={e => setNewLevel(e.target.value)}
-            />
-            <button type="submit" className="btn-primary">{t('listening.add') || 'Add'}</button>
+          <form onSubmit={handleAddLevel} className="level-form">
+            <h3>{t('homework.addLevel') || 'Add Level'}</h3>
+            <div className="level-form-main">
+              <input
+                type="text"
+                placeholder={t('homework.levelName') || 'Level name (e.g., Blackhole 1)'}
+                value={newLevel}
+                onChange={e => setNewLevel(e.target.value)}
+                className="form-input level-name-input"
+                required
+              />
+              <button type="submit" className="btn btn-primary level-add-btn">{t('homework.add') || 'Add'}</button>
+            </div>
           </form>
+
+          {loading ? (
+            <div className="loading">{t('listening.loading') || 'Loading...'}</div>
+          ) : (
+            <div className="hierarchy-list">
+              {levels.length === 0 ? (
+                <div className="no-data">{t('homework.noLevels') || 'No levels yet.'}</div>
+              ) : (
+                levels.map(level => (
+                  <div key={level._id} className="hierarchy-card" onClick={() => selectLevel(level)}>
+                    <div className="hierarchy-icon">🎧</div>
+                    <div className="hierarchy-info">
+                      <h4>{level.name}</h4>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-small btn-delete"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteLevel(level._id); }}
+                    >
+                      {t('homework.delete') || 'Delete'}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </>
       )}
 
       {view === 'classes' && selectedLevel && (
         <>
-          <button className="back-btn" onClick={() => setView('levels')}>← {t('listening.back') || 'Back'}</button>
-          <h3>{selectedLevel.name} — {t('listening.selectClass') || 'Select Class'}</h3>
-          <div className="practice-levels-grid">
-            {lessons.map(lesson => (
-              <button
-                key={lesson._id}
-                className="practice-level-card"
-                onClick={() => {
-                  setSelectedLesson(lesson);
-                  fetchExercises(lesson._id);
-                  setView('exercises');
-                }}
-              >
-                <span>{lesson.name}</span>
-                <small>{lesson.listeningCount || 0} {t('listening.exercises') || 'exercises'}</small>
-              </button>
-            ))}
-          </div>
-          <form className="add-form-inline" onSubmit={handleAddLesson}>
-            <input
-              type="text"
-              placeholder={t('listening.newClass') || 'New class name'}
-              value={lessonForm.name}
-              onChange={e => setLessonForm({ ...lessonForm, name: e.target.value })}
-            />
-            <input
-              type="number"
-              min="1"
-              value={lessonForm.order}
-              onChange={e => setLessonForm({ ...lessonForm, order: parseInt(e.target.value, 10) || 1 })}
-              style={{ width: '70px' }}
-            />
-            <button type="submit" className="btn-primary">{t('listening.addClass') || 'Add Class'}</button>
+          <form onSubmit={handleAddLesson} className="word-form">
+            <h3>{t('listening.addClass') || 'Add Class'}</h3>
+            <div className="form-row lesson-form-row">
+              <div className="form-field">
+                <label className="form-label">{t('homework.lessonName') || 'Class Name'}</label>
+                <input
+                  type="text"
+                  placeholder={t('listening.newClass') || 'New class name'}
+                  value={lessonForm.name}
+                  onChange={e => setLessonForm({ ...lessonForm, name: e.target.value })}
+                  className="form-input"
+                  required
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">{t('homework.order') || 'Order'}</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={lessonForm.order}
+                  onChange={e => setLessonForm({ ...lessonForm, order: parseInt(e.target.value, 10) || 1 })}
+                  className="form-input"
+                  style={{ maxWidth: '80px' }}
+                />
+              </div>
+              <div className="form-field form-field-actions">
+                <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
+              </div>
+            </div>
           </form>
+
+          {loading ? (
+            <div className="loading">{t('listening.loading') || 'Loading...'}</div>
+          ) : (
+            <div className="lessons-list">
+              {lessons.length === 0 ? (
+                <div className="no-data">{t('listening.noClasses') || 'No listening classes available yet.'}</div>
+              ) : (
+                lessons.map(lesson => (
+                  <div key={lesson._id} className="lesson-item">
+                    <div className="lesson-row">
+                      <div className="lesson-main" onClick={() => selectLesson(lesson)} style={{ cursor: 'pointer' }}>
+                        <span className="lesson-order">{lesson.order}</span>
+                        <span className="lesson-name">{lesson.name}</span>
+                        <span className="lesson-meta">
+                          {lesson.listeningCount || 0} {t('listening.exercises') || 'exercises'}
+                        </span>
+                      </div>
+                      <div className="lesson-actions">
+                        <button type="button" className="btn btn-small btn-primary" onClick={() => selectLesson(lesson)}>
+                          {t('listening.exercises') || 'Exercises'}
+                        </button>
+                        <button type="button" className="btn btn-small btn-delete" onClick={() => handleDeleteLesson(lesson._id)}>
+                          {t('homework.delete') || 'Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </>
       )}
 
       {view === 'exercises' && selectedLesson && (
         <>
-          <button className="back-btn" onClick={() => setView('classes')}>← {t('listening.back') || 'Back'}</button>
-          <div className="lesson-header-row">
-            <h3>{selectedLesson.name}</h3>
-            <button className="btn-danger btn-sm" onClick={() => handleDeleteLesson(selectedLesson._id)}>
-              {t('listening.deleteClass') || 'Delete Class'}
-            </button>
-          </div>
-
-          <form className="listening-exercise-form" onSubmit={handleAddExercise}>
-            <h4>{t('listening.addExercise') || 'Add Listening Exercise'}</h4>
-            <input
-              type="text"
-              placeholder={t('listening.exerciseTitle') || 'Title (e.g. Dialogue 1)'}
-              value={exerciseForm.title}
-              onChange={e => setExerciseForm({ ...exerciseForm, title: e.target.value })}
-              required
-            />
+          <form onSubmit={handleAddExercise} className="word-form">
+            <h3>{t('listening.addExercise') || 'Add Listening Exercise'}</h3>
+            <div className="form-row" style={{ flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder={t('listening.exerciseTitle') || 'Title (e.g. Dialogue 1)'}
+                value={exerciseForm.title}
+                onChange={e => setExerciseForm({ ...exerciseForm, title: e.target.value })}
+                className="form-input"
+                required
+              />
+              <input
+                type="number"
+                min="1"
+                value={exerciseForm.order}
+                onChange={e => setExerciseForm({ ...exerciseForm, order: parseInt(e.target.value, 10) || 1 })}
+                className="form-input"
+                style={{ maxWidth: '80px' }}
+                title={t('homework.order') || 'Order'}
+              />
+            </div>
             <textarea
               placeholder={t('listening.scriptPlaceholder') || 'Full script / transcript students should type...'}
               value={exerciseForm.script}
               onChange={e => setExerciseForm({ ...exerciseForm, script: e.target.value })}
               rows={4}
+              className="form-input"
               required
+              style={{ width: '100%', marginTop: '12px', resize: 'vertical' }}
             />
-            <div className="file-input-row">
-              <label>{t('listening.audioFile') || 'Audio file'} (mp3, wav, m4a)</label>
-              <input
-                type="file"
-                accept="audio/*"
-                onChange={e => setAudioFile(e.target.files[0] || null)}
-                required
-              />
+            <div className="form-row" style={{ marginTop: '12px' }}>
+              <div className="file-input-row" style={{ flex: 1 }}>
+                <label>{t('listening.audioFile') || 'Audio file'} (mp3, wav, m4a)</label>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={e => setAudioFile(e.target.files[0] || null)}
+                  required
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={submitting}>
+                {submitting ? (t('listening.uploading') || 'Uploading...') : (t('homework.add') || 'Add')}
+              </button>
             </div>
-            <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? (t('listening.uploading') || 'Uploading...') : (t('listening.addExercise') || 'Add Exercise')}
-            </button>
           </form>
 
-          <div className="listening-exercise-list">
-            {exercises.length === 0 ? (
-              <p className="empty-state">{t('listening.noExercises') || 'No exercises yet. Add one above.'}</p>
-            ) : (
-              exercises.map(exercise => (
-                <div key={exercise._id} className="listening-exercise-card">
-                  {editingExercise === exercise._id ? (
-                    <div className="edit-exercise-form">
-                      <input
-                        type="text"
-                        value={editForm.title}
-                        onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-                      />
-                      <textarea
-                        value={editForm.script}
-                        onChange={e => setEditForm({ ...editForm, script: e.target.value })}
-                        rows={4}
-                      />
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        onChange={e => setEditAudioFile(e.target.files[0] || null)}
-                      />
-                      <div className="card-actions">
-                        <button className="btn-primary btn-sm" onClick={() => handleUpdateExercise(exercise._id)} disabled={submitting}>
-                          {t('listening.save') || 'Save'}
-                        </button>
-                        <button className="btn-secondary btn-sm" onClick={() => setEditingExercise(null)}>
-                          {t('listening.cancel') || 'Cancel'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="exercise-card-header">
-                        <strong>{exercise.title}</strong>
+          {loading ? (
+            <div className="loading">{t('listening.loading') || 'Loading...'}</div>
+          ) : (
+            <div className="listening-exercise-list">
+              {exercises.length === 0 ? (
+                <div className="no-data">{t('listening.noExercises') || 'No exercises yet. Add one above.'}</div>
+              ) : (
+                exercises.map(exercise => (
+                  <div key={exercise._id} className="listening-exercise-card">
+                    {editingExercise === exercise._id ? (
+                      <div className="edit-exercise-form">
+                        <input
+                          type="text"
+                          value={editForm.title}
+                          onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                          className="form-input"
+                        />
+                        <textarea
+                          value={editForm.script}
+                          onChange={e => setEditForm({ ...editForm, script: e.target.value })}
+                          rows={4}
+                          className="form-input"
+                        />
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          onChange={e => setEditAudioFile(e.target.files[0] || null)}
+                        />
                         <div className="card-actions">
-                          <button className="btn-secondary btn-sm" onClick={() => startEditExercise(exercise)}>
-                            {t('listening.edit') || 'Edit'}
+                          <button type="button" className="btn btn-small btn-primary" onClick={() => handleUpdateExercise(exercise._id)} disabled={submitting}>
+                            {t('listening.save') || 'Save'}
                           </button>
-                          <button className="btn-danger btn-sm" onClick={() => handleDeleteExercise(exercise._id)}>
-                            {t('listening.delete') || 'Delete'}
+                          <button type="button" className="btn btn-small btn-secondary" onClick={() => setEditingExercise(null)}>
+                            {t('listening.cancel') || 'Cancel'}
                           </button>
                         </div>
                       </div>
-                      <p className="exercise-script-preview">{exercise.script}</p>
-                      <audio controls src={listeningAPI.getAudioUrl(exercise.audioFile)} preload="metadata" />
-                    </>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+                    ) : (
+                      <>
+                        <div className="exercise-card-header">
+                          <strong>{exercise.title}</strong>
+                          <div className="card-actions">
+                            <button type="button" className="btn btn-small btn-edit" onClick={() => startEditExercise(exercise)}>
+                              {t('listening.edit') || 'Edit'}
+                            </button>
+                            <button type="button" className="btn btn-small btn-delete" onClick={() => handleDeleteExercise(exercise._id)}>
+                              {t('listening.delete') || 'Delete'}
+                            </button>
+                          </div>
+                        </div>
+                        <p className="exercise-script-preview">{exercise.script}</p>
+                        <audio controls src={listeningAPI.getAudioUrl(exercise.audioFile)} preload="metadata" />
+                      </>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

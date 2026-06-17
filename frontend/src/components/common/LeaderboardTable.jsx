@@ -32,8 +32,22 @@ const LeaderboardTable = ({
     </tr>
   );
 
+  const renderTableHead = () => (
+    <thead>
+      <tr>
+        <th>{t('sentences.rank') || 'Rank'}</th>
+        <th>{t('homework.studentName') || 'Student Name'}</th>
+        {columns.map(col => (
+          <th key={col.key}>{col.label}</th>
+        ))}
+      </tr>
+    </thead>
+  );
+
   const showCurrentInTop10 = currentStudent &&
     leaderboard.some(s => s.studentId === currentStudent.studentId);
+
+  const showCurrentBelow = currentStudent && !showCurrentInTop10;
 
   return (
     <div className="sentence-leaderboard">
@@ -44,44 +58,36 @@ const LeaderboardTable = ({
       ) : leaderboard.length === 0 && !currentStudent ? (
         <div className="no-data">{emptyMessage}</div>
       ) : (
-        <div className="leaderboard-table-wrapper">
-          {currentStudent && (
-            <div className="current-student-rank-banner">
-              <span className="current-rank-label">
-                {t('listening.yourRank') || 'Your rank'}:
-              </span>
-              <span className="current-rank-value">#{currentStudent.rank}</span>
-              <span className="current-rank-of">
-                {t('listening.outOf') || 'of'} {currentStudent.totalStudents}{' '}
-                {t('listening.students') || 'students'}
-              </span>
+        <>
+          <div className="leaderboard-table-wrapper">
+            <table className="leaderboard-table">
+              {renderTableHead()}
+              <tbody>
+                {leaderboard.map((student, index) => {
+                  const rank = student.rank ?? index + 1;
+                  const isCurrent = currentStudent && student.studentId === currentStudent.studentId;
+                  return renderRow(student, rank, isCurrent ? 'current-student-row' : '');
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {showCurrentBelow && (
+            <div className="leaderboard-your-rank-section">
+              <p className="leaderboard-your-rank-label">
+                {t('sentences.yourRank') || t('listening.yourRank') || 'Your rank'}
+              </p>
+              <div className="leaderboard-table-wrapper">
+                <table className="leaderboard-table leaderboard-table-your-rank">
+                  {renderTableHead()}
+                  <tbody>
+                    {renderRow(currentStudent, currentStudent.rank, 'current-student-row')}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
-
-          <table className="leaderboard-table">
-            <thead>
-              <tr>
-                <th>{t('sentences.rank') || 'Rank'}</th>
-                <th>{t('homework.studentName') || 'Student'}</th>
-                {columns.map(col => (
-                  <th key={col.key}>{col.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {currentStudent && !showCurrentInTop10 && renderRow(
-                currentStudent,
-                currentStudent.rank,
-                'current-student-row'
-              )}
-              {leaderboard.map((student, index) => {
-                const rank = student.rank ?? index + 1;
-                const isCurrent = currentStudent && student.studentId === currentStudent.studentId;
-                return renderRow(student, rank, isCurrent ? 'current-student-row' : '');
-              })}
-            </tbody>
-          </table>
-        </div>
+        </>
       )}
     </div>
   );

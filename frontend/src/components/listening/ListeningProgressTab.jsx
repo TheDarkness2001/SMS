@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { listeningAPI } from '../../utils/api';
+import { listeningAPI, getImageUrl } from '../../utils/api';
+
+const StudentNameCell = ({ student }) => (
+  <div className="student-name-cell">
+    {student.profileImage ? (
+      <img src={getImageUrl(student.profileImage)} alt={student.name} className="student-avatar-small" />
+    ) : (
+      <div className="student-avatar-placeholder-small">{student.name?.charAt(0) || '?'}</div>
+    )}
+    <span>{student.name || 'Unknown'}</span>
+  </div>
+);
 
 const ListeningProgressTab = ({ t }) => {
   const [studentsProgress, setStudentsProgress] = useState({ groups: [], unassigned: { students: [] } });
@@ -193,7 +204,7 @@ const ListeningProgressTab = ({ t }) => {
                             : null;
                           return (
                             <tr key={student._id}>
-                              <td>{student.name}</td>
+                              <td><StudentNameCell student={student} /></td>
                               {showLessonView ? (
                                 <>
                                   <td>{sStats.attempts}</td>
@@ -238,7 +249,7 @@ const ListeningProgressTab = ({ t }) => {
                   <tbody>
                     {unassignedStudents.map(student => (
                       <tr key={student._id}>
-                        <td>{student.name}</td>
+                        <td><StudentNameCell student={student} /></td>
                         <td>{student.listeningPracticeAccuracy}%</td>
                         <td>{student.listeningAttempts}</td>
                       </tr>

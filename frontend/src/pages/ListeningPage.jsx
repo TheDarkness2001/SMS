@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { AiOutlineSound } from 'react-icons/ai';
 import { languageAPI, levelAPI, lessonAPI, examGroupsAPI, listeningAPI } from '../utils/api';
 import { normalizeText } from '../utils/textNormalizer';
 import { useAuth } from '../context/AuthContext';
@@ -224,7 +225,10 @@ const ListeningPage = () => {
   return (
     <div className="homework-page listening-page">
       <div className="page-header">
-        <h1>{t('listening.title') || 'Listening'}</h1>
+        <h1>
+          <AiOutlineSound size={28} style={{ verticalAlign: 'middle', marginRight: '10px' }} />
+          {t('listening.title') || 'Listening'}
+        </h1>
         <p className="page-subtitle">
           {t('listening.subtitle') || 'Listen to audio and write what you hear'}
         </p>
@@ -266,39 +270,49 @@ const ListeningPage = () => {
                 <h3 className="practice-section-title">{t('listening.selectLanguage') || 'Select a Language'}</h3>
                 <div className="practice-levels-grid">
                   {languages.map(lang => (
-                    <button
+                    <div
                       key={lang._id}
                       className="practice-level-card"
                       onClick={() => selectLanguageForPractice(lang._id)}
+                      style={{ cursor: 'pointer' }}
                     >
-                      {lang.name}
-                    </button>
+                      <div className="practice-level-icon">🌐</div>
+                      <div className="practice-level-name">{lang.name}</div>
+                    </div>
                   ))}
+                  {languages.length === 0 && (
+                    <div className="no-data">{t('listening.noClasses') || 'No languages available yet.'}</div>
+                  )}
                 </div>
               </>
             )}
 
             {practiceView === 'levels' && (
               <>
-                <button className="back-btn" onClick={() => setPracticeView('languages')}>
-                  ← {t('listening.back') || 'Back'}
-                </button>
+                <div className="practice-back-bar">
+                  <button type="button" className="btn btn-small btn-secondary" onClick={() => setPracticeView('languages')}>
+                    ← {t('listening.back') || 'Back'}
+                  </button>
+                </div>
                 <h3 className="practice-section-title">{t('listening.selectLevel') || 'Select a Level'}</h3>
                 <div className="practice-levels-grid">
                   {levelsList.map(level => {
                     const isUnlocked = isStudent ? (level.practiceUnlockedForMe || false) : true;
                     return (
-                      <button
+                      <div
                         key={level._id}
                         className={`practice-level-card ${isUnlocked ? '' : 'locked'}`}
                         onClick={() => isUnlocked && selectLevelForPractice(level._id)}
-                        disabled={!isUnlocked}
+                        style={{ cursor: isUnlocked ? 'pointer' : 'not-allowed' }}
                       >
-                        <span>{level.name}</span>
+                        <div className="practice-level-icon">{isUnlocked ? '🎧' : '🔒'}</div>
+                        <div className="practice-level-name">{level.name}</div>
                         {!isUnlocked && (
-                          <small>{t('listening.practiceLocked') || 'Locked'}</small>
+                          <div className="practice-level-locked-label">
+                            {t('listening.practiceLocked') || 'Locked'}
+                          </div>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -307,26 +321,37 @@ const ListeningPage = () => {
 
             {practiceView === 'classes' && (
               <>
-                <button className="back-btn" onClick={() => setPracticeView('levels')}>
-                  ← {t('listening.back') || 'Back'}
-                </button>
-                <h3 className="practice-section-title">{t('listening.selectClass') || 'Select a Class'}</h3>
+                <div className="practice-back-bar">
+                  <button type="button" className="btn btn-small btn-secondary" onClick={() => setPracticeView('levels')}>
+                    ← {t('listening.back') || 'Back'}
+                  </button>
+                </div>
+                <h3 className="practice-section-title">
+                  {levelsList.find(l => l._id === selectedLevelId)?.name || ''} — {t('listening.selectClass') || 'Select a Class'}
+                </h3>
                 {lessonsLoading ? (
-                  <p>{t('listening.loading') || 'Loading...'}</p>
-                ) : levelLessons.length === 0 ? (
-                  <p className="empty-state">{t('listening.noClasses') || 'No listening classes available yet.'}</p>
+                  <div className="loading-state">{t('listening.loading') || 'Loading...'}</div>
                 ) : (
-                  <div className="practice-levels-grid">
+                  <div className="practice-classes-grid">
                     {levelLessons.map(lesson => (
-                      <button
+                      <div
                         key={lesson._id}
-                        className="practice-level-card"
+                        className="practice-class-card"
                         onClick={() => selectClassForPractice(lesson._id)}
+                        style={{ cursor: 'pointer' }}
                       >
-                        <span>{lesson.name}</span>
-                        <small>{lesson.listeningCount || 0} {t('listening.exercises') || 'exercises'}</small>
-                      </button>
+                        <div className="practice-class-header">
+                          <span className="practice-class-order">{lesson.order}</span>
+                          <span className="practice-class-name">{lesson.name}</span>
+                        </div>
+                        <div className="practice-class-meta">
+                          🎧 {lesson.listeningCount || 0} {t('listening.exercises') || 'exercises'}
+                        </div>
+                      </div>
                     ))}
+                    {levelLessons.length === 0 && (
+                      <div className="no-data">{t('listening.noClasses') || 'No listening classes available yet.'}</div>
+                    )}
                   </div>
                 )}
               </>
@@ -334,9 +359,11 @@ const ListeningPage = () => {
 
             {practiceView === 'exercises' && (
               <>
-                <button className="back-btn" onClick={() => setPracticeView('classes')}>
-                  ← {t('listening.back') || 'Back'}
-                </button>
+                <div className="practice-back-bar">
+                  <button type="button" className="btn btn-small btn-secondary" onClick={() => setPracticeView('classes')}>
+                    ← {t('listening.back') || 'Back'}
+                  </button>
+                </div>
                 <h3 className="practice-section-title">{t('listening.selectExercise') || 'Select an Exercise'}</h3>
                 {sessionStats.total > 0 && (
                   <p className="session-stats-banner">
@@ -344,17 +371,19 @@ const ListeningPage = () => {
                   </p>
                 )}
                 {exercises.length === 0 ? (
-                  <p className="empty-state">{t('listening.noExercises') || 'No exercises in this class yet.'}</p>
+                  <div className="no-data">{t('listening.noExercises') || 'No exercises in this class yet.'}</div>
                 ) : (
                   <div className="practice-levels-grid">
                     {exercises.map(exercise => (
-                      <button
+                      <div
                         key={exercise._id}
                         className="practice-level-card"
                         onClick={() => startExercise(exercise)}
+                        style={{ cursor: 'pointer' }}
                       >
-                        {exercise.title}
-                      </button>
+                        <div className="practice-level-icon">🎧</div>
+                        <div className="practice-level-name">{exercise.title}</div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -363,9 +392,11 @@ const ListeningPage = () => {
 
             {practiceView === 'game' && currentExercise && (
               <div className="listening-practice-card">
-                <button className="back-btn" onClick={handleNext}>
-                  ← {t('listening.backToList') || 'Back to list'}
-                </button>
+                <div className="practice-game-bar">
+                  <button type="button" className="btn btn-small btn-secondary" onClick={handleNext}>
+                    ← {t('listening.backToList') || 'Back to list'}
+                  </button>
+                </div>
 
                 <h3 className="exercise-title">{currentExercise.title}</h3>
 
@@ -380,7 +411,7 @@ const ListeningPage = () => {
                   />
                   <button
                     type="button"
-                    className={`listening-play-btn ${isPlaying ? 'playing' : ''}`}
+                    className={`btn ${isPlaying ? 'btn-delete' : 'btn-primary'}`}
                     onClick={togglePlayPause}
                   >
                     {isPlaying
@@ -404,7 +435,8 @@ const ListeningPage = () => {
 
                 {!feedback ? (
                   <button
-                    className="check-answer-btn"
+                    type="button"
+                    className="btn btn-primary"
                     onClick={handleCheck}
                     disabled={isChecking || !userAnswer.trim()}
                   >
@@ -429,7 +461,7 @@ const ListeningPage = () => {
                         <p className="script-text your-answer">{feedback.yourAnswer}</p>
                       </div>
                     )}
-                    <button className="next-btn" onClick={handleNext}>
+                    <button type="button" className="btn btn-primary" onClick={handleNext}>
                       {t('listening.next') || 'Next Exercise'}
                     </button>
                   </div>
