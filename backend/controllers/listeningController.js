@@ -485,3 +485,39 @@ exports.getLevelStudentStats = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+const AUDIO_MIME_TYPES = {
+  '.mp3': 'audio/mpeg',
+  '.mpeg': 'audio/mpeg',
+  '.wav': 'audio/wav',
+  '.ogg': 'audio/ogg',
+  '.m4a': 'audio/mp4',
+  '.aac': 'audio/aac',
+  '.webm': 'audio/webm'
+};
+
+exports.streamAudio = async (req, res) => {
+  try {
+    const exercise = await ListeningExercise.findById(req.params.id).select('audioFile');
+    if (!exercise?.audioFile) {
+      return res.status(404).send('Audio not found');
+    }
+
+    if (isRemoteAudioUrl(exercise.audioFile)) {
+      return res.redirect(302, exercise.audioFile);
+    }
+
+    const audioPath = path.join(__dirname, '..', 'uploads', exercise.audioFile);
+    if (!fs.existsSync(audioPath)) {
+      return res.status(404).send('Audio file missing. Please re-upload this exercise.');
+    }
+
+    const ext = path.extname(exercise.audioFile).toLowerCase();
+    res.setHeader('Content-Type', AUDIO_MIME_TYPES[ext] || 'audio/mpeg');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.sendFile(audioPath);
+  } catch (error) {
+    console.error('Stream listening audio error:', error);
+    res.status(500).send('Server error');
+  }
+};

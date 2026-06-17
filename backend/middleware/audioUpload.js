@@ -60,7 +60,8 @@ const uploadAudioToImageKit = async (req, res, next) => {
       file: req.file.buffer,
       fileName,
       folder: '/listening',
-      useUniqueFileName: false
+      useUniqueFileName: false,
+      contentType: req.file.mimetype || 'audio/mpeg'
     });
 
     req.file.filename = result.url;

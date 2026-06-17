@@ -426,7 +426,7 @@ const ListeningManageTab = ({ t }) => {
                           </div>
                         </div>
                         <p className="exercise-script-preview">{exercise.script}</p>
-                        <audio controls src={listeningAPI.getAudioUrl(exercise.audioFile)} preload="metadata" />
+                        <audio controls src={listeningAPI.getAudioUrl(exercise.audioFile, exercise._id)} preload="metadata" />
                       </>
                     )}
                   </div>

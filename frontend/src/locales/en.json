@@ -458,7 +458,7 @@
     "prev15s": "Back 15 seconds",
     "next15s": "Forward 15 seconds",
     "audioProgress": "Audio progress",
-    "audioLoadError": "Audio file could not be loaded. It may have been removed from the server.",
+    "audioLoadError": "Audio file could not be loaded. Please re-upload this exercise in Listening → Lessons.",
     "audioPlayError": "Could not play audio. The file may be missing or your browser blocked playback.",
     "listenHint": "Listen carefully, then type what you hear below.",
     "typeWhatYouHear": "Type what you hear...",

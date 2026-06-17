@@ -453,7 +453,7 @@
     "prev15s": "15 soniya orqaga",
     "next15s": "15 soniya oldinga",
     "audioProgress": "Audio jarayoni",
-    "audioLoadError": "Audio fayl yuklanmadi. U serverdan o'chirilgan bo'lishi mumkin.",
+    "audioLoadError": "Audio yuklanmadi. Tinglash → Darslar bo'limida mashqni qayta yuklang.",
     "audioPlayError": "Audioni ijro etib bo'lmadi. Fayl yo'q yoki brauzer bloklagan bo'lishi mumkin.",
     "listenHint": "Diqqat bilan tinglang, keyin eshitganingizni yozing.",
     "typeWhatYouHear": "Eshitganingizni yozing...",

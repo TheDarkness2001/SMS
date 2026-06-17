@@ -365,7 +365,12 @@ export const listeningAPI = {
   getGroupProgress: () => api.get('/listening/students/group-progress'),
   getLevelStudentStats: (levelId) => api.get(`/listening/levels/${levelId}/student-stats`),
   getLessonStudentStats: (lessonId) => api.get(`/listening/lessons/${lessonId}/student-stats`),
-  getAudioUrl: (filename) => getImageUrl(filename)
+  getAudioUrl: (audioFile, exerciseId) => {
+    if (exerciseId) {
+      return `${API_BASE_URL}/listening/exercises/${exerciseId}/audio`;
+    }
+    return getImageUrl(audioFile);
+  }
 };
 
 // Language API

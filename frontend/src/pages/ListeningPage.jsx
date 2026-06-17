@@ -153,11 +153,39 @@ const ListeningPage = () => {
     setAudioError('');
   }, [currentExercise?._id]);
 
+  const waitForAudioReady = (audio) => new Promise((resolve, reject) => {
+    if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      resolve();
+      return;
+    }
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Audio load timeout'));
+    }, 15000);
+    const onReady = () => {
+      cleanup();
+      resolve();
+    };
+    const onFail = () => {
+      cleanup();
+      reject(new Error('Audio failed to load'));
+    };
+    const cleanup = () => {
+      clearTimeout(timeout);
+      audio.removeEventListener('canplay', onReady);
+      audio.removeEventListener('error', onFail);
+    };
+    audio.addEventListener('canplay', onReady);
+    audio.addEventListener('error', onFail);
+  });
+
   const togglePlayPause = async () => {
     const audio = audioRef.current;
-    if (!audio || audioError) return;
+    if (!audio) return;
+    setAudioError('');
     try {
       if (audio.paused) {
+        await waitForAudioReady(audio);
         await audio.play();
         setIsPlaying(true);
       } else {
@@ -166,7 +194,10 @@ const ListeningPage = () => {
       }
     } catch (err) {
       console.error('Audio play error:', err);
-      setAudioError(t('listening.audioPlayError') || 'Could not play audio. The file may be missing or your browser blocked playback.');
+      setAudioError(
+        t('listening.audioLoadError') ||
+        'Audio file could not be loaded. Please ask your teacher to re-upload this exercise.'
+      );
       setIsPlaying(false);
     }
   };
@@ -211,7 +242,10 @@ const ListeningPage = () => {
     }
   };
   const handleAudioError = () => {
-    setAudioError(t('listening.audioLoadError') || 'Audio file could not be loaded. It may have been removed from the server.');
+    setAudioError(
+      t('listening.audioLoadError') ||
+      'Audio file could not be loaded. Please ask your teacher to re-upload this exercise.'
+    );
     setIsPlaying(false);
   };
 
@@ -422,7 +456,7 @@ const ListeningPage = () => {
                   <audio
                     key={currentExercise._id}
                     ref={audioRef}
-                    src={listeningAPI.getAudioUrl(currentExercise.audioFile)}
+                    src={listeningAPI.getAudioUrl(currentExercise.audioFile, currentExercise._id)}
                     onPlay={handleAudioPlay}
                     onPause={handleAudioPause}
                     onEnded={handleAudioEnded}
@@ -467,7 +501,6 @@ const ListeningPage = () => {
                       type="button"
                       className={`btn ${isPlaying ? 'btn-delete' : 'btn-primary'}`}
                       onClick={togglePlayPause}
-                      disabled={!!audioError}
                     >
                       {isPlaying
                         ? (t('listening.pause') || 'Pause')

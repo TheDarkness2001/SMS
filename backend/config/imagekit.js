@@ -18,7 +18,10 @@ if (process.env.IMAGEKIT_PRIVATE_KEY) {
     imagekit.upload = async function(options) {
       try {
         const formData = new FormData();
-        formData.append('file', options.file, options.fileName);
+        const fileOptions = options.contentType
+          ? { filename: options.fileName, contentType: options.contentType }
+          : options.fileName;
+        formData.append('file', options.file, fileOptions);
         formData.append('fileName', options.fileName);
         
         if (options.folder) {
