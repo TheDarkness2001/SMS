@@ -11,6 +11,13 @@ import ExamControl from '../components/homework/ExamControl';
 import '../styles/Homework.css';
 import '../styles/Listening.css';
 
+const formatAudioTime = (seconds) => {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 const ListeningPage = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -28,6 +35,9 @@ const ListeningPage = () => {
   const [feedback, setFeedback] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioError, setAudioError] = useState('');
   const [exercisesLoading, setExercisesLoading] = useState(false);
   const [sessionStats, setSessionStats] = useState({ total: 0, totalAccuracy: 0 });
 
@@ -125,17 +135,38 @@ const ListeningPage = () => {
     setUserAnswer('');
     setFeedback(null);
     setIsPlaying(false);
+    setAudioCurrentTime(0);
+    setAudioDuration(0);
+    setAudioError('');
     setPracticeView('game');
   };
 
-  const togglePlayPause = () => {
+  useEffect(() => {
+    if (!currentExercise) return;
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) {
-      audio.play();
-      setIsPlaying(true);
-    } else {
-      audio.pause();
+    audio.pause();
+    audio.load();
+    setIsPlaying(false);
+    setAudioCurrentTime(0);
+    setAudioDuration(0);
+    setAudioError('');
+  }, [currentExercise?._id]);
+
+  const togglePlayPause = async () => {
+    const audio = audioRef.current;
+    if (!audio || audioError) return;
+    try {
+      if (audio.paused) {
+        await audio.play();
+        setIsPlaying(true);
+      } else {
+        audio.pause();
+        setIsPlaying(false);
+      }
+    } catch (err) {
+      console.error('Audio play error:', err);
+      setAudioError(t('listening.audioPlayError') || 'Could not play audio. The file may be missing or your browser blocked playback.');
       setIsPlaying(false);
     }
   };
@@ -148,11 +179,41 @@ const ListeningPage = () => {
     if (nextTime < 0) nextTime = 0;
     if (duration !== null && nextTime > duration) nextTime = duration;
     audio.currentTime = nextTime;
+    setAudioCurrentTime(nextTime);
+  };
+
+  const handleSeek = (e) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const time = parseFloat(e.target.value);
+    audio.currentTime = time;
+    setAudioCurrentTime(time);
   };
 
   const handleAudioPlay = () => setIsPlaying(true);
   const handleAudioPause = () => setIsPlaying(false);
-  const handleAudioEnded = () => setIsPlaying(false);
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+    const audio = audioRef.current;
+    if (audio && Number.isFinite(audio.duration)) {
+      setAudioCurrentTime(audio.duration);
+    }
+  };
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (audio) setAudioCurrentTime(audio.currentTime);
+  };
+  const handleLoadedMetadata = () => {
+    const audio = audioRef.current;
+    if (audio && Number.isFinite(audio.duration)) {
+      setAudioDuration(audio.duration);
+      setAudioError('');
+    }
+  };
+  const handleAudioError = () => {
+    setAudioError(t('listening.audioLoadError') || 'Audio file could not be loaded. It may have been removed from the server.');
+    setIsPlaying(false);
+  };
 
   const handleCheck = async () => {
     if (!userAnswer.trim() || !currentExercise) return;
@@ -359,13 +420,40 @@ const ListeningPage = () => {
 
                 <div className="listening-audio-controls">
                   <audio
+                    key={currentExercise._id}
                     ref={audioRef}
                     src={listeningAPI.getAudioUrl(currentExercise.audioFile)}
                     onPlay={handleAudioPlay}
                     onPause={handleAudioPause}
                     onEnded={handleAudioEnded}
-                    preload="metadata"
+                    onTimeUpdate={handleTimeUpdate}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onError={handleAudioError}
+                    preload="auto"
                   />
+
+                  <div className="listening-audio-progress">
+                    <input
+                      type="range"
+                      className="listening-audio-progress-bar"
+                      min={0}
+                      max={audioDuration || 0}
+                      step={0.1}
+                      value={Math.min(audioCurrentTime, audioDuration || 0)}
+                      onChange={handleSeek}
+                      disabled={!audioDuration || !!audioError}
+                      aria-label={t('listening.audioProgress') || 'Audio progress'}
+                    />
+                    <div className="listening-audio-time">
+                      <span>{formatAudioTime(audioCurrentTime)}</span>
+                      <span>{formatAudioTime(audioDuration)}</span>
+                    </div>
+                  </div>
+
+                  {audioError && (
+                    <p className="listening-audio-error">{audioError}</p>
+                  )}
+
                   <div className="listening-audio-buttons">
                     <button
                       type="button"
@@ -379,6 +467,7 @@ const ListeningPage = () => {
                       type="button"
                       className={`btn ${isPlaying ? 'btn-delete' : 'btn-primary'}`}
                       onClick={togglePlayPause}
+                      disabled={!!audioError}
                     >
                       {isPlaying
                         ? (t('listening.pause') || 'Pause')
