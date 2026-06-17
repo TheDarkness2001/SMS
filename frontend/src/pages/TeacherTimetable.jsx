@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
 import { teachersAPI, schedulerAPI } from '../utils/api';
+import WeeklyTimetableGrid from '../components/WeeklyTimetableGrid';
 import '../styles/TeacherTimetable.css';
 
 const TeacherTimetable = () => {
@@ -15,10 +16,10 @@ const TeacherTimetable = () => {
   const [currentUser, setCurrentUser] = useState(null);
   
   // Timetable configuration
-  const DAYS_OF_WEEK = [t('common.monday'), t('common.tuesday'), t('common.wednesday'), t('common.thursday'), t('common.friday'), t('common.saturday'), t('common.sunday')];
-  const START_HOUR = 8;
-  const END_HOUR = 21;
-  const HOUR_HEIGHT = 60; // pixels per hour
+  const DAYS_OF_WEEK = useMemo(() => [
+    t('common.monday'), t('common.tuesday'), t('common.wednesday'),
+    t('common.thursday'), t('common.friday'), t('common.saturday'), t('common.sunday')
+  ], [t]);
 
   // Fetch schedules for selected teacher
   const fetchSchedules = useCallback(async (teacherId) => {
@@ -96,35 +97,15 @@ const TeacherTimetable = () => {
      currentUser.role === 'manager' || 
      currentUser.role === 'founder');
 
-  // Helper: Convert time string to minutes from start hour
-  const timeToMinutes = (timeStr) => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return (hours - START_HOUR) * 60 + minutes;
-  };
-  
-  // Helper: Generate color for teacher
-  const getTeacherColor = (teacherId) => {
+  const getTeacherColor = () => {
     const colors = [
       '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336',
       '#00BCD4', '#FF5722', '#3F51B5', '#8BC34A', '#FFC107'
     ];
+    const teacherId = selectedTeacher?._id || '';
     const index = teacherId ? teacherId.charCodeAt(teacherId.length - 1) % colors.length : 0;
     return colors[index];
   };
-  
-  // Helper: Prepare classes for a specific day
-  const getClassesForDay = (day) => {
-    return schedules
-      .filter(schedule => schedule.scheduledDays?.includes(day))
-      .map(schedule => ({
-        ...schedule,
-        top: timeToMinutes(schedule.startTime),
-        height: timeToMinutes(schedule.endTime) - timeToMinutes(schedule.startTime),
-        color: getTeacherColor(selectedTeacher?._id)
-      }))
-      .sort((a, b) => a.top - b.top);
-  };
-  
   // Helper: Get today's classes for mobile/tablet view
   const getTodayClasses = () => {
     const now = new Date();
@@ -143,7 +124,7 @@ const TeacherTimetable = () => {
       .filter(schedule => schedule.scheduledDays?.includes(today))
       .map(schedule => ({
         ...schedule,
-        color: getTeacherColor(selectedTeacher?._id)
+        color: getTeacherColor()
       }))
       .sort((a, b) => {
         const aTime = a.startTime.split(':').map(Number);
@@ -212,67 +193,13 @@ const TeacherTimetable = () => {
           ) : (
             <>
               {/* Desktop Weekly Timetable */}
-              <div className="weekly-timetable desktop-only">
-                <div className="timetable-grid">
-                  {/* Time column */}
-                  <div className="time-column">
-                    <div className="time-header">{t('timetable.time')}</div>
-                    {Array.from({ length: END_HOUR - START_HOUR }, (_, i) => (
-                      <div 
-                        key={i} 
-                        className="time-slot"
-                        style={{ height: `${HOUR_HEIGHT}px` }}
-                      >
-                        {String(START_HOUR + i).padStart(2, '0')}:00
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Day columns */}
-                  {DAYS_OF_WEEK.map(day => {
-                    const dayClasses = getClassesForDay(day);
-                    return (
-                      <div key={day} className="day-column">
-                        <div className="day-header">{day}</div>
-                        <div 
-                          className="day-schedule"
-                          style={{ height: `${(END_HOUR - START_HOUR) * HOUR_HEIGHT}px` }}
-                        >
-                          {/* Background grid lines */}
-                          {Array.from({ length: END_HOUR - START_HOUR }, (_, i) => (
-                            <div 
-                              key={`grid-${i}`} 
-                              className="grid-line"
-                              style={{ 
-                                top: `${i * HOUR_HEIGHT}px`,
-                                height: `${HOUR_HEIGHT}px`
-                              }}
-                            />
-                          ))}
-
-                          {dayClasses.map((classItem, idx) => (
-                            <div
-                              key={idx}
-                              className="class-block"
-                              style={{
-                                top: `${classItem.top}px`,
-                                height: `${Math.max(classItem.height - 2, 30)}px`,
-                                backgroundColor: classItem.color,
-                                borderLeft: `4px solid ${classItem.color}`,
-                                filter: 'brightness(1.1)'
-                              }}
-                              title={`${classItem.subject?.name || classItem.subject} - ${classItem.className}\n${classItem.startTime} - ${classItem.endTime}\nRoom: ${classItem.roomNumber}`}
-                            >
-                              <div className="class-name">{classItem.subject?.name || classItem.subject}</div>
-                              <div className="class-time">{classItem.startTime} - {classItem.endTime}</div>
-                              <div className="class-room">{t('timetable.room')} {classItem.roomNumber}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div className="desktop-only">
+                <WeeklyTimetableGrid
+                  schedules={schedules}
+                  daysOfWeek={DAYS_OF_WEEK}
+                  getClassColor={() => getTeacherColor()}
+                  t={t}
+                />
               </div>
 
               {/* Mobile/Tablet Today's Classes */}
