@@ -11,6 +11,19 @@ const Student = require('../models/Student');
 const { analyzeListeningAnswer } = require('../utils/listeningValidator');
 const { normalizeText } = require('../utils/textNormalizer');
 
+function isRemoteAudioUrl(audioFile) {
+  return typeof audioFile === 'string' &&
+    (audioFile.startsWith('http://') || audioFile.startsWith('https://'));
+}
+
+function deleteStoredAudioFile(audioFile) {
+  if (!audioFile || isRemoteAudioUrl(audioFile)) return;
+  const audioPath = path.join(__dirname, '..', 'uploads', audioFile);
+  if (fs.existsSync(audioPath)) {
+    fs.unlink(audioPath, () => {});
+  }
+}
+
 async function getOrCreateListeningLessonForLevel(levelId) {
   let lesson = await Lesson.findOne({ levelId, type: 'listening' }).sort({ order: 1 });
   if (!lesson) {
@@ -139,10 +152,7 @@ exports.updateExercise = async (req, res) => {
     if (order !== undefined) exercise.order = order;
 
     if (req.file) {
-      const oldPath = path.join(__dirname, '..', 'uploads', exercise.audioFile);
-      if (fs.existsSync(oldPath)) {
-        fs.unlink(oldPath, () => {});
-      }
+      deleteStoredAudioFile(exercise.audioFile);
       exercise.audioFile = req.file.filename;
     }
 
@@ -161,10 +171,7 @@ exports.deleteExercise = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Listening exercise not found' });
     }
 
-    const audioPath = path.join(__dirname, '..', 'uploads', exercise.audioFile);
-    if (fs.existsSync(audioPath)) {
-      fs.unlink(audioPath, () => {});
-    }
+    deleteStoredAudioFile(exercise.audioFile);
 
     await StudentListeningProgress.deleteMany({ listeningId: req.params.id });
     await ListeningExercise.findByIdAndDelete(req.params.id);
