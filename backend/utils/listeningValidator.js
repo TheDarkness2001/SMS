@@ -1,6 +1,6 @@
 /**
- * Rule-based listening chunk checker.
- * Splits transcript internally; compares ONE chunk at a time only.
+ * Rule-based full-transcript listening checker.
+ * Deterministic word matching only — no chunking or semantic analysis.
  */
 
 const PUNCTUATION_PATTERN = /[.,!?;:"'()[\]]/g;
@@ -20,25 +20,68 @@ function splitListeningWords(text) {
   return normalized.split(' ').filter(Boolean);
 }
 
-function splitTranscriptIntoChunks(transcript) {
-  const text = String(transcript || '').trim();
-  if (!text) return [];
-  if (!/[.!?]/.test(text)) return [text];
-  return text.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
-}
-
 function formatWordList(words) {
   return words.length > 0 ? words.join(', ') : '(none)';
 }
 
-function compareWordsForChunk(chunkText, studentAnswer) {
-  const chunkWords = splitListeningWords(chunkText);
+function getResultTier(accuracyPercent) {
+  if (accuracyPercent < 70) return 'failed';
+  if (accuracyPercent < 90) return 'partial';
+  return 'passed';
+}
+
+function buildFormattedResult(accuracyPercent, missingWords, resultTier) {
+  if (resultTier === 'failed') {
+    return [
+      'RESULT',
+      '',
+      `${accuracyPercent}%`,
+      '',
+      'TASK FAILED',
+      '',
+      'Try again'
+    ].join('\n');
+  }
+
+  if (resultTier === 'partial') {
+    return [
+      'RESULT',
+      '',
+      `${accuracyPercent}%`,
+      '',
+      '❌ Missing Words',
+      formatWordList(missingWords)
+    ].join('\n');
+  }
+
+  const lines = [
+    'RESULT',
+    '',
+    `${accuracyPercent}%`,
+    ''
+  ];
+
+  if (missingWords.length > 0) {
+    lines.push('❌ Missing Words', formatWordList(missingWords), '');
+  }
+
+  lines.push('✔ Passed');
+  return lines.join('\n');
+}
+
+function analyzeListeningAnswer(transcript, studentAnswer) {
+  const transcriptWords = splitListeningWords(transcript);
   const studentWords = splitListeningWords(studentAnswer);
+
+  if (transcriptWords.length === 0) {
+    return { error: 'INVALID TRANSCRIPT' };
+  }
+
   const studentPool = [...studentWords];
   const correctWordsList = [];
   const missingWords = [];
 
-  for (const word of chunkWords) {
+  for (const word of transcriptWords) {
     const matchIndex = studentPool.indexOf(word);
     if (matchIndex >= 0) {
       correctWordsList.push(word);
@@ -48,104 +91,31 @@ function compareWordsForChunk(chunkText, studentAnswer) {
     }
   }
 
-  const extraWords = studentPool;
-  const totalWords = chunkWords.length;
+  const totalWords = transcriptWords.length;
   const correctWords = correctWordsList.length;
-  const missingCount = missingWords.length;
-  const extraCount = extraWords.length;
-  const accuracyPercent = totalWords > 0
-    ? Math.round((correctWords / totalWords) * 100)
-    : 0;
+  const accuracyPercent = Math.round((correctWords / totalWords) * 100);
+  const resultTier = getResultTier(accuracyPercent);
 
-  return {
+  const result = {
     accuracyPercent,
     correctWords,
     totalWords,
-    correctWordsList,
     missingWords,
-    extraWords,
-    missingCount,
-    extraCount,
-    isCorrect: totalWords > 0 && correctWords === totalWords && extraCount === 0
-  };
-}
-
-function buildChunkFormattedResult({
-  targetSentence,
-  correctWordsList,
-  missingWords,
-  extraWords,
-  accuracyPercent,
-  chunkIndex,
-  totalChunks
-}) {
-  return [
-    'CHUNK RESULT',
-    '',
-    'Target Sentence:',
-    targetSentence,
-    '',
-    '✔ Correct Words:',
-    formatWordList(correctWordsList),
-    '',
-    '❌ Missing Words:',
-    formatWordList(missingWords),
-    '',
-    '➕ Extra Words:',
-    formatWordList(extraWords),
-    '',
-    '📊 Score:',
-    `${accuracyPercent}%`,
-    '',
-    '📈 Progress:',
-    `Chunk ${chunkIndex + 1} of ${totalChunks}`
-  ].join('\n');
-}
-
-function analyzeListeningChunk(transcript, studentAnswer, chunkIndex = 0) {
-  const chunks = splitTranscriptIntoChunks(transcript);
-
-  if (chunks.length === 0) {
-    return { error: 'INVALID TRANSCRIPT' };
-  }
-
-  const index = Number.parseInt(chunkIndex, 10);
-  if (!Number.isFinite(index) || index < 0 || index >= chunks.length) {
-    return { error: 'INVALID CHUNK' };
-  }
-
-  const targetSentence = chunks[index];
-  if (!targetSentence || !splitListeningWords(targetSentence).length) {
-    return { error: 'INVALID CHUNK' };
-  }
-
-  const answerText = studentAnswer != null ? String(studentAnswer) : '';
-  const comparison = compareWordsForChunk(targetSentence, answerText);
-  const totalChunks = chunks.length;
-  const hasNextChunk = index < totalChunks - 1;
-
-  const result = {
-    ...comparison,
-    targetSentence,
-    chunkIndex: index,
-    totalChunks,
-    hasNextChunk,
-    formattedResult: ''
+    missingCount: missingWords.length,
+    resultTier,
+    taskFailed: resultTier === 'failed',
+    passed: resultTier === 'passed',
+    tryAgain: resultTier === 'failed',
+    showMissingWords: resultTier !== 'failed',
+    isCorrect: resultTier === 'passed',
+    formattedResult: buildFormattedResult(accuracyPercent, missingWords, resultTier)
   };
 
-  result.formattedResult = buildChunkFormattedResult(result);
   return result;
 }
 
-/** @deprecated Use analyzeListeningChunk */
-function analyzeListeningAnswer(transcript, studentAnswer) {
-  return analyzeListeningChunk(transcript, studentAnswer, 0);
-}
-
 module.exports = {
-  analyzeListeningChunk,
   analyzeListeningAnswer,
-  splitTranscriptIntoChunks,
   normalizeListeningText,
   splitListeningWords
 };

@@ -334,19 +334,34 @@
   margin: 8px 0 0;
 }
 
-.listening-chunk-progress {
-  margin: 8px 0 16px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #4338ca;
+.feedback-box.partial .accuracy-percent {
+  color: #d97706;
 }
 
-.listening-result-target {
-  border-left: 3px solid #4f46e5;
+.feedback-box .result-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+  margin-right: 8px;
 }
 
-.listening-result-target p {
-  font-style: italic;
+.listening-task-failed {
+  margin: 12px 0 4px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.listening-try-again-text {
+  margin: 0 0 16px;
+  color: #64748b;
+}
+
+.listening-passed {
+  margin: 12px 0 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #16a34a;
 }
 
 .file-input-row {

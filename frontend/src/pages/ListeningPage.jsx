@@ -39,9 +39,6 @@ const ListeningPage = () => {
   const [audioError, setAudioError] = useState('');
   const [exercisesLoading, setExercisesLoading] = useState(false);
   const [sessionStats, setSessionStats] = useState({ total: 0, totalAccuracy: 0 });
-  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
-  const [totalChunks, setTotalChunks] = useState(1);
-  const [chunkScores, setChunkScores] = useState([]);
 
   const isStudent = user?.userType === 'student';
   const isAdmin = (() => {
@@ -132,7 +129,7 @@ const ListeningPage = () => {
     setPracticeView('exercises');
   };
 
-  const startExercise = async (exercise) => {
+  const startExercise = (exercise) => {
     setCurrentExercise(exercise);
     setUserAnswer('');
     setFeedback(null);
@@ -140,20 +137,7 @@ const ListeningPage = () => {
     setAudioCurrentTime(0);
     setAudioDuration(0);
     setAudioError('');
-    setCurrentChunkIndex(0);
-    setChunkScores([]);
     setPracticeView('game');
-    try {
-      const res = await listeningAPI.getChunkMeta(exercise._id);
-      if (res.data.success) {
-        setTotalChunks(res.data.data.totalChunks || 1);
-      } else {
-        setTotalChunks(1);
-      }
-    } catch (err) {
-      console.error('Error fetching chunk meta:', err);
-      setTotalChunks(1);
-    }
   };
 
   useEffect(() => {
@@ -270,14 +254,11 @@ const ListeningPage = () => {
     try {
       const res = await listeningAPI.checkAnswer({
         listeningId: currentExercise._id,
-        answer: userAnswer,
-        chunkIndex: currentChunkIndex
+        answer: userAnswer
       });
       if (res.data.success) {
-        const { accuracyPercent, totalChunks: chunksTotal } = res.data.data;
+        const { accuracyPercent } = res.data.data;
         setFeedback(res.data.data);
-        if (chunksTotal) setTotalChunks(chunksTotal);
-        setChunkScores(prev => [...prev, accuracyPercent]);
         setSessionStats(prev => ({
           total: prev.total + 1,
           totalAccuracy: prev.totalAccuracy + accuracyPercent
@@ -291,8 +272,7 @@ const ListeningPage = () => {
     }
   };
 
-  const handleNextChunk = () => {
-    setCurrentChunkIndex(prev => prev + 1);
+  const handleTryAgain = () => {
     setFeedback(null);
     setUserAnswer('');
     setIsPlaying(false);
@@ -304,20 +284,10 @@ const ListeningPage = () => {
     setFeedback(null);
     setUserAnswer('');
     setIsPlaying(false);
-    setCurrentChunkIndex(0);
-    setTotalChunks(1);
-    setChunkScores([]);
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && e.ctrlKey) handleCheck();
-  };
-
-  const getAccuracyLabel = (percent) => {
-    if (percent >= 90) return t('listening.excellent') || 'Excellent!';
-    if (percent >= 70) return t('listening.good') || 'Good job!';
-    if (percent >= 50) return t('listening.notBad') || 'Not bad — keep practicing!';
-    return t('listening.keepPracticing') || 'Keep practicing!';
   };
 
   const tabs = [
@@ -479,9 +449,6 @@ const ListeningPage = () => {
                 </div>
 
                 <h3 className="exercise-title">{currentExercise.title}</h3>
-                <p className="listening-chunk-progress">
-                  {t('listening.chunkProgress') || 'Chunk'} {currentChunkIndex + 1} {t('listening.of') || 'of'} {totalChunks}
-                </p>
 
                 <div className="listening-audio-controls">
                   <audio
@@ -573,49 +540,49 @@ const ListeningPage = () => {
                       : (t('listening.checkAnswer') || 'Check Answer')}
                   </button>
                 ) : (
-                  <div className={`feedback-box ${feedback.accuracyPercent >= 70 ? 'correct' : 'incorrect'}`}>
-                    <h4 className="listening-result-title">{t('listening.chunkResult') || 'CHUNK RESULT'}</h4>
-
-                    <div className="listening-result-section listening-result-target">
-                      <strong>{t('listening.targetSentence') || 'Target Sentence:'}</strong>
-                      <p>{feedback.targetSentence}</p>
-                    </div>
-
-                    <div className="listening-result-section listening-result-correct">
-                      <strong>{t('listening.correctWordsList') || '✔ Correct Words:'}</strong>
-                      <p>{feedback.correctWordsList?.length ? feedback.correctWordsList.join(', ') : (t('listening.none') || '(none)')}</p>
-                    </div>
-
-                    <div className="listening-result-section listening-result-missing">
-                      <strong>{t('listening.missingWords') || '❌ Missing Words:'}</strong>
-                      <p>{feedback.missingWords?.length ? feedback.missingWords.join(', ') : (t('listening.none') || '(none)')}</p>
-                    </div>
-
-                    <div className="listening-result-section listening-result-extra">
-                      <strong>{t('listening.extraWords') || '➕ Extra Words:'}</strong>
-                      <p>{feedback.extraWords?.length ? feedback.extraWords.join(', ') : (t('listening.none') || '(none)')}</p>
-                    </div>
-
+                  <div className={`feedback-box ${feedback.resultTier === 'passed' ? 'correct' : feedback.resultTier === 'partial' ? 'partial' : 'incorrect'}`}>
                     <div className="accuracy-display">
+                      <span className="result-label">{t('listening.resultLabel') || 'RESULT:'}</span>
                       <span className="accuracy-percent">{feedback.accuracyPercent}%</span>
-                      <span className="accuracy-label">{getAccuracyLabel(feedback.accuracyPercent)}</span>
                     </div>
 
-                    <div className="listening-result-summary">
-                      <p><strong>{t('listening.progressLabel') || '📈 Progress:'}</strong></p>
-                      <p>
-                        {t('listening.chunkProgress') || 'Chunk'} {(feedback.chunkIndex ?? currentChunkIndex) + 1} {t('listening.of') || 'of'} {feedback.totalChunks ?? totalChunks}
-                      </p>
-                    </div>
+                    {feedback.resultTier === 'failed' && (
+                      <>
+                        <p className="listening-task-failed">{t('listening.taskFailed') || 'TASK FAILED'}</p>
+                        <p className="listening-try-again-text">{t('listening.tryAgain') || 'Try again'}</p>
+                        <button type="button" className="btn btn-primary" onClick={handleTryAgain}>
+                          {t('listening.tryAgain') || 'Try again'}
+                        </button>
+                      </>
+                    )}
 
-                    {feedback.hasNextChunk ? (
-                      <button type="button" className="btn btn-primary" onClick={handleNextChunk}>
-                        {t('listening.nextChunk') || 'Next Chunk'}
-                      </button>
-                    ) : (
-                      <button type="button" className="btn btn-primary" onClick={handleNext}>
-                        {t('listening.finishExercise') || 'Finish Exercise'}
-                      </button>
+                    {feedback.resultTier === 'partial' && (
+                      <>
+                        {feedback.showMissingWords && feedback.missingWords?.length > 0 && (
+                          <div className="listening-result-section listening-result-missing">
+                            <strong>{t('listening.missingWords') || '❌ Missing Words'}</strong>
+                            <p>{feedback.missingWords.join(', ')}</p>
+                          </div>
+                        )}
+                        <button type="button" className="btn btn-primary" onClick={handleNext}>
+                          {t('listening.next') || 'Next Exercise'}
+                        </button>
+                      </>
+                    )}
+
+                    {feedback.resultTier === 'passed' && (
+                      <>
+                        {feedback.showMissingWords && feedback.missingWords?.length > 0 && (
+                          <div className="listening-result-section listening-result-missing">
+                            <strong>{t('listening.missingWords') || '❌ Missing Words'}</strong>
+                            <p>{feedback.missingWords.join(', ')}</p>
+                          </div>
+                        )}
+                        <p className="listening-passed">{t('listening.passed') || '✔ Passed'}</p>
+                        <button type="button" className="btn btn-primary" onClick={handleNext}>
+                          {t('listening.next') || 'Next Exercise'}
+                        </button>
+                      </>
                     )}
                   </div>
                 )}

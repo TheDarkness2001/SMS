@@ -8,7 +8,7 @@ const Level = require('../models/Level');
 const Language = require('../models/Language');
 const ExamGroup = require('../models/ExamGroup');
 const Student = require('../models/Student');
-const { analyzeListeningChunk, splitTranscriptIntoChunks } = require('../utils/listeningValidator');
+const { analyzeListeningAnswer } = require('../utils/listeningValidator');
 const { normalizeText } = require('../utils/textNormalizer');
 
 function isRemoteAudioUrl(audioFile) {
@@ -193,7 +193,7 @@ exports.deleteExercise = async (req, res) => {
 
 exports.checkAnswer = async (req, res) => {
   try {
-    const { listeningId, answer, chunkIndex } = req.body;
+    const { listeningId, answer } = req.body;
     const studentId = req.user?.id || req.user?._id;
 
     if (!listeningId) {
@@ -206,13 +206,10 @@ exports.checkAnswer = async (req, res) => {
     }
 
     const answerText = answer != null ? String(answer) : '';
-    const analysis = analyzeListeningChunk(exercise.script, answerText, chunkIndex ?? 0);
+    const analysis = analyzeListeningAnswer(exercise.script, answerText);
 
     if (analysis.error === 'INVALID TRANSCRIPT') {
       return res.status(400).json({ success: false, message: 'INVALID TRANSCRIPT' });
-    }
-    if (analysis.error === 'INVALID CHUNK') {
-      return res.status(400).json({ success: false, message: 'INVALID CHUNK' });
     }
 
     if (studentId && req.userType === 'student') {
@@ -233,45 +230,19 @@ exports.checkAnswer = async (req, res) => {
         accuracyPercent: analysis.accuracyPercent,
         correctWords: analysis.correctWords,
         totalWords: analysis.totalWords,
-        correctWordsList: analysis.correctWordsList,
-        missingWords: analysis.missingWords,
-        extraWords: analysis.extraWords,
-        missingCount: analysis.missingCount,
-        extraCount: analysis.extraCount,
+        missingWords: analysis.showMissingWords ? analysis.missingWords : [],
+        missingCount: analysis.showMissingWords ? analysis.missingCount : 0,
+        resultTier: analysis.resultTier,
+        taskFailed: analysis.taskFailed,
+        passed: analysis.passed,
+        tryAgain: analysis.tryAgain,
+        showMissingWords: analysis.showMissingWords,
         isCorrect: analysis.isCorrect,
-        targetSentence: analysis.targetSentence,
-        chunkIndex: analysis.chunkIndex,
-        totalChunks: analysis.totalChunks,
-        hasNextChunk: analysis.hasNextChunk,
         formattedResult: analysis.formattedResult
       }
     });
   } catch (error) {
     console.error('Check listening answer error:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
-  }
-};
-
-exports.getChunkMeta = async (req, res) => {
-  try {
-    const exercise = await ListeningExercise.findById(req.params.id).select('script');
-    if (!exercise) {
-      return res.status(404).json({ success: false, message: 'Listening exercise not found' });
-    }
-
-    const chunks = splitTranscriptIntoChunks(exercise.script);
-    if (chunks.length === 0) {
-      return res.status(400).json({ success: false, message: 'INVALID TRANSCRIPT' });
-    }
-
-    res.json({
-      success: true,
-      data: {
-        totalChunks: chunks.length
-      }
-    });
-  } catch (error) {
-    console.error('Get chunk meta error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

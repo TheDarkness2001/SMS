@@ -360,7 +360,6 @@ export const listeningAPI = {
   }),
   delete: (id) => api.delete(`/listening/${id}`),
   checkAnswer: (data) => api.post('/listening/check', data),
-  getChunkMeta: (exerciseId) => api.get(`/listening/exercises/${exerciseId}/chunk-meta`),
   getProgress: () => api.get('/listening/progress'),
   getLeaderboard: () => api.get('/listening/leaderboard'),
   getGroupProgress: () => api.get('/listening/students/group-progress'),
