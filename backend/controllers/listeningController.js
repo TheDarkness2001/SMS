@@ -8,7 +8,7 @@ const Level = require('../models/Level');
 const Language = require('../models/Language');
 const ExamGroup = require('../models/ExamGroup');
 const Student = require('../models/Student');
-const { analyzeListeningAnswer } = require('../utils/listeningValidator');
+const { analyzeListeningChunk, splitTranscriptIntoChunks } = require('../utils/listeningValidator');
 const { normalizeText } = require('../utils/textNormalizer');
 
 function isRemoteAudioUrl(audioFile) {
@@ -58,9 +58,17 @@ exports.getAllExercises = async (req, res) => {
 
     const exercises = await ListeningExercise.find(filter)
       .populate('lessonId', 'name levelId')
-      .sort({ order: 1, createdAt: 1 });
+      .sort({ order: 1, createdAt: 1 })
+      .lean();
 
-    res.json({ success: true, count: exercises.length, data: { exercises } });
+    const isStudent = req.userType === 'student';
+    const safeExercises = exercises.map(exercise => {
+      if (!isStudent) return exercise;
+      const { script, ...rest } = exercise;
+      return rest;
+    });
+
+    res.json({ success: true, count: safeExercises.length, data: { exercises: safeExercises } });
   } catch (error) {
     console.error('Get listening exercises error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
@@ -185,7 +193,7 @@ exports.deleteExercise = async (req, res) => {
 
 exports.checkAnswer = async (req, res) => {
   try {
-    const { listeningId, answer } = req.body;
+    const { listeningId, answer, chunkIndex } = req.body;
     const studentId = req.user?.id || req.user?._id;
 
     if (!listeningId) {
@@ -198,10 +206,13 @@ exports.checkAnswer = async (req, res) => {
     }
 
     const answerText = answer != null ? String(answer) : '';
-    const analysis = analyzeListeningAnswer(exercise.script, answerText);
+    const analysis = analyzeListeningChunk(exercise.script, answerText, chunkIndex ?? 0);
 
     if (analysis.error === 'INVALID TRANSCRIPT') {
       return res.status(400).json({ success: false, message: 'INVALID TRANSCRIPT' });
+    }
+    if (analysis.error === 'INVALID CHUNK') {
+      return res.status(400).json({ success: false, message: 'INVALID CHUNK' });
     }
 
     if (studentId && req.userType === 'student') {
@@ -228,11 +239,39 @@ exports.checkAnswer = async (req, res) => {
         missingCount: analysis.missingCount,
         extraCount: analysis.extraCount,
         isCorrect: analysis.isCorrect,
+        targetSentence: analysis.targetSentence,
+        chunkIndex: analysis.chunkIndex,
+        totalChunks: analysis.totalChunks,
+        hasNextChunk: analysis.hasNextChunk,
         formattedResult: analysis.formattedResult
       }
     });
   } catch (error) {
     console.error('Check listening answer error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+exports.getChunkMeta = async (req, res) => {
+  try {
+    const exercise = await ListeningExercise.findById(req.params.id).select('script');
+    if (!exercise) {
+      return res.status(404).json({ success: false, message: 'Listening exercise not found' });
+    }
+
+    const chunks = splitTranscriptIntoChunks(exercise.script);
+    if (chunks.length === 0) {
+      return res.status(400).json({ success: false, message: 'INVALID TRANSCRIPT' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        totalChunks: chunks.length
+      }
+    });
+  } catch (error) {
+    console.error('Get chunk meta error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

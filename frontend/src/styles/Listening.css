@@ -334,6 +334,21 @@
   margin: 8px 0 0;
 }
 
+.listening-chunk-progress {
+  margin: 8px 0 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #4338ca;
+}
+
+.listening-result-target {
+  border-left: 3px solid #4f46e5;
+}
+
+.listening-result-target p {
+  font-style: italic;
+}
+
 .file-input-row {
   display: flex;
   flex-direction: column;

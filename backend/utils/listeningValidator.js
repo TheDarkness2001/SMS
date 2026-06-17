@@ -1,6 +1,6 @@
 /**
- * Rule-based listening answer checker.
- * Exact word matching only — no semantic or positional alignment.
+ * Rule-based listening chunk checker.
+ * Splits transcript internally; compares ONE chunk at a time only.
  */
 
 const PUNCTUATION_PATTERN = /[.,!?;:"'()[\]]/g;
@@ -20,22 +20,70 @@ function splitListeningWords(text) {
   return normalized.split(' ').filter(Boolean);
 }
 
+function splitTranscriptIntoChunks(transcript) {
+  const text = String(transcript || '').trim();
+  if (!text) return [];
+  if (!/[.!?]/.test(text)) return [text];
+  return text.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+}
+
 function formatWordList(words) {
   return words.length > 0 ? words.join(', ') : '(none)';
 }
 
-function buildFormattedResult({
+function compareWordsForChunk(chunkText, studentAnswer) {
+  const chunkWords = splitListeningWords(chunkText);
+  const studentWords = splitListeningWords(studentAnswer);
+  const studentPool = [...studentWords];
+  const correctWordsList = [];
+  const missingWords = [];
+
+  for (const word of chunkWords) {
+    const matchIndex = studentPool.indexOf(word);
+    if (matchIndex >= 0) {
+      correctWordsList.push(word);
+      studentPool.splice(matchIndex, 1);
+    } else {
+      missingWords.push(word);
+    }
+  }
+
+  const extraWords = studentPool;
+  const totalWords = chunkWords.length;
+  const correctWords = correctWordsList.length;
+  const missingCount = missingWords.length;
+  const extraCount = extraWords.length;
+  const accuracyPercent = totalWords > 0
+    ? Math.round((correctWords / totalWords) * 100)
+    : 0;
+
+  return {
+    accuracyPercent,
+    correctWords,
+    totalWords,
+    correctWordsList,
+    missingWords,
+    extraWords,
+    missingCount,
+    extraCount,
+    isCorrect: totalWords > 0 && correctWords === totalWords && extraCount === 0
+  };
+}
+
+function buildChunkFormattedResult({
+  targetSentence,
   correctWordsList,
   missingWords,
   extraWords,
   accuracyPercent,
-  correctWords,
-  totalWords,
-  missingCount,
-  extraCount
+  chunkIndex,
+  totalChunks
 }) {
   return [
-    'RESULT',
+    'CHUNK RESULT',
+    '',
+    'Target Sentence:',
+    targetSentence,
     '',
     '✔ Correct Words:',
     formatWordList(correctWordsList),
@@ -49,61 +97,55 @@ function buildFormattedResult({
     '📊 Score:',
     `${accuracyPercent}%`,
     '',
-    '📈 Summary:',
-    `Words correct: ${correctWords} / ${totalWords}`,
-    `Missing words: ${missingCount}`,
-    `Extra words: ${extraCount}`
+    '📈 Progress:',
+    `Chunk ${chunkIndex + 1} of ${totalChunks}`
   ].join('\n');
 }
 
-function analyzeListeningAnswer(transcript, studentAnswer) {
-  const transcriptWords = splitListeningWords(transcript);
-  const studentWords = splitListeningWords(studentAnswer);
+function analyzeListeningChunk(transcript, studentAnswer, chunkIndex = 0) {
+  const chunks = splitTranscriptIntoChunks(transcript);
 
-  if (transcriptWords.length === 0) {
+  if (chunks.length === 0) {
     return { error: 'INVALID TRANSCRIPT' };
   }
 
-  const studentPool = [...studentWords];
-  const correctWordsList = [];
-  const missingWords = [];
-
-  for (const word of transcriptWords) {
-    const matchIndex = studentPool.indexOf(word);
-    if (matchIndex >= 0) {
-      correctWordsList.push(word);
-      studentPool.splice(matchIndex, 1);
-    } else {
-      missingWords.push(word);
-    }
+  const index = Number.parseInt(chunkIndex, 10);
+  if (!Number.isFinite(index) || index < 0 || index >= chunks.length) {
+    return { error: 'INVALID CHUNK' };
   }
 
-  const extraWords = studentPool;
-  const totalWords = transcriptWords.length;
-  const correctWords = correctWordsList.length;
-  const missingCount = missingWords.length;
-  const extraCount = extraWords.length;
-  const accuracyPercent = Math.round((correctWords / totalWords) * 100);
+  const targetSentence = chunks[index];
+  if (!targetSentence || !splitListeningWords(targetSentence).length) {
+    return { error: 'INVALID CHUNK' };
+  }
+
+  const answerText = studentAnswer != null ? String(studentAnswer) : '';
+  const comparison = compareWordsForChunk(targetSentence, answerText);
+  const totalChunks = chunks.length;
+  const hasNextChunk = index < totalChunks - 1;
 
   const result = {
-    accuracyPercent,
-    correctWords,
-    totalWords,
-    correctWordsList,
-    missingWords,
-    extraWords,
-    missingCount,
-    extraCount,
-    isCorrect: correctWords === totalWords && extraCount === 0,
+    ...comparison,
+    targetSentence,
+    chunkIndex: index,
+    totalChunks,
+    hasNextChunk,
     formattedResult: ''
   };
 
-  result.formattedResult = buildFormattedResult(result);
+  result.formattedResult = buildChunkFormattedResult(result);
   return result;
 }
 
+/** @deprecated Use analyzeListeningChunk */
+function analyzeListeningAnswer(transcript, studentAnswer) {
+  return analyzeListeningChunk(transcript, studentAnswer, 0);
+}
+
 module.exports = {
+  analyzeListeningChunk,
   analyzeListeningAnswer,
+  splitTranscriptIntoChunks,
   normalizeListeningText,
   splitListeningWords
 };
