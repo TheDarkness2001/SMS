@@ -363,6 +363,7 @@ export const listeningAPI = {
   getProgress: () => api.get('/listening/progress'),
   getLeaderboard: () => api.get('/listening/leaderboard'),
   getGroupProgress: () => api.get('/listening/students/group-progress'),
+  getLevelStudentStats: (levelId) => api.get(`/listening/levels/${levelId}/student-stats`),
   getLessonStudentStats: (lessonId) => api.get(`/listening/lessons/${lessonId}/student-stats`),
   getAudioUrl: (filename) => getImageUrl(filename)
 };

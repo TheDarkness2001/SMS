@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { languageAPI, levelAPI, lessonAPI, listeningAPI } from '../../utils/api';
+import { languageAPI, levelAPI, listeningAPI } from '../../utils/api';
 
 const ListeningManageTab = ({ t }) => {
   const [view, setView] = useState('languages');
@@ -7,16 +7,13 @@ const ListeningManageTab = ({ t }) => {
 
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState(null);
-  const [selectedLesson, setSelectedLesson] = useState(null);
 
   const [languages, setLanguages] = useState([]);
   const [levels, setLevels] = useState([]);
-  const [lessons, setLessons] = useState([]);
   const [exercises, setExercises] = useState([]);
 
   const [newLanguage, setNewLanguage] = useState('');
   const [newLevel, setNewLevel] = useState('');
-  const [lessonForm, setLessonForm] = useState({ name: '', order: 1 });
   const [exerciseForm, setExerciseForm] = useState({ title: '', script: '', order: 1 });
   const [audioFile, setAudioFile] = useState(null);
   const [editingExercise, setEditingExercise] = useState(null);
@@ -52,22 +49,10 @@ const ListeningManageTab = ({ t }) => {
     }
   };
 
-  const fetchLessons = async (levelId) => {
+  const fetchExercises = async (levelId) => {
     setLoading(true);
     try {
-      const res = await lessonAPI.getAllLessons(levelId, 'listening');
-      if (res.data.success) setLessons(res.data.data.lessons);
-    } catch (err) {
-      console.error('Error fetching lessons:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchExercises = async (lessonId) => {
-    setLoading(true);
-    try {
-      const res = await listeningAPI.getAll({ lessonId });
+      const res = await listeningAPI.getAll({ levelId });
       if (res.data.success) setExercises(res.data.data.exercises);
     } catch (err) {
       console.error('Error fetching exercises:', err);
@@ -96,6 +81,7 @@ const ListeningManageTab = ({ t }) => {
       await languageAPI.delete(id);
       if (selectedLanguage?._id === id) {
         setSelectedLanguage(null);
+        setSelectedLevel(null);
         setView('languages');
       }
       fetchLanguages();
@@ -106,6 +92,7 @@ const ListeningManageTab = ({ t }) => {
 
   const selectLanguage = (lang) => {
     setSelectedLanguage(lang);
+    setSelectedLevel(null);
     fetchLevels(lang._id);
     setView('levels');
   };
@@ -140,58 +127,19 @@ const ListeningManageTab = ({ t }) => {
 
   const selectLevel = (level) => {
     setSelectedLevel(level);
-    fetchLessons(level._id);
-    setView('classes');
-  };
-
-  const handleAddLesson = async (e) => {
-    e.preventDefault();
-    if (!lessonForm.name.trim() || !selectedLevel) return;
-    try {
-      const res = await lessonAPI.createLesson({
-        name: lessonForm.name.trim(),
-        levelId: selectedLevel._id,
-        order: lessonForm.order,
-        type: 'listening'
-      });
-      if (res.data.success) {
-        setLessonForm({ name: '', order: 1 });
-        fetchLessons(selectedLevel._id);
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error adding class');
-    }
-  };
-
-  const selectLesson = (lesson) => {
-    setSelectedLesson(lesson);
-    fetchExercises(lesson._id);
+    fetchExercises(level._id);
     setView('exercises');
-  };
-
-  const handleDeleteLesson = async (lessonId) => {
-    if (!window.confirm(t('listening.confirmDeleteClass') || 'Delete this class and all exercises?')) return;
-    try {
-      await lessonAPI.deleteLesson(lessonId);
-      fetchLessons(selectedLevel._id);
-      if (selectedLesson?._id === lessonId) {
-        setSelectedLesson(null);
-        setView('classes');
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error deleting class');
-    }
   };
 
   const handleAddExercise = async (e) => {
     e.preventDefault();
-    if (!exerciseForm.title.trim() || !exerciseForm.script.trim() || !audioFile || !selectedLesson) return;
+    if (!exerciseForm.title.trim() || !exerciseForm.script.trim() || !audioFile || !selectedLevel) return;
     setSubmitting(true);
     try {
       const formData = new FormData();
       formData.append('title', exerciseForm.title.trim());
       formData.append('script', exerciseForm.script.trim());
-      formData.append('lessonId', selectedLesson._id);
+      formData.append('levelId', selectedLevel._id);
       formData.append('order', exerciseForm.order);
       formData.append('audio', audioFile);
 
@@ -199,8 +147,7 @@ const ListeningManageTab = ({ t }) => {
       if (res.data.success) {
         setExerciseForm({ title: '', script: '', order: 1 });
         setAudioFile(null);
-        fetchExercises(selectedLesson._id);
-        fetchLessons(selectedLevel._id);
+        fetchExercises(selectedLevel._id);
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Error adding exercise');
@@ -227,7 +174,7 @@ const ListeningManageTab = ({ t }) => {
       const res = await listeningAPI.update(exerciseId, formData);
       if (res.data.success) {
         setEditingExercise(null);
-        fetchExercises(selectedLesson._id);
+        fetchExercises(selectedLevel._id);
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Error updating exercise');
@@ -240,8 +187,7 @@ const ListeningManageTab = ({ t }) => {
     if (!window.confirm(t('listening.confirmDelete') || 'Delete this exercise?')) return;
     try {
       await listeningAPI.delete(exerciseId);
-      fetchExercises(selectedLesson._id);
-      fetchLessons(selectedLevel._id);
+      fetchExercises(selectedLevel._id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting exercise');
     }
@@ -256,7 +202,7 @@ const ListeningManageTab = ({ t }) => {
         className="breadcrumb-item"
         onClick={() => {
           setView('languages');
-          setSelectedLesson(null);
+          setSelectedLevel(null);
         }}
       >
         {t('homework.languages') || 'Languages'}
@@ -266,35 +212,22 @@ const ListeningManageTab = ({ t }) => {
       items.push(
         <span key="sep1" className="breadcrumb-sep">/</span>,
         <button
-          key="lvl"
+          key="lvl-nav"
           type="button"
           className="breadcrumb-item"
           onClick={() => {
             setView('levels');
-            setSelectedLesson(null);
+            setSelectedLevel(null);
           }}
         >
           {selectedLanguage.name}
         </button>
       );
     }
-    if (selectedLevel && (view === 'classes' || view === 'exercises')) {
+    if (selectedLevel && view === 'exercises') {
       items.push(
         <span key="sep2" className="breadcrumb-sep">/</span>,
-        <button
-          key="cls"
-          type="button"
-          className="breadcrumb-item"
-          onClick={() => setView('classes')}
-        >
-          {selectedLevel.name}
-        </button>
-      );
-    }
-    if (selectedLesson && view === 'exercises') {
-      items.push(
-        <span key="sep3" className="breadcrumb-sep">/</span>,
-        <span key="ex" className="breadcrumb-item active">{selectedLesson.name}</span>
+        <span key="lvl" className="breadcrumb-item active">{selectedLevel.name}</span>
       );
     }
     return <div className="breadcrumb">{items}</div>;
@@ -394,74 +327,7 @@ const ListeningManageTab = ({ t }) => {
         </>
       )}
 
-      {view === 'classes' && selectedLevel && (
-        <>
-          <form onSubmit={handleAddLesson} className="word-form">
-            <h3>{t('listening.addClass') || 'Add Class'}</h3>
-            <div className="form-row lesson-form-row">
-              <div className="form-field">
-                <label className="form-label">{t('homework.lessonName') || 'Class Name'}</label>
-                <input
-                  type="text"
-                  placeholder={t('listening.newClass') || 'New class name'}
-                  value={lessonForm.name}
-                  onChange={e => setLessonForm({ ...lessonForm, name: e.target.value })}
-                  className="form-input"
-                  required
-                />
-              </div>
-              <div className="form-field">
-                <label className="form-label">{t('homework.order') || 'Order'}</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={lessonForm.order}
-                  onChange={e => setLessonForm({ ...lessonForm, order: parseInt(e.target.value, 10) || 1 })}
-                  className="form-input"
-                  style={{ maxWidth: '80px' }}
-                />
-              </div>
-              <div className="form-field form-field-actions">
-                <button type="submit" className="btn btn-primary">{t('homework.add') || 'Add'}</button>
-              </div>
-            </div>
-          </form>
-
-          {loading ? (
-            <div className="loading">{t('listening.loading') || 'Loading...'}</div>
-          ) : (
-            <div className="lessons-list">
-              {lessons.length === 0 ? (
-                <div className="no-data">{t('listening.noClasses') || 'No listening classes available yet.'}</div>
-              ) : (
-                lessons.map(lesson => (
-                  <div key={lesson._id} className="lesson-item">
-                    <div className="lesson-row">
-                      <div className="lesson-main" onClick={() => selectLesson(lesson)} style={{ cursor: 'pointer' }}>
-                        <span className="lesson-order">{lesson.order}</span>
-                        <span className="lesson-name">{lesson.name}</span>
-                        <span className="lesson-meta">
-                          {lesson.listeningCount || 0} {t('listening.exercises') || 'exercises'}
-                        </span>
-                      </div>
-                      <div className="lesson-actions">
-                        <button type="button" className="btn btn-small btn-primary" onClick={() => selectLesson(lesson)}>
-                          {t('listening.exercises') || 'Exercises'}
-                        </button>
-                        <button type="button" className="btn btn-small btn-delete" onClick={() => handleDeleteLesson(lesson._id)}>
-                          {t('homework.delete') || 'Delete'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </>
-      )}
-
-      {view === 'exercises' && selectedLesson && (
+      {view === 'exercises' && selectedLevel && (
         <>
           <form onSubmit={handleAddExercise} className="word-form">
             <h3>{t('listening.addExercise') || 'Add Listening Exercise'}</h3>

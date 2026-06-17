@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AiOutlineSound } from 'react-icons/ai';
-import { languageAPI, levelAPI, lessonAPI, examGroupsAPI, listeningAPI } from '../utils/api';
+import { languageAPI, levelAPI, examGroupsAPI, listeningAPI } from '../utils/api';
 import { normalizeText } from '../utils/textNormalizer';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -19,18 +19,16 @@ const ListeningPage = () => {
   const [activeTab, setActiveTab] = useState('practice');
   const [languages, setLanguages] = useState([]);
   const [levelsList, setLevelsList] = useState([]);
-  const [levelLessons, setLevelLessons] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [selectedLanguageId, setSelectedLanguageId] = useState('');
   const [selectedLevelId, setSelectedLevelId] = useState('');
-  const [selectedPracticeLessonId, setSelectedPracticeLessonId] = useState('');
   const [practiceView, setPracticeView] = useState('languages');
   const [currentExercise, setCurrentExercise] = useState(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [lessonsLoading, setLessonsLoading] = useState(false);
+  const [exercisesLoading, setExercisesLoading] = useState(false);
   const [sessionStats, setSessionStats] = useState({ total: 0, totalAccuracy: 0 });
 
   const isStudent = user?.userType === 'student';
@@ -93,30 +91,18 @@ const ListeningPage = () => {
     fetchLevels();
   }, [selectedLanguageId]);
 
-  useEffect(() => {
-    if (!selectedLevelId) return;
-    const fetchLessons = async () => {
-      setLessonsLoading(true);
-      try {
-        const res = await lessonAPI.getAllLessons(selectedLevelId, 'listening');
-        if (res.data.success) setLevelLessons(res.data.data.lessons || []);
-      } catch (err) {
-        console.error('Error fetching lessons:', err);
-      } finally {
-        setLessonsLoading(false);
-      }
-    };
-    fetchLessons();
-  }, [selectedLevelId]);
-
-  const loadExercisesForLesson = async (lessonId) => {
+  const loadExercisesForLevel = async (levelId) => {
+    setExercisesLoading(true);
     try {
-      const res = await listeningAPI.getAll({ lessonId });
+      const res = await listeningAPI.getAll({ levelId });
       if (res.data.success) {
         setExercises(res.data.data.exercises || []);
       }
     } catch (err) {
       console.error('Error fetching exercises:', err);
+      setExercises([]);
+    } finally {
+      setExercisesLoading(false);
     }
   };
 
@@ -125,18 +111,13 @@ const ListeningPage = () => {
     setPracticeView('levels');
   };
 
-  const selectLevelForPractice = (levelId) => {
+  const selectLevelForPractice = async (levelId) => {
     setSelectedLevelId(levelId);
-    setPracticeView('classes');
-  };
-
-  const selectClassForPractice = async (lessonId) => {
-    setSelectedPracticeLessonId(lessonId);
-    await loadExercisesForLesson(lessonId);
-    setPracticeView('exercises');
     setFeedback(null);
     setUserAnswer('');
     setCurrentExercise(null);
+    await loadExercisesForLevel(levelId);
+    setPracticeView('exercises');
   };
 
   const startExercise = (exercise) => {
@@ -157,6 +138,16 @@ const ListeningPage = () => {
       audio.pause();
       setIsPlaying(false);
     }
+  };
+
+  const skipAudio = (seconds) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const duration = Number.isFinite(audio.duration) ? audio.duration : null;
+    let nextTime = audio.currentTime + seconds;
+    if (nextTime < 0) nextTime = 0;
+    if (duration !== null && nextTime > duration) nextTime = duration;
+    audio.currentTime = nextTime;
   };
 
   const handleAudioPlay = () => setIsPlaying(true);
@@ -319,7 +310,7 @@ const ListeningPage = () => {
               </>
             )}
 
-            {practiceView === 'classes' && (
+            {practiceView === 'exercises' && (
               <>
                 <div className="practice-back-bar">
                   <button type="button" className="btn btn-small btn-secondary" onClick={() => setPracticeView('levels')}>
@@ -327,51 +318,17 @@ const ListeningPage = () => {
                   </button>
                 </div>
                 <h3 className="practice-section-title">
-                  {levelsList.find(l => l._id === selectedLevelId)?.name || ''} — {t('listening.selectClass') || 'Select a Class'}
+                  {levelsList.find(l => l._id === selectedLevelId)?.name || ''} — {t('listening.selectExercise') || 'Select an Exercise'}
                 </h3>
-                {lessonsLoading ? (
-                  <div className="loading-state">{t('listening.loading') || 'Loading...'}</div>
-                ) : (
-                  <div className="practice-classes-grid">
-                    {levelLessons.map(lesson => (
-                      <div
-                        key={lesson._id}
-                        className="practice-class-card"
-                        onClick={() => selectClassForPractice(lesson._id)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div className="practice-class-header">
-                          <span className="practice-class-order">{lesson.order}</span>
-                          <span className="practice-class-name">{lesson.name}</span>
-                        </div>
-                        <div className="practice-class-meta">
-                          🎧 {lesson.listeningCount || 0} {t('listening.exercises') || 'exercises'}
-                        </div>
-                      </div>
-                    ))}
-                    {levelLessons.length === 0 && (
-                      <div className="no-data">{t('listening.noClasses') || 'No listening classes available yet.'}</div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            {practiceView === 'exercises' && (
-              <>
-                <div className="practice-back-bar">
-                  <button type="button" className="btn btn-small btn-secondary" onClick={() => setPracticeView('classes')}>
-                    ← {t('listening.back') || 'Back'}
-                  </button>
-                </div>
-                <h3 className="practice-section-title">{t('listening.selectExercise') || 'Select an Exercise'}</h3>
                 {sessionStats.total > 0 && (
                   <p className="session-stats-banner">
                     {t('listening.sessionAvg') || 'Session average'}: {sessionAvg}%
                   </p>
                 )}
-                {exercises.length === 0 ? (
-                  <div className="no-data">{t('listening.noExercises') || 'No exercises in this class yet.'}</div>
+                {exercisesLoading ? (
+                  <div className="loading-state">{t('listening.loading') || 'Loading...'}</div>
+                ) : exercises.length === 0 ? (
+                  <div className="no-data">{t('listening.noExercises') || 'No exercises in this level yet.'}</div>
                 ) : (
                   <div className="practice-levels-grid">
                     {exercises.map(exercise => (
@@ -409,15 +366,33 @@ const ListeningPage = () => {
                     onEnded={handleAudioEnded}
                     preload="metadata"
                   />
-                  <button
-                    type="button"
-                    className={`btn ${isPlaying ? 'btn-delete' : 'btn-primary'}`}
-                    onClick={togglePlayPause}
-                  >
-                    {isPlaying
-                      ? (t('listening.pause') || 'Pause')
-                      : (t('listening.play') || 'Play')}
-                  </button>
+                  <div className="listening-audio-buttons">
+                    <button
+                      type="button"
+                      className="btn btn-small btn-secondary"
+                      onClick={() => skipAudio(-15)}
+                      title={t('listening.prev15s') || 'Back 15 seconds'}
+                    >
+                      −15s
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${isPlaying ? 'btn-delete' : 'btn-primary'}`}
+                      onClick={togglePlayPause}
+                    >
+                      {isPlaying
+                        ? (t('listening.pause') || 'Pause')
+                        : (t('listening.play') || 'Play')}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-small btn-secondary"
+                      onClick={() => skipAudio(15)}
+                      title={t('listening.next15s') || 'Forward 15 seconds'}
+                    >
+                      +15s
+                    </button>
+                  </div>
                   <span className="listening-hint">
                     {t('listening.listenHint') || 'Listen carefully, then type what you hear below.'}
                   </span>

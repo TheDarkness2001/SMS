@@ -11,6 +11,26 @@ const Student = require('../models/Student');
 const { analyzeListeningAnswer } = require('../utils/listeningValidator');
 const { normalizeText } = require('../utils/textNormalizer');
 
+async function getOrCreateListeningLessonForLevel(levelId) {
+  let lesson = await Lesson.findOne({ levelId, type: 'listening' }).sort({ order: 1 });
+  if (!lesson) {
+    lesson = await Lesson.create({
+      name: 'Exercises',
+      levelId,
+      order: 1,
+      type: 'listening'
+    });
+  }
+  return lesson;
+}
+
+async function getExerciseIdsForLevel(levelId) {
+  const lessons = await Lesson.find({ levelId, type: 'listening' }).select('_id').lean();
+  if (lessons.length === 0) return [];
+  const exercises = await ListeningExercise.find({ lessonId: { $in: lessons.map(l => l._id) } }).select('_id').lean();
+  return exercises.map(e => e._id);
+}
+
 exports.getAllExercises = async (req, res) => {
   try {
     const { lessonId, levelId } = req.query;
@@ -62,19 +82,29 @@ exports.getRandomExercise = async (req, res) => {
 
 exports.createExercise = async (req, res) => {
   try {
-    const { title, script, lessonId, order } = req.body;
+    const { title, script, lessonId, levelId, order } = req.body;
 
     if (!title?.trim() || !script?.trim()) {
       return res.status(400).json({ success: false, message: 'Title and script are required' });
     }
-    if (!lessonId) {
-      return res.status(400).json({ success: false, message: 'Lesson ID is required' });
+    if (!lessonId && !levelId) {
+      return res.status(400).json({ success: false, message: 'Level ID is required' });
     }
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'Audio file is required' });
     }
 
-    const lesson = await Lesson.findById(lessonId);
+    let resolvedLessonId = lessonId;
+    if (!resolvedLessonId && levelId) {
+      const level = await Level.findById(levelId);
+      if (!level) {
+        return res.status(404).json({ success: false, message: 'Level not found' });
+      }
+      const lesson = await getOrCreateListeningLessonForLevel(levelId);
+      resolvedLessonId = lesson._id;
+    }
+
+    const lesson = await Lesson.findById(resolvedLessonId);
     if (!lesson) {
       return res.status(404).json({ success: false, message: 'Lesson not found' });
     }
@@ -83,7 +113,7 @@ exports.createExercise = async (req, res) => {
       title: normalizeText(title),
       script: normalizeText(script),
       audioFile: req.file.filename,
-      lessonId,
+      lessonId: resolvedLessonId,
       order: order || 1
     });
 
@@ -349,33 +379,27 @@ exports.getGroupStudentProgress = async (req, res) => {
       status: 'active'
     }).select('_id name studentId profileImage status').sort({ name: 1 });
 
-    const allLessons = await Lesson.find({ type: 'listening' }).select('_id name order type levelId').sort({ order: 1 }).lean();
-    const levelIds = [...new Set(allLessons.map(l => l.levelId?.toString()).filter(Boolean))];
-    const allLevels = await Level.find({ _id: { $in: levelIds } }).select('_id name languageId').lean();
-    const levelMap = new Map(allLevels.map(l => [l._id.toString(), l]));
+    const allLevels = await Level.find().select('_id name order languageId').sort({ order: 1 }).lean();
     const languageIds = [...new Set(allLevels.map(l => l.languageId?.toString()).filter(Boolean))];
     const allLanguages = await Language.find({ _id: { $in: languageIds } }).select('_id name').lean();
     const langIdToName = new Map(allLanguages.map(l => [l._id.toString(), l.name]));
 
-    const lessonsByLang = new Map();
-    for (const lesson of allLessons) {
-      const lvl = levelMap.get(lesson.levelId?.toString());
-      const langName = langIdToName.get(lvl?.languageId?.toString());
+    const levelsByLang = new Map();
+    for (const level of allLevels) {
+      const langName = langIdToName.get(level.languageId?.toString());
       if (!langName) continue;
       const key = langName.toLowerCase().trim();
-      if (!lessonsByLang.has(key)) lessonsByLang.set(key, []);
-      lessonsByLang.get(key).push({
-        _id: lesson._id.toString(),
-        name: lesson.name,
-        order: lesson.order,
-        type: 'listening',
-        levelName: lvl?.name || ''
+      if (!levelsByLang.has(key)) levelsByLang.set(key, []);
+      levelsByLang.get(key).push({
+        _id: level._id.toString(),
+        name: level.name,
+        order: level.order
       });
     }
 
     groupsData.forEach(g => {
       const key = (g.subjectName || '').toLowerCase().trim();
-      g.lessons = lessonsByLang.get(key) || [];
+      g.levels = levelsByLang.get(key) || [];
     });
 
     res.json({
@@ -421,6 +445,36 @@ exports.getLessonStudentStats = async (req, res) => {
     res.json({ success: true, data: { lessonId, type: 'listening', stats } });
   } catch (error) {
     console.error('Get listening lesson stats error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+exports.getLevelStudentStats = async (req, res) => {
+  try {
+    const { levelId } = req.params;
+    const exerciseIds = await getExerciseIdsForLevel(levelId);
+    const stats = {};
+
+    if (exerciseIds.length === 0) {
+      return res.json({ success: true, data: { levelId, type: 'listening', stats: {} } });
+    }
+
+    const progresses = await StudentListeningProgress.find({ listeningId: { $in: exerciseIds } }).lean();
+    for (const p of progresses) {
+      const sid = p.studentId.toString();
+      if (!stats[sid]) stats[sid] = { attempts: 0, bestAccuracy: 0, exerciseCount: 0, accuracySum: 0 };
+      stats[sid].attempts += p.attempts || 0;
+      stats[sid].exerciseCount += 1;
+      stats[sid].accuracySum += p.bestAccuracy || 0;
+    }
+    for (const sid of Object.keys(stats)) {
+      const s = stats[sid];
+      s.accuracy = s.exerciseCount > 0 ? Math.round(s.accuracySum / s.exerciseCount) : 0;
+    }
+
+    res.json({ success: true, data: { levelId, type: 'listening', stats } });
+  } catch (error) {
+    console.error('Get listening level stats error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

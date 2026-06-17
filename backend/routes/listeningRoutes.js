@@ -9,6 +9,7 @@ router.post('/check', protect, listeningController.checkAnswer);
 router.get('/progress', protect, listeningController.getStudentProgress);
 router.get('/leaderboard', protect, listeningController.getLeaderboard);
 router.get('/students/group-progress', protect, listeningController.getGroupStudentProgress);
+router.get('/levels/:levelId/student-stats', protect, listeningController.getLevelStudentStats);
 router.get('/lessons/:lessonId/student-stats', protect, listeningController.getLessonStudentStats);
 
 router.get('/', protect, listeningController.getAllExercises);
