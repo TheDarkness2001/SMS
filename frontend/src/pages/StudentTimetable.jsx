@@ -54,16 +54,6 @@ const StudentTimetable = () => {
     }
   };
 
-  const getClassColor = (schedule) => {
-    const colors = [
-      '#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626',
-      '#0891b2', '#4f46e5', '#ca8a04', '#be185d', '#0d9488'
-    ];
-    const subject = schedule.subjectGroup?.subject || schedule.subject?.name || schedule.subject || '';
-    const subjectName = typeof subject === 'string' ? subject : 'Default';
-    return colors[subjectName.charCodeAt(0) % colors.length];
-  };
-
   const pageTitle = user.name
     ? t('timetable.teachersTimetable', { name: user.name })
     : t('studentTimetable.myTimetable');
@@ -116,7 +106,6 @@ const StudentTimetable = () => {
         <WeeklyTimetableGrid
           schedules={schedules}
           daysOfWeek={DAYS_OF_WEEK}
-          getClassColor={getClassColor}
           t={t}
         />
       )}

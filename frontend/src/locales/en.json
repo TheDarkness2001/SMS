@@ -1487,7 +1487,14 @@
     "timetable": "Timetable",
     "failedToLoad": "Failed to load timetable",
     "teachersTimetable": "%{name}'s Timetable",
-    "roomLabel": "Room: %{room}"
+    "roomLabel": "Room: %{room}",
+    "totalClasses": "Total Classes",
+    "thisWeek": "This week",
+    "subjects": "Subjects",
+    "differentSubjects": "Different subjects",
+    "groups": "Groups",
+    "activeGroups": "Active groups",
+    "hoursScheduled": "Hours Scheduled"
   },
   "studentTimetable": {
     "unableToIdentify": "Unable to identify student. Please log in again.",

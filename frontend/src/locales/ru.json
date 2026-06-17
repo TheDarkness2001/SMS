@@ -1396,7 +1396,14 @@
     "timetable": "Расписание",
     "failedToLoad": "Не удалось загрузить расписание",
     "teachersTimetable": "Расписание %{name}",
-    "roomLabel": "Кабинет: %{room}"
+    "roomLabel": "Кабинет: %{room}",
+    "totalClasses": "Всего занятий",
+    "thisWeek": "На этой неделе",
+    "subjects": "Предметы",
+    "differentSubjects": "Разные предметы",
+    "groups": "Группы",
+    "activeGroups": "Активные группы",
+    "hoursScheduled": "Часов в расписании"
   },
   "studentTimetable": {
     "unableToIdentify": "Не удалось определить студента. Пожалуйста, войдите в систему снова.",

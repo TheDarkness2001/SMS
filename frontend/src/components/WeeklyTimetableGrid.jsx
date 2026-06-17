@@ -1,11 +1,38 @@
 import React, { useMemo } from 'react';
 import {
+  AiOutlineCalendar,
+  AiOutlineCheckSquare,
+  AiOutlineTeam,
+  AiOutlineClockCircle
+} from 'react-icons/ai';
+import {
   DEFAULT_HOUR_HEIGHT,
   DEFAULT_END_HOUR,
   DEFAULT_START_HOUR,
   getTimetableBounds,
-  getClassesForDay
+  getClassesForDay,
+  getWeekDates,
+  getTimetableSummary,
+  getSubjectTheme
 } from '../utils/timetableLayout';
+
+function resolveTheme(classItem, getClassColor) {
+  if (getClassColor) {
+    const color = getClassColor(classItem);
+    if (color && typeof color === 'object') return color;
+    if (typeof color === 'string') {
+      return { accent: color, bg: `${color}18` };
+    }
+  }
+  return classItem.theme || getSubjectTheme(classItem);
+}
+
+function getLocale() {
+  const language = localStorage.getItem('language');
+  if (language === 'uz') return 'uz-UZ';
+  if (language === 'ru') return 'ru-RU';
+  return 'en-GB';
+}
 
 const WeeklyTimetableGrid = ({
   schedules,
@@ -14,15 +41,25 @@ const WeeklyTimetableGrid = ({
   t,
   hourHeight = DEFAULT_HOUR_HEIGHT,
   minStartHour = DEFAULT_START_HOUR,
-  maxEndHour = DEFAULT_END_HOUR
+  maxEndHour = DEFAULT_END_HOUR,
+  showSummary = true
 }) => {
   const { startHour, endHour } = useMemo(
     () => getTimetableBounds(schedules, minStartHour, maxEndHour),
     [schedules, minStartHour, maxEndHour]
   );
 
+  const weekDates = useMemo(() => getWeekDates(), []);
+  const summary = useMemo(() => getTimetableSummary(schedules), [schedules]);
+  const locale = getLocale();
   const hourSlots = endHour - startHour;
   const scheduleHeight = hourSlots * hourHeight;
+
+  const formatDayDate = (date) =>
+    date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+
+  const getSubjectTitle = (classItem) =>
+    classItem.subject?.name || classItem.subjectGroup?.subject || classItem.subject || t('common.unknown');
 
   return (
     <div className="weekly-timetable">
@@ -40,12 +77,20 @@ const WeeklyTimetableGrid = ({
           ))}
         </div>
 
-        {daysOfWeek.map((day) => {
-          const dayClasses = getClassesForDay(schedules, day, startHour, hourHeight, getClassColor);
+        {daysOfWeek.map((day, dayIndex) => {
+          const dayClasses = getClassesForDay(schedules, day, startHour, hourHeight);
+          const headerClass = dayIndex === 5
+            ? 'day-header day-header--saturday'
+            : dayIndex === 6
+              ? 'day-header day-header--sunday'
+              : 'day-header';
 
           return (
             <div key={day} className="day-column">
-              <div className="day-header">{day}</div>
+              <div className={headerClass}>
+                <span className="day-header-name">{day}</span>
+                <span className="day-header-date">{formatDayDate(weekDates[dayIndex])}</span>
+              </div>
               <div className="day-schedule" style={{ height: `${scheduleHeight}px` }}>
                 {Array.from({ length: hourSlots }, (_, i) => (
                   <div
@@ -58,39 +103,90 @@ const WeeklyTimetableGrid = ({
                   />
                 ))}
 
-                {dayClasses.map((classItem) => (
-                  <div
-                    key={`${classItem._id || classItem.id}-${day}-${classItem.startTime}-${classItem.columnIndex}`}
-                    className="class-block"
-                    style={{
-                      top: `${classItem.top}px`,
-                      height: `${classItem.height}px`,
-                      left: `calc(${classItem.leftPercent}% + 2px)`,
-                      width: `calc(${classItem.widthPercent}% - 4px)`,
-                      backgroundColor: classItem.color,
-                      borderLeft: `4px solid ${classItem.color}`,
-                      zIndex: classItem.columnCount > 1 ? classItem.columnIndex + 1 : 1
-                    }}
-                    title={`${classItem.subject?.name || classItem.subjectGroup?.subject || classItem.subject} - ${classItem.className}\n${classItem.startTime} - ${classItem.endTime}\n${t('timetable.roomLabel', { room: classItem.roomNumber || t('common.unknown') })}`}
-                  >
-                    <div className="class-name">
-                      {classItem.subject?.name || classItem.subjectGroup?.subject || classItem.subject}
-                    </div>
-                    <div className="class-time">
-                      {classItem.startTime} - {classItem.endTime}
-                    </div>
-                    {classItem.roomNumber && (
-                      <div className="class-room">
-                        {t('timetable.roomLabel', { room: classItem.roomNumber })}
+                {dayClasses.map((classItem) => {
+                  const theme = resolveTheme(classItem, getClassColor);
+                  const groupLabel = classItem.className
+                    || (classItem.section ? `${t('studentTimetable.section')} ${classItem.section}` : '')
+                    || classItem.groupName
+                    || '';
+
+                  return (
+                    <div
+                      key={`${classItem._id || classItem.id}-${day}-${classItem.startTime}-${classItem.columnIndex}`}
+                      className="class-block"
+                      style={{
+                        top: `${classItem.top + 3}px`,
+                        height: `${Math.max(classItem.height - 6, hourHeight * 0.42)}px`,
+                        left: `calc(${classItem.leftPercent}% + 4px)`,
+                        width: `calc(${classItem.widthPercent}% - 8px)`,
+                        backgroundColor: theme.bg,
+                        borderLeftColor: theme.accent,
+                        zIndex: classItem.columnCount > 1 ? classItem.columnIndex + 2 : 2
+                      }}
+                      title={`${getSubjectTitle(classItem)}\n${classItem.startTime} - ${classItem.endTime}${groupLabel ? `\n${groupLabel}` : ''}`}
+                    >
+                      <div className="class-block-top">
+                        <span
+                          className="class-dot"
+                          style={{ backgroundColor: theme.accent }}
+                          aria-hidden="true"
+                        />
+                        <span className="class-menu" aria-hidden="true">⋮</span>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      <div className="class-name" style={{ color: theme.accent }}>
+                        {getSubjectTitle(classItem)}
+                      </div>
+                      <div className="class-time">
+                        {classItem.startTime} - {classItem.endTime}
+                      </div>
+                      {groupLabel && (
+                        <div className="class-group">{groupLabel}</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
         })}
       </div>
+
+      {showSummary && (
+        <div className="timetable-summary">
+          <div className="timetable-summary-card timetable-summary-card--blue">
+            <div className="timetable-summary-icon"><AiOutlineCalendar /></div>
+            <div>
+              <div className="timetable-summary-label">{t('timetable.totalClasses')}</div>
+              <div className="timetable-summary-value">{summary.totalClasses}</div>
+              <div className="timetable-summary-sub">{t('timetable.thisWeek')}</div>
+            </div>
+          </div>
+          <div className="timetable-summary-card timetable-summary-card--green">
+            <div className="timetable-summary-icon"><AiOutlineCheckSquare /></div>
+            <div>
+              <div className="timetable-summary-label">{t('timetable.subjects')}</div>
+              <div className="timetable-summary-value">{summary.subjectCount}</div>
+              <div className="timetable-summary-sub">{t('timetable.differentSubjects')}</div>
+            </div>
+          </div>
+          <div className="timetable-summary-card timetable-summary-card--purple">
+            <div className="timetable-summary-icon"><AiOutlineTeam /></div>
+            <div>
+              <div className="timetable-summary-label">{t('timetable.groups')}</div>
+              <div className="timetable-summary-value">{summary.groupCount}</div>
+              <div className="timetable-summary-sub">{t('timetable.activeGroups')}</div>
+            </div>
+          </div>
+          <div className="timetable-summary-card timetable-summary-card--orange">
+            <div className="timetable-summary-icon"><AiOutlineClockCircle /></div>
+            <div>
+              <div className="timetable-summary-label">{t('timetable.hoursScheduled')}</div>
+              <div className="timetable-summary-value">{summary.hoursScheduled}h</div>
+              <div className="timetable-summary-sub">{t('timetable.thisWeek')}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

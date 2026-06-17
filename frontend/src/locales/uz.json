@@ -1444,7 +1444,14 @@
     "timetable": "Dars jadvali",
     "failedToLoad": "Dars jadvalini yuklab bo'lmadi",
     "teachersTimetable": "%{name}ning dars jadvali",
-    "roomLabel": "Xona: %{room}"
+    "roomLabel": "Xona: %{room}",
+    "totalClasses": "Jami darslar",
+    "thisWeek": "Bu hafta",
+    "subjects": "Fanlar",
+    "differentSubjects": "Turli fanlar",
+    "groups": "Guruhlar",
+    "activeGroups": "Faol guruhlar",
+    "hoursScheduled": "Rejalashtirilgan soatlar"
   },
   "studentTimetable": {
     "unableToIdentify": "Talabani aniqlab bo'lmadi. Iltimos, qayta tizimga kiring.",

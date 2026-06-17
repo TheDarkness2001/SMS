@@ -3,6 +3,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useBranch } from '../context/BranchContext';
 import { teachersAPI, schedulerAPI } from '../utils/api';
 import WeeklyTimetableGrid from '../components/WeeklyTimetableGrid';
+import '../styles/Timetable.css';
 import '../styles/TeacherTimetable.css';
 
 const TeacherTimetable = () => {
