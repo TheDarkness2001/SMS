@@ -188,8 +188,8 @@ exports.checkAnswer = async (req, res) => {
     const { listeningId, answer } = req.body;
     const studentId = req.user?.id || req.user?._id;
 
-    if (!listeningId || !answer?.trim()) {
-      return res.status(400).json({ success: false, message: 'Listening ID and answer are required' });
+    if (!listeningId) {
+      return res.status(400).json({ success: false, message: 'Listening ID is required' });
     }
 
     const exercise = await ListeningExercise.findById(listeningId);
@@ -197,7 +197,12 @@ exports.checkAnswer = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Listening exercise not found' });
     }
 
-    const analysis = analyzeListeningAnswer(exercise.script, normalizeText(answer));
+    const answerText = answer != null ? String(answer) : '';
+    const analysis = analyzeListeningAnswer(exercise.script, answerText);
+
+    if (analysis.error === 'INVALID TRANSCRIPT') {
+      return res.status(400).json({ success: false, message: 'INVALID TRANSCRIPT' });
+    }
 
     if (studentId && req.userType === 'student') {
       let progress = await StudentListeningProgress.findOne({ studentId, listeningId });
@@ -217,10 +222,13 @@ exports.checkAnswer = async (req, res) => {
         accuracyPercent: analysis.accuracyPercent,
         correctWords: analysis.correctWords,
         totalWords: analysis.totalWords,
+        correctWordsList: analysis.correctWordsList,
+        missingWords: analysis.missingWords,
+        extraWords: analysis.extraWords,
+        missingCount: analysis.missingCount,
+        extraCount: analysis.extraCount,
         isCorrect: analysis.isCorrect,
-        script: exercise.script,
-        yourAnswer: answer.trim(),
-        diff: analysis.diff
+        formattedResult: analysis.formattedResult
       }
     });
   } catch (error) {

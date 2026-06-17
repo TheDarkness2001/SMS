@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AiOutlineSound } from 'react-icons/ai';
 import { languageAPI, levelAPI, examGroupsAPI, listeningAPI } from '../utils/api';
-import { normalizeText } from '../utils/textNormalizer';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import ListeningManageTab from '../components/listening/ListeningManageTab';
@@ -255,7 +254,7 @@ const ListeningPage = () => {
     try {
       const res = await listeningAPI.checkAnswer({
         listeningId: currentExercise._id,
-        answer: normalizeText(userAnswer)
+        answer: userAnswer
       });
       if (res.data.success) {
         const { accuracyPercent } = res.data.data;
@@ -535,7 +534,7 @@ const ListeningPage = () => {
                     type="button"
                     className="btn btn-primary"
                     onClick={handleCheck}
-                    disabled={isChecking || !userAnswer.trim()}
+                    disabled={isChecking}
                   >
                     {isChecking
                       ? (t('listening.checking') || 'Checking...')
@@ -543,21 +542,35 @@ const ListeningPage = () => {
                   </button>
                 ) : (
                   <div className={`feedback-box ${feedback.accuracyPercent >= 70 ? 'correct' : 'incorrect'}`}>
+                    <h4 className="listening-result-title">{t('listening.result') || 'RESULT'}</h4>
+
+                    <div className="listening-result-section listening-result-correct">
+                      <strong>{t('listening.correctWordsList') || '✔ Correct Words:'}</strong>
+                      <p>{feedback.correctWordsList?.length ? feedback.correctWordsList.join(', ') : (t('listening.none') || '(none)')}</p>
+                    </div>
+
+                    <div className="listening-result-section listening-result-missing">
+                      <strong>{t('listening.missingWords') || '❌ Missing Words:'}</strong>
+                      <p>{feedback.missingWords?.length ? feedback.missingWords.join(', ') : (t('listening.none') || '(none)')}</p>
+                    </div>
+
+                    <div className="listening-result-section listening-result-extra">
+                      <strong>{t('listening.extraWords') || '➕ Extra Words:'}</strong>
+                      <p>{feedback.extraWords?.length ? feedback.extraWords.join(', ') : (t('listening.none') || '(none)')}</p>
+                    </div>
+
                     <div className="accuracy-display">
                       <span className="accuracy-percent">{feedback.accuracyPercent}%</span>
                       <span className="accuracy-label">{getAccuracyLabel(feedback.accuracyPercent)}</span>
                     </div>
-                    <p className="accuracy-detail">
-                      {feedback.correctWords} / {feedback.totalWords} {t('listening.wordsCorrect') || 'words correct'}
-                    </p>
-                    {feedback.accuracyPercent < 100 && (
-                      <div className="script-comparison">
-                        <p><strong>{t('listening.correctScript') || 'Correct script'}:</strong></p>
-                        <p className="script-text">{feedback.script}</p>
-                        <p><strong>{t('listening.yourAnswer') || 'Your answer'}:</strong></p>
-                        <p className="script-text your-answer">{feedback.yourAnswer}</p>
-                      </div>
-                    )}
+
+                    <div className="listening-result-summary">
+                      <p><strong>{t('listening.summary') || '📈 Summary:'}</strong></p>
+                      <p>{t('listening.wordsCorrectSummary') || 'Words correct:'} {feedback.correctWords} / {feedback.totalWords}</p>
+                      <p>{t('listening.missingWordsCount') || 'Missing words:'} {feedback.missingCount ?? feedback.missingWords?.length ?? 0}</p>
+                      <p>{t('listening.extraWordsCount') || 'Extra words:'} {feedback.extraCount ?? feedback.extraWords?.length ?? 0}</p>
+                    </div>
+
                     <button type="button" className="btn btn-primary" onClick={handleNext}>
                       {t('listening.next') || 'Next Exercise'}
                     </button>
