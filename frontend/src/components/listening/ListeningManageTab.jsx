@@ -32,7 +32,7 @@ const ListeningManageTab = ({ t }) => {
   const fetchLanguages = async () => {
     setLoading(true);
     try {
-      const res = await languageAPI.getAll();
+      const res = await languageAPI.getAll({ moduleType: 'listening' });
       if (res.data.success) setLanguages(res.data.data.languages);
     } catch (err) {
       console.error('Error fetching languages:', err);
@@ -69,7 +69,7 @@ const ListeningManageTab = ({ t }) => {
     e.preventDefault();
     if (!newLanguage.trim()) return;
     try {
-      const res = await languageAPI.create({ name: newLanguage.trim() });
+      const res = await languageAPI.create({ name: newLanguage.trim(), moduleType: 'listening' });
       if (res.data.success) {
         setNewLanguage('');
         fetchLanguages();
@@ -93,6 +93,10 @@ const ListeningManageTab = ({ t }) => {
         setView('languages');
       }
       fetchLanguages();
+      if (res.data?.data?.retagged) {
+        toast.success(t('homework.languageRemovedFromModule') || 'Language removed from this module');
+        return;
+      }
       showMovedToRecycleBin(
         toast,
         recycleBinAPI,

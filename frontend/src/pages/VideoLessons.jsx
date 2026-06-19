@@ -98,7 +98,7 @@ const VideoLessons = () => {
   useEffect(() => {
     const run = async () => {
       try {
-        const res = await languageAPI.getAll();
+        const res = await languageAPI.getAll({ moduleType: 'words' });
         if (res.data.success) {
           let langs = res.data.data.languages || [];
           if (isStudent) {
@@ -269,7 +269,7 @@ const VideoLessons = () => {
   const loadManageLanguages = async () => {
     setManageLoading(true);
     try {
-      const res = await languageAPI.getAll();
+      const res = await languageAPI.getAll({ moduleType: 'words' });
       if (res.data.success) setManageLanguages(res.data.data.languages || []);
     } catch (e) {} finally { setManageLoading(false); }
   };
@@ -282,7 +282,7 @@ const VideoLessons = () => {
     const name = newLangName.trim();
     if (!name) return;
     try {
-      await languageAPI.create({ name });
+      await languageAPI.create({ name, moduleType: 'words' });
       setNewLangName('');
       loadManageLanguages();
     } catch (e) {
@@ -405,7 +405,7 @@ const VideoLessons = () => {
     setPermView('languages');
     setPermLoading(true);
     try {
-      const res = await languageAPI.getAll();
+      const res = await languageAPI.getAll({ moduleType: 'words' });
       if (res.data.success) setPermLanguages(res.data.data.languages || []);
     } catch (e) {} finally { setPermLoading(false); }
   };

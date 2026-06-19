@@ -75,7 +75,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const fetchLanguages = async () => {
     setLoading(true);
     try {
-      const res = await languageAPI.getAll();
+      const res = await languageAPI.getAll({ moduleType: isSentences ? 'sentences' : 'words' });
       if (res.data.success) setLanguages(res.data.data.languages);
     } catch (err) {
       console.error('Error fetching languages:', err);
@@ -130,7 +130,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
     e.preventDefault();
     if (!newLanguage.trim()) return;
     try {
-      await languageAPI.create({ name: newLanguage.trim() });
+      await languageAPI.create({ name: newLanguage.trim(), moduleType: isSentences ? 'sentences' : 'words' });
       setNewLanguage('');
       fetchLanguages();
     } catch (err) {
@@ -149,6 +149,10 @@ const LessonsTab = ({ t, mode = 'words' }) => {
         { t }
       );
       fetchLanguages();
+      if (res.data?.data?.retagged) {
+        toast.success(t('homework.languageRemovedFromModule') || 'Language removed from this module');
+        return;
+      }
       showMovedToRecycleBin(
         toast,
         recycleBinAPI,

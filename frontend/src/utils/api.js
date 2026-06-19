@@ -375,7 +375,7 @@ export const listeningAPI = {
 
 // Language API
 export const languageAPI = {
-  getAll: () => api.get('/homework/languages'),
+  getAll: (params) => api.get('/homework/languages', { params }),
   create: (data) => api.post('/homework/languages', data),
   update: (id, data) => api.put(`/homework/languages/${id}`, data),
   delete: (id, params) => api.delete(`/homework/languages/${id}`, { params })

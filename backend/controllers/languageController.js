@@ -1,15 +1,21 @@
 const Language = require('../models/Language');
-const Level = require('../models/Level');
 const {
   VALID_LESSON_TYPES,
-  deleteLessonsForLanguageByType,
+  buildModuleTypeFilter,
+  filterLanguagesForModule
+} = require('../utils/lessonTypes');
+const {
+  resolveScopedLanguageDelete,
   softDeleteLanguageById
-} = require('../utils/lessonTypeCleanup');
+} = require('../services/recycleBinService');
 const { getDeleteOptions, getPrimaryRecycleId } = require('../utils/deleteHelpers');
 
 exports.getAllLanguages = async (req, res) => {
   try {
-    const languages = await Language.find().sort({ name: 1 });
+    const moduleType = req.query.moduleType || req.query.lessonType;
+    const filter = buildModuleTypeFilter(moduleType);
+    let languages = await Language.find(filter).sort({ name: 1 }).lean();
+    languages = await filterLanguagesForModule(languages, moduleType || 'words');
     res.json({ success: true, count: languages.length, data: { languages } });
   } catch (error) {
     console.error('Get all languages error:', error);
@@ -19,14 +25,26 @@ exports.getAllLanguages = async (req, res) => {
 
 exports.createLanguage = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, moduleType } = req.body;
     if (!name?.trim()) {
       return res.status(400).json({ success: false, message: 'Language name is required' });
     }
-    const language = new Language({ name: name.trim() });
+    if (!moduleType || !VALID_LESSON_TYPES.includes(moduleType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'moduleType is required (words, sentences, or listening)'
+      });
+    }
+    const language = new Language({ name: name.trim(), moduleType });
     await language.save();
     res.status(201).json({ success: true, message: 'Language created', data: { language } });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'A language with this name already exists in this module'
+      });
+    }
     console.error('Create language error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
@@ -58,14 +76,27 @@ exports.deleteLanguage = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid lesson type' });
       }
 
-      const result = await deleteLessonsForLanguageByType(id, lessonType, deleteOptions);
+      const result = await resolveScopedLanguageDelete(language, lessonType, deleteOptions);
+
+      if (result?.retagged) {
+        return res.json({
+          success: true,
+          message: `Language removed from ${lessonType} module`,
+          data: {
+            retagged: true,
+            moduleType: result.moduleType || null
+          }
+        });
+      }
+
       return res.json({
         success: true,
         message: `${lessonType} content moved to Recycle Bin`,
         data: {
-          deletedLessons: result.deletedCount,
-          recycleBinId: getPrimaryRecycleId(result.recycleEntries),
-          movedToRecycleBin: true
+          deletedLessons: result?.deletedCount ?? result?.deletedLevels ?? 0,
+          recycleBinId: result?.languageEntry?._id || getPrimaryRecycleId(result?.recycleEntries),
+          movedToRecycleBin: true,
+          removedFromModule: Boolean(result?.removedFromModule)
         }
       });
     }

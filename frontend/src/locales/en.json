@@ -282,6 +282,7 @@
     "confirmDelete": "Are you sure you want to delete this?",
     "confirmDeleteLevelWords": "Delete only WORDS content for this level? Sentences and listening will NOT be deleted.",
     "levelRemovedFromModule": "Level removed from this module",
+    "languageRemovedFromModule": "Language removed from this module",
     "confirmDeleteLevelSentences": "Delete only SENTENCES content for this level? Words and listening will NOT be deleted.",
     "confirmDeleteLanguageWords": "Delete only WORDS content for this language? Sentences and listening will NOT be deleted.",
     "confirmDeleteLanguageSentences": "Delete only SENTENCES content for this language? Words and listening will NOT be deleted.",

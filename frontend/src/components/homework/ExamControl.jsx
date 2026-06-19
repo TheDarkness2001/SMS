@@ -82,7 +82,7 @@ const ExamControl = ({ t, noExam = false, lessonType: lessonTypeProp }) => {
   const fetchLanguages = async () => {
     setLoading(true);
     try {
-      const res = await languageAPI.getAll();
+      const res = await languageAPI.getAll({ moduleType: 'words' });
       if (res.data.success) {
         setLanguages(res.data.data.languages || []);
       }
@@ -202,7 +202,7 @@ const ExamControl = ({ t, noExam = false, lessonType: lessonTypeProp }) => {
     setLoading(true);
     try {
       // Fetch all languages and try to auto-match by subjectName
-      const langRes = await languageAPI.getAll();
+      const langRes = await languageAPI.getAll({ moduleType: 'words' });
       const allLangs = langRes.data.data?.languages || [];
       setLanguages(allLangs);
 

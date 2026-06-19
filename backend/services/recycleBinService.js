@@ -7,6 +7,11 @@ const Lesson = require('../models/Lesson');
 const Word = require('../models/Word');
 const Sentence = require('../models/Sentence');
 const ListeningExercise = require('../models/ListeningExercise');
+const {
+  buildModuleTypeFilter,
+  filterLevelsForModule,
+  resolveScopedLevelDelete
+} = require('../utils/lessonTypes');
 
 const MODEL_REGISTRY = {
   languages: Language,
@@ -238,6 +243,81 @@ async function softDeleteLessonsForLanguageByType(languageId, lessonType, option
   return { deletedCount, recycleEntries, cascadeGroupId };
 }
 
+async function softDeleteLanguageForModule(languageId, moduleType, options = {}) {
+  const language = await Language.findById(languageId);
+  if (!language) return null;
+
+  let levels = await Level.find({ languageId, ...buildModuleTypeFilter(moduleType) });
+  levels = await filterLevelsForModule(levels, moduleType);
+
+  if (levels.length) {
+    validateMassDelete(levels.length, options);
+  }
+
+  const cascadeGroupId = options.cascadeGroupId || randomUUID();
+  const recycleEntries = [];
+  let deletedLevels = 0;
+
+  for (const level of levels) {
+    const result = await resolveScopedLevelDelete(level, moduleType, { ...options, cascadeGroupId }, {
+      softDeleteLevelById,
+      softDeleteLessonsForLevelByType: softDeleteLessonsForLevelByType
+    });
+    if (result?.retagged) continue;
+    deletedLevels += 1;
+    if (result?.levelEntry) {
+      recycleEntries.push(result.levelEntry, ...(result.recycleEntries || []));
+    } else if (result?.recycleEntries?.length) {
+      recycleEntries.push(...result.recycleEntries);
+    }
+  }
+
+  const remainingCount = await Level.countDocuments({ languageId });
+  if (remainingCount === 0) {
+    const languageEntry = await softDeleteDocument(Language, language, { ...options, cascadeGroupId });
+    recycleEntries.push(languageEntry);
+    return { languageEntry, deletedLevels, recycleEntries, cascadeGroupId };
+  }
+
+  return { deletedLevels, recycleEntries, cascadeGroupId, removedFromModule: true };
+}
+
+async function resolveScopedLanguageDelete(language, moduleType, options = {}) {
+  if (language.moduleType === moduleType) {
+    return softDeleteLanguageById(language._id, options);
+  }
+
+  if (language.moduleType && language.moduleType !== moduleType) {
+    return softDeleteLanguageForModule(language._id, moduleType, options);
+  }
+
+  const allLevels = await Level.find({ languageId: language._id });
+  if (!allLevels.length) {
+    return softDeleteLanguageById(language._id, options);
+  }
+
+  let moduleLevels = await Level.find({ languageId: language._id, ...buildModuleTypeFilter(moduleType) });
+  moduleLevels = await filterLevelsForModule(moduleLevels, moduleType);
+  const moduleLevelIds = new Set(moduleLevels.map((level) => String(level._id)));
+  const otherLevels = allLevels.filter((level) => !moduleLevelIds.has(String(level._id)));
+
+  if (!moduleLevels.length && otherLevels.length) {
+    const types = new Set(otherLevels.map((level) => level.moduleType).filter(Boolean));
+    if (types.size === 1) {
+      language.moduleType = [...types][0];
+      await language.save();
+      return { retagged: true, moduleType: language.moduleType };
+    }
+    return { retagged: true, removedFromModule: true };
+  }
+
+  if (!otherLevels.length) {
+    return softDeleteLanguageById(language._id, options);
+  }
+
+  return softDeleteLanguageForModule(language._id, moduleType, options);
+}
+
 async function softDeleteLanguageById(languageId, options = {}) {
   const language = await Language.findByIdIncludingDeleted(languageId);
   if (!language || language.isDeleted) return null;
@@ -365,6 +445,8 @@ module.exports = {
   softDeleteLessonsByFilter,
   softDeleteLevelById,
   softDeleteLanguageById,
+  softDeleteLanguageForModule,
+  resolveScopedLanguageDelete,
   softDeleteLessonsForLevelByType,
   softDeleteLessonsForLanguageByType,
   restoreRecycleEntry,

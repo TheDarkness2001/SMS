@@ -150,7 +150,7 @@ const Homework = () => {
   useEffect(() => {
     const fetchLanguages = async () => {
       try {
-        const res = await languageAPI.getAll();
+        const res = await languageAPI.getAll({ moduleType: 'words' });
         if (res.data.success) {
           let allLanguages = res.data.data.languages || [];
 

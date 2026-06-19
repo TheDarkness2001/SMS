@@ -105,6 +105,36 @@ async function filterLevelsForModule(levels, moduleType) {
   return levels;
 }
 
+async function filterLanguagesForModule(languages, moduleType) {
+  const Level = require('../models/Level');
+  const effectiveModule = moduleType || 'words';
+  const result = [];
+
+  for (const lang of languages) {
+    if (lang.moduleType === effectiveModule) {
+      result.push(lang);
+      continue;
+    }
+    if (lang.moduleType && lang.moduleType !== effectiveModule) {
+      continue;
+    }
+
+    const levels = await Level.find({ languageId: lang._id, ...buildModuleTypeFilter(effectiveModule) }).lean();
+    const filteredLevels = await filterLevelsForModule(levels, effectiveModule);
+    if (filteredLevels.length > 0) {
+      result.push(lang);
+      continue;
+    }
+
+    const totalLevels = await Level.countDocuments({ languageId: lang._id });
+    if (totalLevels === 0 && effectiveModule === 'words') {
+      result.push(lang);
+    }
+  }
+
+  return result;
+}
+
 module.exports = {
   VALID_LESSON_TYPES,
   buildModuleTypeFilter,
@@ -112,5 +142,6 @@ module.exports = {
   countLessonsByType,
   inferModuleTypeFromCounts,
   resolveScopedLevelDelete,
-  filterLevelsForModule
+  filterLevelsForModule,
+  filterLanguagesForModule
 };

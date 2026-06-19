@@ -56,7 +56,7 @@ const ListeningPage = () => {
   useEffect(() => {
     const fetchLanguages = async () => {
       try {
-        const res = await languageAPI.getAll();
+        const res = await languageAPI.getAll({ moduleType: 'listening' });
         if (res.data.success) {
           let allLanguages = res.data.data.languages || [];
           if (isStudent) {

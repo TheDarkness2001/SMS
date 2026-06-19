@@ -55,7 +55,7 @@ const VideoLessonFormModal = ({ editVideo, preset, onClose, onSaved }) => {
   }, [editVideo, preset]);
 
   useEffect(() => {
-    languageAPI.getAll().then(res => {
+    languageAPI.getAll({ moduleType: 'words' }).then(res => {
       if (res.data.success) setLanguages(res.data.data.languages || []);
     });
   }, []);
