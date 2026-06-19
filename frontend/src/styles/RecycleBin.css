@@ -1,0 +1,71 @@
+.recycle-bin-page {
+  padding: 24px;
+}
+
+.recycle-bin-header {
+  margin-bottom: 24px;
+}
+
+.recycle-bin-header h1 {
+  margin: 0 0 8px;
+}
+
+.recycle-bin-header p {
+  margin: 0;
+  color: #64748b;
+}
+
+.recycle-bin-empty {
+  padding: 48px 24px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 12px;
+  color: #64748b;
+}
+
+.recycle-bin-table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.recycle-bin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.recycle-bin-table th,
+.recycle-bin-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef2f7;
+  text-align: left;
+  vertical-align: top;
+}
+
+.recycle-bin-table th {
+  background: #f8fafc;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.recycle-bin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.recycle-bin-purge-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.recycle-bin-purge-form input {
+  width: 90px;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}

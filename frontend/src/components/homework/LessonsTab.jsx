@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { languageAPI, levelAPI, lessonAPI, homeworkAPI, sentenceAPI, uploadAPI } from '../../utils/api';
+import { languageAPI, levelAPI, lessonAPI, homeworkAPI, sentenceAPI, uploadAPI, recycleBinAPI } from '../../utils/api';
+import { useToast } from '../../context/ToastContext';
+import { showMovedToRecycleBin } from '../../utils/recycleBinUndo';
+import { executeDelete } from '../../utils/massDeleteHelper';
 
 const LessonsTab = ({ t, mode = 'words' }) => {
+  const toast = useToast();
   const isSentences = mode === 'sentences';
   const itemLabel = isSentences ? 'sentences' : 'words';
   const [view, setView] = useState('languages');
@@ -135,10 +139,23 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   };
 
   const handleDeleteLanguage = async (id) => {
-    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
+    const lessonType = isSentences ? 'sentences' : 'words';
+    const confirmKey = isSentences ? 'homework.confirmDeleteLanguageSentences' : 'homework.confirmDeleteLanguageWords';
+    if (!window.confirm(t(confirmKey) || 'Delete only content for this module? Other modules will NOT be affected.')) return;
     try {
-      await languageAPI.delete(id);
+      const res = await executeDelete(
+        (params) => languageAPI.delete(id, { lessonType, ...params }),
+        {},
+        { t }
+      );
       fetchLanguages();
+      showMovedToRecycleBin(
+        toast,
+        recycleBinAPI,
+        res.data?.data?.recycleBinId,
+        t('recycleBin.moved') || 'Item moved to Recycle Bin',
+        fetchLanguages
+      );
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting language');
     }
@@ -171,10 +188,23 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   };
 
   const handleDeleteLevel = async (id) => {
-    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
+    const lessonType = isSentences ? 'sentences' : 'words';
+    const confirmKey = isSentences ? 'homework.confirmDeleteLevelSentences' : 'homework.confirmDeleteLevelWords';
+    if (!window.confirm(t(confirmKey) || 'Delete only content for this module? Other modules will NOT be affected.')) return;
     try {
-      await levelAPI.delete(id);
+      const res = await executeDelete(
+        (params) => levelAPI.delete(id, { lessonType, ...params }),
+        {},
+        { t }
+      );
       fetchLevels(selectedLanguage._id);
+      showMovedToRecycleBin(
+        toast,
+        recycleBinAPI,
+        res.data?.data?.recycleBinId,
+        t('recycleBin.moved') || 'Item moved to Recycle Bin',
+        () => fetchLevels(selectedLanguage._id)
+      );
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting level');
     }
@@ -227,8 +257,15 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const handleDeleteLesson = async (id) => {
     if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
     try {
-      await lessonAPI.deleteLesson(id);
+      const res = await lessonAPI.deleteLesson(id);
       fetchLessons(selectedLevel._id);
+      showMovedToRecycleBin(
+        toast,
+        recycleBinAPI,
+        res.data?.data?.recycleBinId,
+        t('recycleBin.moved') || 'Item moved to Recycle Bin',
+        () => fetchLessons(selectedLevel._id)
+      );
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting lesson');
     }
@@ -334,13 +371,24 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
     try {
+      let res;
       if (isSentences) {
-        await sentenceAPI.delete(itemId);
+        res = await sentenceAPI.delete(itemId);
       } else {
-        await lessonAPI.removeWordFromLesson(selectedLesson._id, itemId);
+        res = await lessonAPI.removeWordFromLesson(selectedLesson._id, itemId);
       }
-      fetchLessonItems(selectedLesson._id);
-      fetchLessons(selectedLevel._id);
+      const refresh = () => {
+        fetchLessonItems(selectedLesson._id);
+        fetchLessons(selectedLevel._id);
+      };
+      refresh();
+      showMovedToRecycleBin(
+        toast,
+        recycleBinAPI,
+        res.data?.data?.recycleBinId,
+        t('recycleBin.moved') || 'Item moved to Recycle Bin',
+        refresh
+      );
     } catch (err) {
       alert(err.response?.data?.message || `Error deleting ${itemLabel}`);
     }

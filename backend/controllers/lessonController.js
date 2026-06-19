@@ -286,6 +286,8 @@ exports.toggleExamLock = async (req, res) => {
 exports.deleteLesson = async (req, res) => {
   try {
     const { id } = req.params;
+    const { softDeleteLessonById } = require('../utils/lessonTypeCleanup');
+    const { getDeleteOptions } = require('../utils/deleteHelpers');
 
     const lesson = await Lesson.findById(id);
     if (!lesson) {
@@ -295,40 +297,33 @@ exports.deleteLesson = async (req, res) => {
       });
     }
 
-    // Delete all words or sentences in this lesson
-    if (lesson.type === 'sentences') {
-      await Sentence.deleteMany({ lessonId: id });
-    } else if (lesson.type === 'listening') {
-      const exercises = await ListeningExercise.find({ lessonId: id });
-      for (const ex of exercises) {
-        await StudentListeningProgress.deleteMany({ listeningId: ex._id });
-      }
-      await ListeningExercise.deleteMany({ lessonId: id });
-    } else {
-      await Word.deleteMany({ _id: { $in: lesson.wordIds } });
-    }
-
-    await Lesson.findByIdAndDelete(id);
-    await StudentVocabProgress.deleteMany({ lessonId: id });
+    const result = await softDeleteLessonById(id, getDeleteOptions(req));
 
     res.json({
       success: true,
-      message: 'Class and its items deleted successfully'
+      message: 'Class moved to Recycle Bin',
+      data: {
+        recycleBinId: result.lessonEntry?._id,
+        movedToRecycleBin: true
+      }
     });
   } catch (error) {
     console.error('Delete lesson error:', error);
-    res.status(500).json({
+    const status = error.statusCode || 500;
+    res.status(status).json({
       success: false,
-      message: 'Server error while deleting lesson',
-      error: error.message
+      message: error.message || 'Server error while deleting lesson',
+      code: error.code
     });
   }
 };
 
-// Remove word from lesson and delete it
+// Remove word from lesson and soft-delete it
 exports.removeWordFromLesson = async (req, res) => {
   try {
     const { id, wordId } = req.params;
+    const { softDeleteById } = require('../services/recycleBinService');
+    const { getDeleteOptions } = require('../utils/deleteHelpers');
 
     const lesson = await Lesson.findById(id);
     if (!lesson) {
@@ -341,13 +336,16 @@ exports.removeWordFromLesson = async (req, res) => {
     lesson.wordIds = lesson.wordIds.filter(w => w.toString() !== wordId);
     await lesson.save();
 
-    // Delete the word since words cannot be orphaned
-    await Word.findByIdAndDelete(wordId);
+    const recycleEntry = await softDeleteById(Word, wordId, getDeleteOptions(req));
 
     res.json({
       success: true,
-      message: 'Word removed and deleted',
-      data: { lesson }
+      message: 'Word moved to Recycle Bin',
+      data: {
+        lesson,
+        recycleBinId: recycleEntry?._id,
+        movedToRecycleBin: true
+      }
     });
   } catch (error) {
     console.error('Remove word from lesson error:', error);

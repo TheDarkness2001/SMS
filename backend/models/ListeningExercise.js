@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const softDeletePlugin = require('../plugins/softDeletePlugin');
 
 const listeningExerciseSchema = new mongoose.Schema({
   title: {
@@ -31,5 +32,7 @@ const listeningExerciseSchema = new mongoose.Schema({
 });
 
 listeningExerciseSchema.index({ lessonId: 1, order: 1 });
+
+listeningExerciseSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model('ListeningExercise', listeningExerciseSchema);

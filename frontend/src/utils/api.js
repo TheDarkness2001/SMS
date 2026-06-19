@@ -378,7 +378,7 @@ export const languageAPI = {
   getAll: () => api.get('/homework/languages'),
   create: (data) => api.post('/homework/languages', data),
   update: (id, data) => api.put(`/homework/languages/${id}`, data),
-  delete: (id) => api.delete(`/homework/languages/${id}`)
+  delete: (id, params) => api.delete(`/homework/languages/${id}`, { params })
 };
 
 // Level API
@@ -387,7 +387,7 @@ export const levelAPI = {
   togglePracticeLock: (id, groupId) => api.post(`/homework/levels/${id}/toggle-practice-lock`, { groupId }),
   create: (data) => api.post('/homework/levels', data),
   update: (id, data) => api.put(`/homework/levels/${id}`, data),
-  delete: (id) => api.delete(`/homework/levels/${id}`)
+  delete: (id, params) => api.delete(`/homework/levels/${id}`, { params })
 };
 
 // Lesson API
@@ -454,6 +454,13 @@ export const getImageUrl = (filename) => {
   // Otherwise, construct backend URL
   const baseUrl = API_BASE_URL.replace('/api', '');
   return `${baseUrl}/uploads/${filename}`;
+};
+
+export const recycleBinAPI = {
+  list: (params) => api.get('/admin/recycle-bin', { params }),
+  restore: (id) => api.post(`/admin/recycle-bin/restore/${id}`),
+  purge: (id, data) => api.post(`/admin/recycle-bin/purge/${id}`, data),
+  snapshots: (params) => api.get('/admin/recycle-bin/snapshots', { params })
 };
 
 export default api;

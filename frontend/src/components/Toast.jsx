@@ -2,14 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { AiOutlineCheckCircle, AiOutlineCloseCircle, AiOutlineInfoCircle, AiOutlineWarning } from 'react-icons/ai';
 import './Toast.css';
 
-const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
+const Toast = ({ message, type = 'info', duration = 3000, onClose, actionLabel, onAction }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [progress, setProgress] = useState(100);
 
   useEffect(() => {
     if (!message) return;
 
-    // Animate progress bar
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev <= 0) {
@@ -20,12 +19,11 @@ const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
       });
     }, 100);
 
-    // Auto close after duration
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(() => {
         onClose?.();
-      }, 300); // Wait for exit animation
+      }, 300);
     }, duration);
 
     return () => {
@@ -46,9 +44,24 @@ const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
   return (
     <div className={`toast toast-${type} ${isVisible ? 'toast-enter' : 'toast-exit'}`}>
       <div className="toast-icon">{icons[type]}</div>
-      <div className="toast-message">{message}</div>
-      <button 
-        className="toast-close" 
+      <div className="toast-content">
+        <div className="toast-message">{message}</div>
+        {actionLabel && onAction && (
+          <button
+            type="button"
+            className="toast-action"
+            onClick={() => {
+              onAction();
+              setIsVisible(false);
+              setTimeout(() => onClose?.(), 300);
+            }}
+          >
+            {actionLabel}
+          </button>
+        )}
+      </div>
+      <button
+        className="toast-close"
         onClick={() => {
           setIsVisible(false);
           setTimeout(() => onClose?.(), 300);
@@ -56,8 +69,8 @@ const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
       >
         ×
       </button>
-      <div 
-        className="toast-progress" 
+      <div
+        className="toast-progress"
         style={{ width: `${progress}%` }}
       />
     </div>

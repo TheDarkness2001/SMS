@@ -1,7 +1,14 @@
 const Level = require('../models/Level');
 const Lesson = require('../models/Lesson');
-const Word = require('../models/Word');
 const ExamGroup = require('../models/ExamGroup');
+const {
+  VALID_LESSON_TYPES,
+  deleteLessonsForLevelByType,
+  deleteLessonsForLanguageByType,
+  softDeleteLevelById,
+  softDeleteLanguageById
+} = require('../utils/lessonTypeCleanup');
+const { getDeleteOptions, getPrimaryRecycleId } = require('../utils/deleteHelpers');
 
 exports.getLevelsByLanguage = async (req, res) => {
   try {
@@ -125,24 +132,49 @@ exports.togglePracticeLock = async (req, res) => {
 exports.deleteLevel = async (req, res) => {
   try {
     const { id } = req.params;
+    const { lessonType } = req.query;
+    const deleteOptions = getDeleteOptions(req);
     const level = await Level.findById(id);
     if (!level) return res.status(404).json({ success: false, message: 'Level not found' });
 
-    // Get all lessons in this level
-    const lessons = await Lesson.find({ levelId: id });
+    if (lessonType) {
+      if (!VALID_LESSON_TYPES.includes(lessonType)) {
+        return res.status(400).json({ success: false, message: 'Invalid lesson type' });
+      }
 
-    // Delete all words in all lessons
-    for (const lesson of lessons) {
-      await Word.deleteMany({ _id: { $in: lesson.wordIds } });
+      const result = await deleteLessonsForLevelByType(id, lessonType, deleteOptions);
+      return res.json({
+        success: true,
+        message: `${lessonType} content moved to Recycle Bin`,
+        data: {
+          deletedLessons: result.deletedCount,
+          recycleBinId: getPrimaryRecycleId(result.recycleEntries),
+          movedToRecycleBin: true
+        }
+      });
     }
 
-    // Delete lessons and progress
-    await Lesson.deleteMany({ levelId: id });
-    await Level.findByIdAndDelete(id);
+    const result = await softDeleteLevelById(id, deleteOptions);
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Level not found' });
+    }
 
-    res.json({ success: true, message: 'Level, classes, and words deleted' });
+    res.json({
+      success: true,
+      message: 'Level moved to Recycle Bin',
+      data: {
+        deletedLessons: result.deletedLessons,
+        recycleBinId: result.levelEntry?._id,
+        movedToRecycleBin: true
+      }
+    });
   } catch (error) {
     console.error('Delete level error:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    const status = error.statusCode || 500;
+    res.status(status).json({
+      success: false,
+      message: error.message || 'Server error',
+      code: error.code
+    });
   }
 };

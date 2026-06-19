@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { languageAPI, levelAPI, listeningAPI } from '../../utils/api';
+import { languageAPI, levelAPI, listeningAPI, recycleBinAPI } from '../../utils/api';
+import { useToast } from '../../context/ToastContext';
+import { showMovedToRecycleBin } from '../../utils/recycleBinUndo';
+import { executeDelete } from '../../utils/massDeleteHelper';
 
 const ListeningManageTab = ({ t }) => {
+  const toast = useToast();
   const [view, setView] = useState('languages');
   const [loading, setLoading] = useState(false);
 
@@ -76,15 +80,26 @@ const ListeningManageTab = ({ t }) => {
   };
 
   const handleDeleteLanguage = async (id) => {
-    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
+    if (!window.confirm(t('listening.confirmDeleteLanguage') || 'Delete only listening content for this language? Words and sentences will NOT be deleted.')) return;
     try {
-      await languageAPI.delete(id);
+      const res = await executeDelete(
+        (params) => languageAPI.delete(id, { lessonType: 'listening', ...params }),
+        {},
+        { t }
+      );
       if (selectedLanguage?._id === id) {
         setSelectedLanguage(null);
         setSelectedLevel(null);
         setView('languages');
       }
       fetchLanguages();
+      showMovedToRecycleBin(
+        toast,
+        recycleBinAPI,
+        res.data?.data?.recycleBinId,
+        t('recycleBin.moved') || 'Item moved to Recycle Bin',
+        fetchLanguages
+      );
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting language');
     }
@@ -112,14 +127,25 @@ const ListeningManageTab = ({ t }) => {
   };
 
   const handleDeleteLevel = async (id) => {
-    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
+    if (!window.confirm(t('listening.confirmDeleteLevel') || 'Delete only listening exercises for this level? Words and sentences will NOT be deleted.')) return;
     try {
-      await levelAPI.delete(id);
+      const res = await executeDelete(
+        (params) => levelAPI.delete(id, { lessonType: 'listening', ...params }),
+        {},
+        { t }
+      );
       if (selectedLevel?._id === id) {
         setSelectedLevel(null);
         setView('levels');
       }
       fetchLevels(selectedLanguage._id);
+      showMovedToRecycleBin(
+        toast,
+        recycleBinAPI,
+        res.data?.data?.recycleBinId,
+        t('recycleBin.moved') || 'Item moved to Recycle Bin',
+        () => fetchLevels(selectedLanguage._id)
+      );
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting level');
     }
@@ -186,8 +212,15 @@ const ListeningManageTab = ({ t }) => {
   const handleDeleteExercise = async (exerciseId) => {
     if (!window.confirm(t('listening.confirmDelete') || 'Delete this exercise?')) return;
     try {
-      await listeningAPI.delete(exerciseId);
+      const res = await listeningAPI.delete(exerciseId);
       fetchExercises(selectedLevel._id);
+      showMovedToRecycleBin(
+        toast,
+        recycleBinAPI,
+        res.data?.data?.recycleBinId,
+        t('recycleBin.moved') || 'Item moved to Recycle Bin',
+        () => fetchExercises(selectedLevel._id)
+      );
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting exercise');
     }

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const softDeletePlugin = require('../plugins/softDeletePlugin');
 
 const wordSchema = new mongoose.Schema({
   english: {
@@ -24,5 +25,7 @@ const wordSchema = new mongoose.Schema({
 });
 
 wordSchema.index({ lessonId: 1 });
+
+wordSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model('Word', wordSchema);

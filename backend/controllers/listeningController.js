@@ -174,20 +174,28 @@ exports.updateExercise = async (req, res) => {
 
 exports.deleteExercise = async (req, res) => {
   try {
+    const { softDeleteById } = require('../services/recycleBinService');
+    const { getDeleteOptions } = require('../utils/deleteHelpers');
+
     const exercise = await ListeningExercise.findById(req.params.id);
     if (!exercise) {
       return res.status(404).json({ success: false, message: 'Listening exercise not found' });
     }
 
-    deleteStoredAudioFile(exercise.audioFile);
+    const recycleEntry = await softDeleteById(ListeningExercise, req.params.id, getDeleteOptions(req));
 
-    await StudentListeningProgress.deleteMany({ listeningId: req.params.id });
-    await ListeningExercise.findByIdAndDelete(req.params.id);
-
-    res.json({ success: true, message: 'Listening exercise deleted' });
+    res.json({
+      success: true,
+      message: 'Listening exercise moved to Recycle Bin',
+      data: {
+        recycleBinId: recycleEntry?._id,
+        movedToRecycleBin: true
+      }
+    });
   } catch (error) {
     console.error('Delete listening exercise error:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    const status = error.statusCode || 500;
+    res.status(status).json({ success: false, message: error.message || 'Server error', code: error.code });
   }
 };
 

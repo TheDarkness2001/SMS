@@ -432,10 +432,12 @@ exports.updateWord = async (req, res) => {
   }
 };
 
-// Delete word
+// Delete word (soft delete)
 exports.deleteWord = async (req, res) => {
   try {
     const { id } = req.params;
+    const { softDeleteById } = require('../services/recycleBinService');
+    const { getDeleteOptions } = require('../utils/deleteHelpers');
 
     const word = await Word.findById(id);
     if (!word) {
@@ -445,18 +447,23 @@ exports.deleteWord = async (req, res) => {
       });
     }
 
-    await Word.findByIdAndDelete(id);
+    const recycleEntry = await softDeleteById(Word, id, getDeleteOptions(req));
 
     res.json({
       success: true,
-      message: 'Word deleted successfully'
+      message: 'Word moved to Recycle Bin',
+      data: {
+        recycleBinId: recycleEntry?._id,
+        movedToRecycleBin: true
+      }
     });
   } catch (error) {
     console.error('Delete word error:', error);
-    res.status(500).json({
+    const status = error.statusCode || 500;
+    res.status(status).json({
       success: false,
-      message: 'Server error while deleting word',
-      error: error.message
+      message: error.message || 'Server error while deleting word',
+      code: error.code
     });
   }
 };

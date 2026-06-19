@@ -23,7 +23,8 @@ import {
   AiOutlineStar,
   AiOutlineTrophy,
   AiOutlinePlayCircle,
-  AiOutlineSound
+  AiOutlineSound,
+  AiOutlineDelete
 } from 'react-icons/ai';
 import { IoSchoolOutline } from 'react-icons/io5';
 import './Sidebar.css';
@@ -356,6 +357,15 @@ const Sidebar = ({ user, isOpen, onClose }) => {
             <Link to="/groups">
               <span className="icon"><AiOutlineAppstore size={20} /></span>
               <span>{t('sidebar.groups') || 'Groups'}</span>
+            </Link>
+          </li>
+        )}
+
+        {(['admin', 'founder', 'manager'].includes(userData.role) || hasPermission('manageSettings')) && (
+          <li className={isActive('/admin/recycle-bin')}>
+            <Link to="/admin/recycle-bin">
+              <span className="icon"><AiOutlineDelete size={20} /></span>
+              <span>{t('sidebar.recycleBin') || 'Recycle Bin'}</span>
             </Link>
           </li>
         )}

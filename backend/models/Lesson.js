@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const softDeletePlugin = require('../plugins/softDeletePlugin');
 
 const lessonSchema = new mongoose.Schema({
   name: {
@@ -54,5 +55,7 @@ const lessonSchema = new mongoose.Schema({
 });
 
 lessonSchema.index({ levelId: 1, order: 1 });
+
+lessonSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model('Lesson', lessonSchema);

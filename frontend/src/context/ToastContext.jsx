@@ -15,9 +15,9 @@ export const useToast = () => {
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback((message, type = 'info', duration = 3000) => {
+  const addToast = useCallback((message, type = 'info', duration = 3000, extras = {}) => {
     const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type, duration }]);
+    setToasts(prev => [...prev, { id, message, type, duration, ...extras }]);
     return id;
   }, []);
 
@@ -42,8 +42,12 @@ export const ToastProvider = ({ children }) => {
     return addToast(message, 'info', duration);
   }, [addToast]);
 
+  const action = useCallback((message, actionLabel, onAction, duration = 8000) => {
+    return addToast(message, 'success', duration, { actionLabel, onAction });
+  }, [addToast]);
+
   return (
-    <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info }}>
+    <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info, action }}>
       {children}
       <div className="toast-container">
         {toasts.map(toast => (
@@ -52,6 +56,8 @@ export const ToastProvider = ({ children }) => {
             message={toast.message}
             type={toast.type}
             duration={toast.duration}
+            actionLabel={toast.actionLabel}
+            onAction={toast.onAction}
             onClose={() => removeToast(toast.id)}
           />
         ))}

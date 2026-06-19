@@ -103,16 +103,28 @@ exports.updateSentence = async (req, res) => {
 // Delete sentence
 exports.deleteSentence = async (req, res) => {
   try {
-    const sentence = await Sentence.findByIdAndDelete(req.params.id);
+    const { softDeleteById } = require('../services/recycleBinService');
+    const { getDeleteOptions } = require('../utils/deleteHelpers');
+
+    const sentence = await Sentence.findById(req.params.id);
     if (!sentence) {
       return res.status(404).json({ success: false, message: 'Sentence not found' });
     }
-    // Also delete related progress
-    await StudentSentenceProgress.deleteMany({ sentenceId: req.params.id });
-    res.json({ success: true, message: 'Sentence and related progress deleted' });
+
+    const recycleEntry = await softDeleteById(Sentence, req.params.id, getDeleteOptions(req));
+
+    res.json({
+      success: true,
+      message: 'Sentence moved to Recycle Bin',
+      data: {
+        recycleBinId: recycleEntry?._id,
+        movedToRecycleBin: true
+      }
+    });
   } catch (error) {
     console.error('Delete sentence error:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    const status = error.statusCode || 500;
+    res.status(status).json({ success: false, message: error.message || 'Server error', code: error.code });
   }
 };
 

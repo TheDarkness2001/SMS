@@ -53,6 +53,7 @@ import TeacherPresentations from './pages/TeacherPresentations';
 import BonusDashboard from './pages/BonusDashboard';
 import StudentPenalties from './pages/StudentPenalties';
 import StudentPresentations from './pages/StudentPresentations';
+import RecycleBinPage from './pages/RecycleBinPage';
 import NotFound from './components/NotFound';
 import PrivateRoute from './components/PrivateRoute';
 import InactiveStudentGuard from './components/InactiveStudentGuard';
@@ -119,6 +120,7 @@ function App() {
             <Route path="/listening" element={<PrivateRoute><InactiveStudentGuard><ListeningPage /></InactiveStudentGuard></PrivateRoute>} />
             <Route path="/video-lessons" element={<PrivateRoute><InactiveStudentGuard><VideoLessons /></InactiveStudentGuard></PrivateRoute>} />
             <Route path="/video-lessons/:id/test" element={<PrivateRoute><VideoTest /></PrivateRoute>} />
+            <Route path="/admin/recycle-bin" element={<PrivateRoute><RecycleBinPage /></PrivateRoute>} />
             <Route path="/penalties" element={<PrivateRoute><TeacherPenalties /></PrivateRoute>} />
             <Route path="/presentations" element={<PrivateRoute><TeacherPresentations /></PrivateRoute>} />
             <Route path="/bonuses" element={<PrivateRoute><BonusDashboard /></PrivateRoute>} />

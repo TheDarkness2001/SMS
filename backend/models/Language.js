@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const softDeletePlugin = require('../plugins/softDeletePlugin');
 
 const languageSchema = new mongoose.Schema({
   name: {
@@ -12,5 +13,7 @@ const languageSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+languageSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model('Language', languageSchema);

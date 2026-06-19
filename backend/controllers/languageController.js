@@ -1,7 +1,11 @@
 const Language = require('../models/Language');
 const Level = require('../models/Level');
-const Lesson = require('../models/Lesson');
-const Word = require('../models/Word');
+const {
+  VALID_LESSON_TYPES,
+  deleteLessonsForLanguageByType,
+  softDeleteLanguageById
+} = require('../utils/lessonTypeCleanup');
+const { getDeleteOptions, getPrimaryRecycleId } = require('../utils/deleteHelpers');
 
 exports.getAllLanguages = async (req, res) => {
   try {
@@ -44,24 +48,48 @@ exports.updateLanguage = async (req, res) => {
 exports.deleteLanguage = async (req, res) => {
   try {
     const { id } = req.params;
+    const { lessonType } = req.query;
+    const deleteOptions = getDeleteOptions(req);
     const language = await Language.findById(id);
     if (!language) return res.status(404).json({ success: false, message: 'Language not found' });
 
-    // Cascade: Language → Levels → Lessons → Words
-    const levels = await Level.find({ languageId: id });
-    for (const level of levels) {
-      const lessons = await Lesson.find({ levelId: level._id });
-      for (const lesson of lessons) {
-        await Word.deleteMany({ _id: { $in: lesson.wordIds } });
+    if (lessonType) {
+      if (!VALID_LESSON_TYPES.includes(lessonType)) {
+        return res.status(400).json({ success: false, message: 'Invalid lesson type' });
       }
-      await Lesson.deleteMany({ levelId: level._id });
-    }
-    await Level.deleteMany({ languageId: id });
-    await Language.findByIdAndDelete(id);
 
-    res.json({ success: true, message: 'Language and all related data deleted' });
+      const result = await deleteLessonsForLanguageByType(id, lessonType, deleteOptions);
+      return res.json({
+        success: true,
+        message: `${lessonType} content moved to Recycle Bin`,
+        data: {
+          deletedLessons: result.deletedCount,
+          recycleBinId: getPrimaryRecycleId(result.recycleEntries),
+          movedToRecycleBin: true
+        }
+      });
+    }
+
+    const result = await softDeleteLanguageById(id, deleteOptions);
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Language not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Language moved to Recycle Bin',
+      data: {
+        recycleBinId: result.languageEntry?._id,
+        movedToRecycleBin: true
+      }
+    });
   } catch (error) {
     console.error('Delete language error:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    const status = error.statusCode || 500;
+    res.status(status).json({
+      success: false,
+      message: error.message || 'Server error',
+      code: error.code
+    });
   }
 };
