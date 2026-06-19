@@ -490,10 +490,10 @@ const ListeningPage = () => {
                     <button
                       type="button"
                       className="btn btn-small btn-secondary"
-                      onClick={() => skipAudio(-15)}
-                      title={t('listening.prev15s') || 'Back 15 seconds'}
+                      onClick={() => skipAudio(-5)}
+                      title={t('listening.prev5s') || 'Back 5 seconds'}
                     >
-                      −15s
+                      −5s
                     </button>
                     <button
                       type="button"
@@ -507,10 +507,10 @@ const ListeningPage = () => {
                     <button
                       type="button"
                       className="btn btn-small btn-secondary"
-                      onClick={() => skipAudio(15)}
-                      title={t('listening.next15s') || 'Forward 15 seconds'}
+                      onClick={() => skipAudio(5)}
+                      title={t('listening.next5s') || 'Forward 5 seconds'}
                     >
-                      +15s
+                      +5s
                     </button>
                   </div>
                   <span className="listening-hint">
