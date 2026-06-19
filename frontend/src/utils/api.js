@@ -383,7 +383,7 @@ export const languageAPI = {
 
 // Level API
 export const levelAPI = {
-  getByLanguage: (languageId) => api.get(`/homework/levels/language/${languageId}`),
+  getByLanguage: (languageId, params) => api.get(`/homework/levels/language/${languageId}`, { params }),
   togglePracticeLock: (id, groupId) => api.post(`/homework/levels/${id}/toggle-practice-lock`, { groupId }),
   create: (data) => api.post('/homework/levels', data),
   update: (id, data) => api.put(`/homework/levels/${id}`, data),

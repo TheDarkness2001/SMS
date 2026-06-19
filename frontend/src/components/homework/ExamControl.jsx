@@ -96,7 +96,7 @@ const ExamControl = ({ t, noExam = false, lessonType: lessonTypeProp }) => {
   const fetchLevels = async (languageId) => {
     setLoading(true);
     try {
-      const res = await levelAPI.getByLanguage(languageId);
+      const res = await levelAPI.getByLanguage(languageId, { moduleType: 'words' });
       if (res.data.success) {
         setLevels(res.data.data.levels || []);
       }
@@ -212,7 +212,7 @@ const ExamControl = ({ t, noExam = false, lessonType: lessonTypeProp }) => {
 
       if (matchedLang) {
         setSelectedLanguage(matchedLang);
-        const levelRes = await levelAPI.getByLanguage(matchedLang._id);
+        const levelRes = await levelAPI.getByLanguage(matchedLang._id, { moduleType: 'words' });
         const fetchedLevels = levelRes.data.data?.levels || [];
         setLevels(fetchedLevels);
         // Try to auto-match level by group name or class

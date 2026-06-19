@@ -1,8 +1,8 @@
 const Level = require('../models/Level');
 const Lesson = require('../models/Lesson');
 const ExamGroup = require('../models/ExamGroup');
+const { VALID_LESSON_TYPES, buildModuleTypeFilter } = require('../utils/lessonTypes');
 const {
-  VALID_LESSON_TYPES,
   deleteLessonsForLevelByType,
   deleteLessonsForLanguageByType,
   softDeleteLevelById,
@@ -13,11 +13,13 @@ const { getDeleteOptions, getPrimaryRecycleId } = require('../utils/deleteHelper
 exports.getLevelsByLanguage = async (req, res) => {
   try {
     const { languageId } = req.params;
+    const moduleType = req.query.moduleType || req.query.lessonType;
     const userRole = req.user?.role;
     const userId = req.user?._id;
     const isStudent = req.userType === 'student' || userRole === 'student';
 
-    const levels = await Level.find({ languageId }).sort({ name: 1 }).lean();
+    const filter = { languageId, ...buildModuleTypeFilter(moduleType) };
+    const levels = await Level.find(filter).sort({ name: 1 }).lean();
 
     // For students, compute per-level unlock status based on their groups
     if (isStudent && userId) {
@@ -56,13 +58,31 @@ exports.getLevelsByLanguage = async (req, res) => {
 
 exports.createLevel = async (req, res) => {
   try {
-    const { name, languageId, classesCount, wordsPerClass, examTimeLimit, minPassScore } = req.body;
+    const {
+      name,
+      languageId,
+      classesCount,
+      wordsPerClass,
+      examTimeLimit,
+      minPassScore,
+      moduleType
+    } = req.body;
+
     if (!name?.trim() || !languageId) {
       return res.status(400).json({ success: false, message: 'Name and language are required' });
     }
+
+    if (!moduleType || !VALID_LESSON_TYPES.includes(moduleType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'moduleType is required (words, sentences, or listening)'
+      });
+    }
+
     const level = new Level({
       name: name.trim(),
       languageId,
+      moduleType,
       classesCount: classesCount || 11,
       wordsPerClass: wordsPerClass || 20,
       examTimeLimit: examTimeLimit || 300,
@@ -71,6 +91,12 @@ exports.createLevel = async (req, res) => {
     await level.save();
     res.status(201).json({ success: true, message: 'Level created', data: { level } });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'A level with this name already exists for this language in this module'
+      });
+    }
     console.error('Create level error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
@@ -140,6 +166,22 @@ exports.deleteLevel = async (req, res) => {
     if (lessonType) {
       if (!VALID_LESSON_TYPES.includes(lessonType)) {
         return res.status(400).json({ success: false, message: 'Invalid lesson type' });
+      }
+
+      if (level.moduleType === lessonType) {
+        const result = await softDeleteLevelById(id, deleteOptions);
+        if (!result) {
+          return res.status(404).json({ success: false, message: 'Level not found' });
+        }
+        return res.json({
+          success: true,
+          message: 'Level moved to Recycle Bin',
+          data: {
+            deletedLessons: result.deletedLessons,
+            recycleBinId: result.levelEntry?._id,
+            movedToRecycleBin: true
+          }
+        });
       }
 
       const result = await deleteLessonsForLevelByType(id, lessonType, deleteOptions);

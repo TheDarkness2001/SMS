@@ -87,7 +87,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const fetchLevels = async (languageId) => {
     setLoading(true);
     try {
-      const res = await levelAPI.getByLanguage(languageId);
+      const res = await levelAPI.getByLanguage(languageId, { moduleType: isSentences ? 'sentences' : 'words' });
       if (res.data.success) setLevels(res.data.data.levels);
     } catch (err) {
       console.error('Error fetching levels:', err);
@@ -175,6 +175,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
       await levelAPI.create({
         name: newLevel.trim(),
         languageId: selectedLanguage._id,
+        moduleType: isSentences ? 'sentences' : 'words',
         classesCount: parseInt(levelConfig.classesCount) || 11,
         wordsPerClass: parseInt(levelConfig.wordsPerClass) || 20,
         minPassScore: parseInt(levelConfig.minPassScore) || 70

@@ -44,6 +44,11 @@ const levelSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  moduleType: {
+    type: String,
+    enum: ['words', 'sentences', 'listening'],
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -51,6 +56,7 @@ const levelSchema = new mongoose.Schema({
 });
 
 levelSchema.index({ languageId: 1, name: 1 });
+levelSchema.index({ languageId: 1, name: 1, moduleType: 1 }, { unique: true });
 
 levelSchema.plugin(softDeletePlugin);
 

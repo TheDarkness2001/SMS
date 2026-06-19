@@ -91,7 +91,7 @@ const ListeningPage = () => {
     if (!selectedLanguageId) return;
     const fetchLevels = async () => {
       try {
-        const res = await levelAPI.getByLanguage(selectedLanguageId);
+        const res = await levelAPI.getByLanguage(selectedLanguageId, { moduleType: 'listening' });
         if (res.data.success) setLevelsList(res.data.data.levels || []);
       } catch (err) {
         console.error('Error fetching levels:', err);

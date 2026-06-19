@@ -193,7 +193,7 @@ const Homework = () => {
   const fetchLevels = useCallback(async () => {
     if (!selectedLanguageId) return;
     try {
-      const res = await levelAPI.getByLanguage(selectedLanguageId);
+      const res = await levelAPI.getByLanguage(selectedLanguageId, { moduleType: 'words' });
       if (res.data.success) {
         setLevelsList(res.data.data.levels);
         if (res.data.data.levels.length > 0) {

@@ -65,7 +65,7 @@ const VideoLessonFormModal = ({ editVideo, preset, onClose, onSaved }) => {
       setLevels([]);
       return;
     }
-    levelAPI.getByLanguage(form.languageId).then(res => {
+    levelAPI.getByLanguage(form.languageId, { moduleType: 'words' }).then(res => {
       if (res.data.success) setLevels(res.data.data.levels || []);
     });
   }, [form.languageId]);

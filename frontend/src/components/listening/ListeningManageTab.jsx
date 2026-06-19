@@ -44,7 +44,7 @@ const ListeningManageTab = ({ t }) => {
   const fetchLevels = async (languageId) => {
     setLoading(true);
     try {
-      const res = await levelAPI.getByLanguage(languageId);
+      const res = await levelAPI.getByLanguage(languageId, { moduleType: 'listening' });
       if (res.data.success) setLevels(res.data.data.levels);
     } catch (err) {
       console.error('Error fetching levels:', err);
@@ -116,7 +116,7 @@ const ListeningManageTab = ({ t }) => {
     e.preventDefault();
     if (!newLevel.trim() || !selectedLanguage) return;
     try {
-      const res = await levelAPI.create({ name: newLevel.trim(), languageId: selectedLanguage._id });
+      const res = await levelAPI.create({ name: newLevel.trim(), languageId: selectedLanguage._id, moduleType: 'listening' });
       if (res.data.success) {
         setNewLevel('');
         fetchLevels(selectedLanguage._id);

@@ -133,7 +133,7 @@ const SentencesPage = () => {
     if (!selectedLanguageId) return;
     const fetchLevels = async () => {
       try {
-        const res = await levelAPI.getByLanguage(selectedLanguageId);
+        const res = await levelAPI.getByLanguage(selectedLanguageId, { moduleType: 'sentences' });
         if (res.data.success) {
           setLevelsList(res.data.data.levels);
           if (res.data.data.levels.length > 0) {

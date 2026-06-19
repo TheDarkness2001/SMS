@@ -129,7 +129,7 @@ const VideoLessons = () => {
       setLevels([]);
       return;
     }
-    levelAPI.getByLanguage(selectedLanguageId).then(res => {
+    levelAPI.getByLanguage(selectedLanguageId, { moduleType: 'words' }).then(res => {
       if (res.data.success) setLevels(res.data.data.levels || []);
     }).catch(() => setLevels([]));
   }, [selectedLanguageId]);
@@ -315,7 +315,7 @@ const VideoLessons = () => {
   const loadManageLevels = async (langId) => {
     setManageLoading(true);
     try {
-      const res = await levelAPI.getByLanguage(langId);
+      const res = await levelAPI.getByLanguage(langId, { moduleType: 'words' });
       if (res.data.success) {
         const sorted = (res.data.data.levels || []).sort((a, b) =>
           (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
@@ -334,7 +334,7 @@ const VideoLessons = () => {
     const name = newLevelName.trim();
     if (!name) return;
     try {
-      await levelAPI.create({ name, languageId: manageLanguage._id });
+      await levelAPI.create({ name, languageId: manageLanguage._id, moduleType: 'words' });
       setNewLevelName('');
       loadManageLevels(manageLanguage._id);
     } catch (e) {
@@ -415,7 +415,7 @@ const VideoLessons = () => {
     setPermView('levels');
     setPermLoading(true);
     try {
-      const res = await levelAPI.getByLanguage(lang._id);
+      const res = await levelAPI.getByLanguage(lang._id, { moduleType: 'words' });
       if (res.data.success) {
         const sorted = (res.data.data.levels || []).sort((a, b) =>
           (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
