@@ -46,7 +46,7 @@ const levelSchema = new mongoose.Schema({
   },
   moduleType: {
     type: String,
-    enum: ['words', 'sentences', 'listening'],
+    enum: [null, 'words', 'sentences', 'listening'],
     default: null
   },
   createdAt: {
