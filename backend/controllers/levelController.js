@@ -1,7 +1,7 @@
 const Level = require('../models/Level');
 const Lesson = require('../models/Lesson');
 const ExamGroup = require('../models/ExamGroup');
-const { VALID_LESSON_TYPES, buildModuleTypeFilter } = require('../utils/lessonTypes');
+const { VALID_LESSON_TYPES, buildModuleTypeFilter, filterLevelsForModule, resolveScopedLevelDelete } = require('../utils/lessonTypes');
 const {
   deleteLessonsForLevelByType,
   deleteLessonsForLanguageByType,
@@ -19,7 +19,8 @@ exports.getLevelsByLanguage = async (req, res) => {
     const isStudent = req.userType === 'student' || userRole === 'student';
 
     const filter = { languageId, ...buildModuleTypeFilter(moduleType) };
-    const levels = await Level.find(filter).sort({ name: 1 }).lean();
+    let levels = await Level.find(filter).sort({ name: 1 }).lean();
+    levels = await filterLevelsForModule(levels, moduleType || 'words');
 
     // For students, compute per-level unlock status based on their groups
     if (isStudent && userId) {
@@ -168,29 +169,33 @@ exports.deleteLevel = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid lesson type' });
       }
 
-      if (level.moduleType === lessonType) {
-        const result = await softDeleteLevelById(id, deleteOptions);
-        if (!result) {
-          return res.status(404).json({ success: false, message: 'Level not found' });
+      const result = await resolveScopedLevelDelete(
+        level,
+        lessonType,
+        deleteOptions,
+        {
+          softDeleteLevelById,
+          softDeleteLessonsForLevelByType: deleteLessonsForLevelByType
         }
+      );
+
+      if (result?.retagged) {
         return res.json({
           success: true,
-          message: 'Level moved to Recycle Bin',
+          message: `Level removed from ${lessonType} module`,
           data: {
-            deletedLessons: result.deletedLessons,
-            recycleBinId: result.levelEntry?._id,
-            movedToRecycleBin: true
+            retagged: true,
+            moduleType: result.moduleType
           }
         });
       }
 
-      const result = await deleteLessonsForLevelByType(id, lessonType, deleteOptions);
       return res.json({
         success: true,
         message: `${lessonType} content moved to Recycle Bin`,
         data: {
-          deletedLessons: result.deletedCount,
-          recycleBinId: getPrimaryRecycleId(result.recycleEntries),
+          deletedLessons: result?.deletedCount ?? result?.deletedLessons ?? 0,
+          recycleBinId: result?.levelEntry?._id || getPrimaryRecycleId(result?.recycleEntries),
           movedToRecycleBin: true
         }
       });

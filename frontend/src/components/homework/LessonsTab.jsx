@@ -199,6 +199,10 @@ const LessonsTab = ({ t, mode = 'words' }) => {
         { t }
       );
       fetchLevels(selectedLanguage._id);
+      if (res.data?.data?.retagged) {
+        toast.success(t('homework.levelRemovedFromModule') || 'Level removed from this module');
+        return;
+      }
       showMovedToRecycleBin(
         toast,
         recycleBinAPI,
