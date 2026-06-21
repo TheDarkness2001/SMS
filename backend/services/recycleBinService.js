@@ -34,19 +34,22 @@ function getCollectionName(Model) {
   return Model.collection.collectionName;
 }
 
+const MASS_DELETE_CONFIRM_THRESHOLD = 20;
+const MASS_DELETE_FORCE_THRESHOLD = 200;
+
 function getDeletedBy(options = {}) {
   return options.deletedBy || options.user?.email || options.user?.name || options.user?.id || 'system';
 }
 
 function validateMassDelete(count, options = {}) {
-  if (count > 100 && !options.force) {
-    const error = new Error('More than 100 records would be affected. Pass force=true to continue.');
+  if (count > MASS_DELETE_FORCE_THRESHOLD && !options.force) {
+    const error = new Error(`More than ${MASS_DELETE_FORCE_THRESHOLD} records would be affected. Pass force=true to continue.`);
     error.code = 'MASS_DELETE_BLOCKED';
     error.statusCode = 400;
     throw error;
   }
-  if (count > 20 && options.confirmText !== 'DELETE') {
-    const error = new Error('Type DELETE to confirm deleting more than 20 records.');
+  if (count > MASS_DELETE_CONFIRM_THRESHOLD && options.confirmText !== 'DELETE') {
+    const error = new Error(`Type DELETE to confirm deleting more than ${MASS_DELETE_CONFIRM_THRESHOLD} records.`);
     error.code = 'CONFIRMATION_REQUIRED';
     error.statusCode = 400;
     throw error;

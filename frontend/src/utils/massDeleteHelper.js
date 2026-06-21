@@ -19,7 +19,7 @@ export async function executeDelete(apiFn, baseParams = {}, options = {}) {
       } catch (err2) {
         if (err2.response?.data?.code === 'MASS_DELETE_BLOCKED') {
           const ok = window.confirm(
-            t?.('recycleBin.forceConfirm') || 'More than 100 records would be affected. Continue anyway?'
+            t?.('recycleBin.forceConfirm') || 'More than 200 records would be affected. Continue anyway?'
           );
           if (!ok) throw err2;
           return await run({ confirmText: 'DELETE', force: true });
@@ -30,7 +30,7 @@ export async function executeDelete(apiFn, baseParams = {}, options = {}) {
 
     if (code === 'MASS_DELETE_BLOCKED') {
       const ok = window.confirm(
-        t?.('recycleBin.forceConfirm') || 'More than 100 records would be affected. Continue anyway?'
+        t?.('recycleBin.forceConfirm') || 'More than 200 records would be affected. Continue anyway?'
       );
       if (!ok) throw err;
       return await run({ confirmText: 'DELETE', force: true });

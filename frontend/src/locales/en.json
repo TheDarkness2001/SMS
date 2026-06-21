@@ -127,7 +127,7 @@
     "confirmPurge": "Confirm",
     "purgeWarning": "This removes the item from the Recycle Bin view. A snapshot is still kept.",
     "typeDeleteConfirm": "Type DELETE to confirm permanent removal",
-    "forceConfirm": "More than 100 records would be affected. Continue anyway?",
+    "forceConfirm": "More than 200 records would be affected. Continue anyway?",
     "moved": "Item moved to Recycle Bin",
     "restored": "Restored from Recycle Bin",
     "undo": "Undo"

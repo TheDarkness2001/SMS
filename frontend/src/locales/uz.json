@@ -123,7 +123,7 @@
     "confirmPurge": "Tasdiqlash",
     "purgeWarning": "Bu element Chiqindilar qutisidan olib tashlanadi. Snapshot saqlanadi.",
     "typeDeleteConfirm": "Butunlay o'chirish uchun DELETE yozing",
-    "forceConfirm": "100 dan ortiq yozuv ta'sirlanadi. Davom etilsinmi?",
+    "forceConfirm": "200 dan ortiq yozuv ta'sirlanadi. Davom etilsinmi?",
     "moved": "Element Chiqindilar qutisiga ko'chirildi",
     "restored": "Chiqindilar qutisidan tiklandi",
     "undo": "Bekor qilish"
