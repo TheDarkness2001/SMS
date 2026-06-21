@@ -18,7 +18,13 @@ const languageSchema = new mongoose.Schema({
   }
 });
 
-languageSchema.index({ name: 1, moduleType: 1 }, { unique: true });
+languageSchema.index(
+  { name: 1, moduleType: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isDeleted: { $ne: true } }
+  }
+);
 
 languageSchema.plugin(softDeletePlugin);
 

@@ -16,6 +16,13 @@ const connectDB = async () => {
     } else {
       console.log('✅ Local MongoDB connected successfully');
     }
+
+    try {
+      const ensureContentIndexes = require('../utils/ensureContentIndexes');
+      await ensureContentIndexes();
+    } catch (indexError) {
+      console.error('⚠️  Content index sync warning:', indexError.message);
+    }
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
     
@@ -32,6 +39,12 @@ const connectDB = async () => {
           useUnifiedTopology: true
         });
         console.log('✅ In-memory MongoDB connected successfully');
+        try {
+          const ensureContentIndexes = require('../utils/ensureContentIndexes');
+          await ensureContentIndexes();
+        } catch (indexError) {
+          console.error('⚠️  Content index sync warning:', indexError.message);
+        }
       } catch (memError) {
         console.error('❌ Failed to connect to any MongoDB instance:', memError.message);
         process.exit(1);

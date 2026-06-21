@@ -56,7 +56,13 @@ const levelSchema = new mongoose.Schema({
 });
 
 levelSchema.index({ languageId: 1, name: 1 });
-levelSchema.index({ languageId: 1, name: 1, moduleType: 1 }, { unique: true });
+levelSchema.index(
+  { languageId: 1, name: 1, moduleType: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isDeleted: { $ne: true } }
+  }
+);
 
 levelSchema.plugin(softDeletePlugin);
 

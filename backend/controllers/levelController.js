@@ -80,8 +80,22 @@ exports.createLevel = async (req, res) => {
       });
     }
 
+    const normalizedName = name.trim();
+    const existing = await Level.findOne({
+      languageId,
+      name: normalizedName,
+      moduleType,
+      isDeleted: { $ne: true }
+    });
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: `A level named "${normalizedName}" already exists in the ${moduleType} module for this language`
+      });
+    }
+
     const level = new Level({
-      name: name.trim(),
+      name: normalizedName,
       languageId,
       moduleType,
       classesCount: classesCount || 11,
@@ -95,7 +109,7 @@ exports.createLevel = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'A level with this name already exists for this language in this module'
+        message: 'Could not create level. If this persists, restart the server so database indexes can update.'
       });
     }
     console.error('Create level error:', error);

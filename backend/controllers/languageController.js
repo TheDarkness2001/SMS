@@ -35,14 +35,28 @@ exports.createLanguage = async (req, res) => {
         message: 'moduleType is required (words, sentences, or listening)'
       });
     }
-    const language = new Language({ name: name.trim(), moduleType });
+
+    const normalizedName = name.trim();
+    const existing = await Language.findOne({
+      name: normalizedName,
+      moduleType,
+      isDeleted: { $ne: true }
+    });
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: `A language named "${normalizedName}" already exists in the ${moduleType} module`
+      });
+    }
+
+    const language = new Language({ name: normalizedName, moduleType });
     await language.save();
     res.status(201).json({ success: true, message: 'Language created', data: { language } });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'A language with this name already exists in this module'
+        message: 'Could not create language. If this persists, restart the server so database indexes can update.'
       });
     }
     console.error('Create language error:', error);
