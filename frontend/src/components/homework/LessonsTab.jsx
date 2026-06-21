@@ -134,7 +134,12 @@ const LessonsTab = ({ t, mode = 'words' }) => {
       setNewLanguage('');
       fetchLanguages();
     } catch (err) {
-      alert(err.response?.data?.message || 'Error creating language');
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Error creating language';
+      alert(msg);
     }
   };
 

@@ -4,11 +4,27 @@ const {
   buildModuleTypeFilter,
   filterLanguagesForModule
 } = require('../utils/lessonTypes');
+const ensureContentIndexes = require('../utils/ensureContentIndexes');
 const {
   resolveScopedLanguageDelete,
   softDeleteLanguageById
 } = require('../services/recycleBinService');
 const { getDeleteOptions, getPrimaryRecycleId } = require('../utils/deleteHelpers');
+
+function sendCreateLanguageError(res, error) {
+  if (error.code === 11000) {
+    const dupValue = error.keyValue?.name || 'this name';
+    return res.status(409).json({
+      success: false,
+      message: `Could not create "${dupValue}". A legacy database index may still be blocking separate modules. Restart the server once, then try again.`,
+      code: 'DUPLICATE_LANGUAGE'
+    });
+  }
+
+  const message = error.message || 'Server error while creating language';
+  console.error('Create language error:', error);
+  return res.status(500).json({ success: false, message, error: message });
+}
 
 exports.getAllLanguages = async (req, res) => {
   try {
@@ -49,18 +65,37 @@ exports.createLanguage = async (req, res) => {
       });
     }
 
+    const deletedMatch = await Language.findOne({ name: normalizedName, moduleType })
+      .setOptions({ includeDeleted: true });
+    if (deletedMatch?.isDeleted) {
+      deletedMatch.isDeleted = false;
+      deletedMatch.deletedAt = null;
+      deletedMatch.deletedBy = null;
+      await deletedMatch.save();
+      return res.status(201).json({
+        success: true,
+        message: 'Language restored',
+        data: { language: deletedMatch, restored: true }
+      });
+    }
+
     const language = new Language({ name: normalizedName, moduleType });
     await language.save();
     res.status(201).json({ success: true, message: 'Language created', data: { language } });
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: 'Could not create language. If this persists, restart the server so database indexes can update.'
-      });
+      try {
+        await ensureContentIndexes();
+        const normalizedName = req.body.name?.trim();
+        const moduleType = req.body.moduleType;
+        const language = new Language({ name: normalizedName, moduleType });
+        await language.save();
+        return res.status(201).json({ success: true, message: 'Language created', data: { language } });
+      } catch (retryError) {
+        return sendCreateLanguageError(res, retryError);
+      }
     }
-    console.error('Create language error:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return sendCreateLanguageError(res, error);
   }
 };
 
