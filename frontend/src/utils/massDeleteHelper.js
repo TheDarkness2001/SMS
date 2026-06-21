@@ -1,14 +1,21 @@
 export async function executeDelete(apiFn, baseParams = {}, options = {}) {
-  const { t } = options;
+  const { t, skipTypeDelete = false } = options;
 
   const run = (extra = {}) => apiFn({ ...baseParams, ...extra });
 
+  const initialParams = skipTypeDelete ? {} : { confirmText: 'DELETE' };
+
   try {
-    return await run();
+    return await run(initialParams);
   } catch (err) {
     const code = err.response?.data?.code;
+    const message = err.response?.data?.message || '';
 
-    if (code === 'CONFIRMATION_REQUIRED') {
+    const needsTypedConfirm =
+      !skipTypeDelete &&
+      (code === 'CONFIRMATION_REQUIRED' || message.includes('Type DELETE'));
+
+    if (needsTypedConfirm) {
       const typed = window.prompt(
         t?.('recycleBin.typeDeleteConfirm') || 'More than 20 records will be affected. Type DELETE to continue.'
       );
@@ -38,4 +45,8 @@ export async function executeDelete(apiFn, baseParams = {}, options = {}) {
 
     throw err;
   }
+}
+
+export function getApiErrorMessage(err, fallback = 'Request failed') {
+  return err.response?.data?.message || err.response?.data?.error || err.message || fallback;
 }

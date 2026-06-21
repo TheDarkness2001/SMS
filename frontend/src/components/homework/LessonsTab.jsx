@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { languageAPI, levelAPI, lessonAPI, homeworkAPI, sentenceAPI, uploadAPI, recycleBinAPI } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import { showMovedToRecycleBin } from '../../utils/recycleBinUndo';
-import { executeDelete } from '../../utils/massDeleteHelper';
+import { executeDelete, getApiErrorMessage } from '../../utils/massDeleteHelper';
 
 const LessonsTab = ({ t, mode = 'words' }) => {
   const toast = useToast();
@@ -166,7 +166,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
         fetchLanguages
       );
     } catch (err) {
-      alert(err.response?.data?.message || 'Error deleting language');
+      alert(getApiErrorMessage(err, 'Error deleting language'));
     }
   };
 
@@ -220,7 +220,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
         () => fetchLevels(selectedLanguage._id)
       );
     } catch (err) {
-      alert(err.response?.data?.message || 'Error deleting level');
+      alert(getApiErrorMessage(err, 'Error deleting level'));
     }
   };
 
@@ -271,7 +271,11 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   const handleDeleteLesson = async (id) => {
     if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
     try {
-      const res = await lessonAPI.deleteLesson(id);
+      const res = await executeDelete(
+        (params) => lessonAPI.deleteLesson(id, params),
+        {},
+        { t }
+      );
       fetchLessons(selectedLevel._id);
       showMovedToRecycleBin(
         toast,
@@ -281,7 +285,7 @@ const LessonsTab = ({ t, mode = 'words' }) => {
         () => fetchLessons(selectedLevel._id)
       );
     } catch (err) {
-      alert(err.response?.data?.message || 'Error deleting lesson');
+      alert(getApiErrorMessage(err, 'Error deleting lesson'));
     }
   };
 
