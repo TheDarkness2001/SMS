@@ -2,19 +2,22 @@ const RecycleBin = require('../models/RecycleBin');
 const Snapshot = require('../models/Snapshot');
 const {
   restoreRecycleEntry,
-  purgeRecycleEntry
+  purgeRecycleEntry,
+  buildRecycleBinFilter,
+  toggleRecycleImportant,
+  purgeAllRecycleEntries
 } = require('../services/recycleBinService');
 const { getDeleteOptions } = require('../utils/deleteHelpers');
 
 exports.listRecycleBin = async (req, res) => {
   try {
-    const { includePurged } = req.query;
-    const filter = { restoredAt: null };
-    if (includePurged !== 'true') {
-      filter.purgedAt = null;
+    const { includePurged, type, language, search, importantOnly } = req.query;
+    const filter = buildRecycleBinFilter({ type, language, search, importantOnly });
+    if (includePurged === 'true') {
+      delete filter.purgedAt;
     }
 
-    const items = await RecycleBin.find(filter).sort({ deletedAt: -1 }).lean();
+    const items = await RecycleBin.find(filter).sort({ isImportant: -1, deletedAt: -1 }).lean();
     res.json({ success: true, count: items.length, data: { items } });
   } catch (error) {
     console.error('List recycle bin error:', error);
@@ -63,6 +66,48 @@ exports.purgeItem = async (req, res) => {
     });
   } catch (error) {
     console.error('Purge recycle bin item error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Server error'
+    });
+  }
+};
+
+exports.purgeAll = async (req, res) => {
+  try {
+    const { confirmText, force, type, language, search, importantOnly } = req.body;
+    const result = await purgeAllRecycleEntries(
+      { type, language, search, importantOnly },
+      { ...getDeleteOptions(req), confirmText, force: force === true || force === 'true' }
+    );
+    res.json({
+      success: true,
+      message: `Permanently removed ${result.count} item(s) from Recycle Bin (snapshots retained)`,
+      data: { count: result.count }
+    });
+  } catch (error) {
+    console.error('Purge all recycle bin error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Server error',
+      code: error.code
+    });
+  }
+};
+
+exports.toggleImportant = async (req, res) => {
+  try {
+    const { isImportant } = req.body;
+    const entry = await toggleRecycleImportant(req.params.id, {
+      isImportant: typeof isImportant === 'boolean' ? isImportant : undefined
+    });
+    res.json({
+      success: true,
+      message: entry.isImportant ? 'Marked as important' : 'Removed important mark',
+      data: { item: entry }
+    });
+  } catch (error) {
+    console.error('Toggle recycle bin important error:', error);
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || 'Server error'

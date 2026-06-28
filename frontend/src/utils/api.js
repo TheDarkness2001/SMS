@@ -461,6 +461,8 @@ export const recycleBinAPI = {
   list: (params) => api.get('/admin/recycle-bin', { params }),
   restore: (id) => api.post(`/admin/recycle-bin/restore/${id}`),
   purge: (id, data) => api.post(`/admin/recycle-bin/purge/${id}`, data),
+  purgeAll: (data) => api.post('/admin/recycle-bin/purge-all', data),
+  toggleImportant: (id, data) => api.post(`/admin/recycle-bin/important/${id}`, data || {}),
   snapshots: (params) => api.get('/admin/recycle-bin/snapshots', { params })
 };
 

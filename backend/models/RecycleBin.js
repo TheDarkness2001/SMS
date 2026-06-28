@@ -33,7 +33,8 @@ const recycleBinSchema = new mongoose.Schema({
   restoredAt: { type: Date, default: null },
   restoredBy: { type: String, default: null },
   purgedAt: { type: Date, default: null },
-  purgedBy: { type: String, default: null }
+  purgedBy: { type: String, default: null },
+  isImportant: { type: Boolean, default: false, index: true }
 });
 
 recycleBinSchema.index({ restoredAt: 1, purgedAt: 1 });

@@ -3,7 +3,11 @@
 }
 
 .recycle-bin-header {
-  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .recycle-bin-header h1 {
@@ -12,6 +16,69 @@
 
 .recycle-bin-header p {
   margin: 0;
+  color: #64748b;
+}
+
+.recycle-bin-delete-all-btn {
+  flex-shrink: 0;
+}
+
+.recycle-bin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.recycle-bin-search {
+  flex: 1 1 180px;
+  min-width: 160px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.recycle-bin-filter-select {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  min-width: 140px;
+}
+
+.recycle-bin-important-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.recycle-bin-bulk-purge {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #991b1b;
+}
+
+.recycle-bin-bulk-purge p {
+  margin: 0 0 10px;
+}
+
+.recycle-bin-count {
+  margin-bottom: 10px;
+  font-size: 14px;
   color: #64748b;
 }
 
@@ -49,6 +116,40 @@
   color: #475569;
 }
 
+.recycle-bin-col-important {
+  width: 44px;
+  text-align: center;
+}
+
+.recycle-bin-star-btn {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #cbd5e1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.recycle-bin-star-btn:hover {
+  color: #f59e0b;
+  background: #fffbeb;
+}
+
+.recycle-bin-star-btn.is-important {
+  color: #f59e0b;
+}
+
+.recycle-bin-row-important {
+  background: #fffbeb;
+}
+
+.recycle-bin-row-important:hover {
+  background: #fef3c7;
+}
+
 .recycle-bin-actions {
   display: flex;
   flex-wrap: wrap;
@@ -68,4 +169,14 @@
   padding: 6px 8px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .recycle-bin-header {
+    flex-direction: column;
+  }
+
+  .recycle-bin-delete-all-btn {
+    width: 100%;
+  }
 }

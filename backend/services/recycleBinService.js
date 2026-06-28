@@ -426,6 +426,61 @@ async function purgeRecycleEntry(recycleBinId, options = {}) {
   return entry;
 }
 
+function buildRecycleBinFilter(params = {}) {
+  const { type, language, search, importantOnly } = params;
+  const filter = { restoredAt: null, purgedAt: null };
+
+  if (type && type !== 'all') {
+    filter.$or = [{ displayType: type }, { collectionName: type }];
+  }
+  if (language && language !== 'all') {
+    filter.languageName = language;
+  }
+  if (importantOnly === true || importantOnly === 'true') {
+    filter.isImportant = true;
+  }
+  if (search && String(search).trim()) {
+    filter.displayName = { $regex: String(search).trim(), $options: 'i' };
+  }
+
+  return filter;
+}
+
+async function toggleRecycleImportant(recycleBinId, options = {}) {
+  const entry = await RecycleBin.findById(recycleBinId);
+  if (!entry) {
+    const error = new Error('Recycle bin entry not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  if (entry.restoredAt || entry.purgedAt) {
+    const error = new Error('This item cannot be marked as important');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (typeof options.isImportant === 'boolean') {
+    entry.isImportant = options.isImportant;
+  } else {
+    entry.isImportant = !entry.isImportant;
+  }
+  await entry.save();
+  return entry;
+}
+
+async function purgeAllRecycleEntries(params = {}, options = {}) {
+  const filter = buildRecycleBinFilter(params);
+  const entries = await RecycleBin.find(filter).select('_id').lean();
+  validateMassDelete(entries.length, options);
+
+  const purged = [];
+  for (const entry of entries) {
+    purged.push(await purgeRecycleEntry(entry._id, options));
+  }
+
+  return { count: purged.length, purged };
+}
+
 async function snapshotBeforeUpdate(Model, doc, updatedBy) {
   if (!doc) return null;
   return createSnapshot(Model, doc, 'update', updatedBy);
@@ -462,5 +517,8 @@ module.exports = {
   softDeleteLessonsForLanguageByType,
   restoreRecycleEntry,
   purgeRecycleEntry,
+  buildRecycleBinFilter,
+  toggleRecycleImportant,
+  purgeAllRecycleEntries,
   registerUpdateSnapshotHooks
 };

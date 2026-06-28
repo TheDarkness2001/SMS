@@ -10,5 +10,7 @@ router.get('/', recycleBinController.listRecycleBin);
 router.get('/snapshots', recycleBinController.listSnapshots);
 router.post('/restore/:id', recycleBinController.restoreItem);
 router.post('/purge/:id', recycleBinController.purgeItem);
+router.post('/purge-all', recycleBinController.purgeAll);
+router.post('/important/:id', recycleBinController.toggleImportant);
 
 module.exports = router;
