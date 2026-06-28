@@ -120,8 +120,18 @@ exports.createLevel = async (req, res) => {
 exports.updateLevel = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
-    const level = await Level.findByIdAndUpdate(id, { name: name?.trim() }, { new: true });
+    const { name, classesCount, wordsPerClass, minPassScore } = req.body;
+    const updates = {};
+    if (name !== undefined) updates.name = String(name).trim();
+    if (classesCount !== undefined) updates.classesCount = Math.max(1, parseInt(classesCount, 10) || 11);
+    if (wordsPerClass !== undefined) updates.wordsPerClass = Math.max(1, parseInt(wordsPerClass, 10) || 20);
+    if (minPassScore !== undefined) {
+      updates.minPassScore = Math.min(100, Math.max(1, parseInt(minPassScore, 10) || 70));
+    }
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+    const level = await Level.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
     if (!level) return res.status(404).json({ success: false, message: 'Level not found' });
     res.json({ success: true, message: 'Level updated', data: { level } });
   } catch (error) {

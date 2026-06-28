@@ -30,6 +30,13 @@ const LessonsTab = ({ t, mode = 'words' }) => {
     wordsPerClass: 20,
     minPassScore: 70
   });
+  const [editingLevelId, setEditingLevelId] = useState(null);
+  const [editingLevelForm, setEditingLevelForm] = useState({
+    name: '',
+    classesCount: 11,
+    wordsPerClass: 20,
+    minPassScore: 70
+  });
   const [lessonForm, setLessonForm] = useState({ name: '', order: 1, minPassScore: 70, maxWords: 20 });
   const [editingLesson, setEditingLesson] = useState(null);
   const [newItem, setNewItem] = useState({ english: '', uzbek: '' });
@@ -221,6 +228,40 @@ const LessonsTab = ({ t, mode = 'words' }) => {
       );
     } catch (err) {
       alert(getApiErrorMessage(err, 'Error deleting level'));
+    }
+  };
+
+  const startEditLevel = (lvl) => {
+    setEditingLevelId(lvl._id);
+    setEditingLevelForm({
+      name: lvl.name,
+      classesCount: lvl.classesCount || 11,
+      wordsPerClass: lvl.wordsPerClass || 20,
+      minPassScore: lvl.minPassScore || 70
+    });
+  };
+
+  const cancelEditLevel = () => {
+    setEditingLevelId(null);
+    setEditingLevelForm({ name: '', classesCount: 11, wordsPerClass: 20, minPassScore: 70 });
+  };
+
+  const handleUpdateLevel = async (id) => {
+    if (!editingLevelForm.name.trim()) return;
+    try {
+      const payload = {
+        name: editingLevelForm.name.trim(),
+        classesCount: parseInt(editingLevelForm.classesCount, 10) || 11,
+        minPassScore: parseInt(editingLevelForm.minPassScore, 10) || 70
+      };
+      if (!isSentences) {
+        payload.wordsPerClass = parseInt(editingLevelForm.wordsPerClass, 10) || 20;
+      }
+      await levelAPI.update(id, payload);
+      cancelEditLevel();
+      fetchLevels(selectedLanguage._id);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error updating level');
     }
   };
 
@@ -691,25 +732,103 @@ const LessonsTab = ({ t, mode = 'words' }) => {
                 <div className="no-data">{t('homework.noLevels') || 'No levels yet.'}</div>
               ) : (
                 levels.map(lvl => (
-                  <div key={lvl._id} className="hierarchy-card" onClick={() => selectLevel(lvl)}>
+                  <div
+                    key={lvl._id}
+                    className="hierarchy-card"
+                    onClick={() => editingLevelId !== lvl._id && selectLevel(lvl)}
+                  >
                     <div className="hierarchy-icon">📚</div>
                     <div className="hierarchy-info">
-                      <h4>{lvl.name}</h4>
-                      <span className="hierarchy-meta">
-                        {lvl.classesCount || 11} {t('homework.classes') || 'classes'}
-                        {!isSentences && (
-                          <> · {lvl.wordsPerClass || 20} {t('homework.wordsPerClassShort') || 'words/class'}</>
-                        )}
-                        {' · '}{lvl.minPassScore || 70}%
-                      </span>
+                      {editingLevelId === lvl._id ? (
+                        <div className="level-edit-inline" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={editingLevelForm.name}
+                            onChange={(e) => setEditingLevelForm({ ...editingLevelForm, name: e.target.value })}
+                            autoFocus
+                          />
+                          <div className="level-form-config level-edit-config">
+                            <div className="config-field">
+                              <span className="config-label">{t('homework.classesCount') || 'Classes'}</span>
+                              <input
+                                type="number"
+                                value={editingLevelForm.classesCount}
+                                onChange={(e) => setEditingLevelForm({ ...editingLevelForm, classesCount: e.target.value })}
+                                className="config-input"
+                                min="1"
+                              />
+                            </div>
+                            {!isSentences && (
+                              <div className="config-field">
+                                <span className="config-label">{t('homework.wordsPerClassShort') || 'Words/class'}</span>
+                                <input
+                                  type="number"
+                                  value={editingLevelForm.wordsPerClass}
+                                  onChange={(e) => setEditingLevelForm({ ...editingLevelForm, wordsPerClass: e.target.value })}
+                                  className="config-input"
+                                  min="1"
+                                />
+                              </div>
+                            )}
+                            <div className="config-field">
+                              <span className="config-label">{t('homework.passScore') || 'Pass %'}</span>
+                              <input
+                                type="number"
+                                value={editingLevelForm.minPassScore}
+                                onChange={(e) => setEditingLevelForm({ ...editingLevelForm, minPassScore: e.target.value })}
+                                className="config-input"
+                                min="1"
+                                max="100"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <h4>{lvl.name}</h4>
+                          <span className="hierarchy-meta">
+                            {lvl.classesCount || 11} {t('homework.classes') || 'classes'}
+                            {!isSentences && (
+                              <> · {lvl.wordsPerClass || 20} {t('homework.wordsPerClassShort') || 'words/class'}</>
+                            )}
+                            {' · '}{lvl.minPassScore || 70}%
+                          </span>
+                        </>
+                      )}
                     </div>
                     <div className="hierarchy-actions">
-                      <button
-                        className="btn btn-small btn-delete"
-                        onClick={(e) => { e.stopPropagation(); handleDeleteLevel(lvl._id); }}
-                      >
-                        {t('homework.delete') || 'Delete'}
-                      </button>
+                      {editingLevelId === lvl._id ? (
+                        <>
+                          <button
+                            className="btn btn-small btn-primary"
+                            onClick={(e) => { e.stopPropagation(); handleUpdateLevel(lvl._id); }}
+                          >
+                            {t('homework.save') || 'Save'}
+                          </button>
+                          <button
+                            className="btn btn-small btn-secondary"
+                            onClick={(e) => { e.stopPropagation(); cancelEditLevel(); }}
+                          >
+                            {t('homework.cancel') || 'Cancel'}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className="btn btn-small btn-edit"
+                            onClick={(e) => { e.stopPropagation(); startEditLevel(lvl); }}
+                          >
+                            {t('homework.edit') || 'Edit'}
+                          </button>
+                          <button
+                            className="btn btn-small btn-delete"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteLevel(lvl._id); }}
+                          >
+                            {t('homework.delete') || 'Delete'}
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))

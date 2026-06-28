@@ -598,6 +598,21 @@
   border: 1px solid #f1f5f9;
 }
 
+.level-edit-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.level-edit-inline .form-input {
+  max-width: 280px;
+}
+
+.level-edit-config {
+  padding: 8px 10px;
+}
+
 .config-field {
   display: flex;
   align-items: center;
