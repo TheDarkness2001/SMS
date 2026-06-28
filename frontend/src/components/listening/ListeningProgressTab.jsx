@@ -187,7 +187,7 @@ const ListeningProgressTab = ({ t }) => {
                       <div className="progress-group-subject">{group.subjectName}</div>
                     </div>
                   </div>
-                  <div className="progress-group-filter" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <div className="progress-group-filter">
                     <select
                       className="group-lesson-select"
                       value={selectedLevelId}
