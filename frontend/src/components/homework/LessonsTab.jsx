@@ -310,7 +310,12 @@ const LessonsTab = ({ t, mode = 'words' }) => {
   };
 
   const handleDeleteLesson = async (id) => {
-    if (!window.confirm(t('homework.confirmDelete') || 'Are you sure?')) return;
+    const confirmKey = isSentences
+      ? 'homework.confirmDeleteLessonSentences'
+      : 'homework.confirmDeleteLesson';
+    if (!window.confirm(
+      t(confirmKey) || 'Delete this entire class and all content inside? This cannot be undone from here except via Recycle Bin.'
+    )) return;
     try {
       const res = await executeDelete(
         (params) => lessonAPI.deleteLesson(id, params),

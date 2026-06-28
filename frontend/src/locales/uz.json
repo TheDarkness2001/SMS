@@ -293,6 +293,8 @@
     "class": "Sinf",
     "languages": "Tillar",
     "confirmDelete": "Buni o'chirishni xohlaysizmi?",
+    "confirmDeleteLesson": "Butun sinf va ichidagi barcha so'zlarni o'chirish?",
+    "confirmDeleteLessonSentences": "Butun sinf va ichidagi barcha gaplarni o'chirish?",
     "confirmDeleteLevelWords": "Faqat SO'ZLAR kontentini o'chirish? Gaplar va tinglash o'chirilmaydi.",
     "confirmDeleteLevelSentences": "Faqat GAPLAR kontentini o'chirish? So'zlar va tinglash o'chirilmaydi.",
     "confirmDeleteLanguageWords": "Faqat SO'ZLAR kontentini o'chirish? Gaplar va tinglash o'chirilmaydi.",

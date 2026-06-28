@@ -42,6 +42,7 @@ function getDeletedBy(options = {}) {
 }
 
 function validateMassDelete(count, options = {}) {
+  if (!count || options.cascadeDelete || options.bypassMassDeleteGuard) return;
   if (count > MASS_DELETE_FORCE_THRESHOLD && !options.force) {
     const error = new Error(`More than ${MASS_DELETE_FORCE_THRESHOLD} records would be affected. Pass force=true to continue.`);
     error.code = 'MASS_DELETE_BLOCKED';
@@ -112,6 +113,84 @@ async function resolveDisplayMeta(Model, doc) {
   return { displayName, displayType, languageName };
 }
 
+async function resolveBulkDisplayMeta(Model, docs) {
+  const collectionName = getCollectionName(Model);
+  const languageByLessonId = new Map();
+
+  if (['sentences', 'words', 'listeningexercises'].includes(collectionName)) {
+    const lessonIds = [...new Set(docs.map((doc) => doc.lessonId?.toString()).filter(Boolean))];
+    if (lessonIds.length) {
+      const lessons = await Lesson.find({ _id: { $in: lessonIds } })
+        .populate({ path: 'levelId', populate: { path: 'languageId', select: 'name' } })
+        .lean();
+      for (const lesson of lessons) {
+        languageByLessonId.set(String(lesson._id), lesson.levelId?.languageId?.name || '');
+      }
+    }
+  }
+
+  return docs.map((doc) => {
+    const plainDoc = doc.toObject ? doc.toObject() : doc;
+    let displayName = plainDoc.name || plainDoc.title || plainDoc.english || String(plainDoc._id);
+    let displayType = collectionName;
+    let languageName = '';
+
+    if (collectionName === 'levels' && plainDoc.languageId) {
+      displayType = 'level';
+    } else if (collectionName === 'lessons') {
+      displayType = plainDoc.type || 'lesson';
+    } else if (collectionName === 'words') {
+      displayName = plainDoc.english || displayName;
+      displayType = 'word';
+      languageName = languageByLessonId.get(String(plainDoc.lessonId)) || '';
+    } else if (collectionName === 'sentences') {
+      displayName = plainDoc.english || displayName;
+      displayType = 'sentence';
+      languageName = languageByLessonId.get(String(plainDoc.lessonId)) || '';
+    } else if (collectionName === 'listeningexercises') {
+      displayName = plainDoc.title || displayName;
+      displayType = 'listening';
+      languageName = languageByLessonId.get(String(plainDoc.lessonId)) || '';
+    } else if (collectionName === 'languages') {
+      displayType = 'language';
+      languageName = plainDoc.name || '';
+    }
+
+    return { displayName, displayType, languageName, plainDoc };
+  });
+}
+
+async function softDeleteManyBulk(Model, activeDocs, options = {}) {
+  if (!activeDocs.length) return [];
+
+  const collectionName = getCollectionName(Model);
+  const deletedBy = getDeletedBy(options);
+  const cascadeGroupId = options.cascadeGroupId || (activeDocs.length > 1 ? randomUUID() : null);
+  const now = new Date();
+  const metas = await resolveBulkDisplayMeta(Model, activeDocs);
+
+  const recyclePayloads = metas.map(({ displayName, displayType, languageName, plainDoc }) => ({
+    originalId: plainDoc._id,
+    collectionName,
+    displayName,
+    displayType,
+    languageName,
+    data: plainDoc,
+    deletedAt: now,
+    deletedBy,
+    cascadeGroupId,
+    parentRecycleId: options.parentRecycleId || null
+  }));
+
+  const entries = await RecycleBin.insertMany(recyclePayloads);
+  await Model.updateMany(
+    { _id: { $in: activeDocs.map((doc) => doc._id) } },
+    { $set: { isDeleted: true, deletedAt: now, deletedBy } }
+  );
+
+  return entries;
+}
+
 async function archiveToRecycleBin(Model, doc, options = {}) {
   const collectionName = getCollectionName(Model);
   const meta = await resolveDisplayMeta(Model, doc);
@@ -153,31 +232,44 @@ async function softDeleteMany(Model, filter, options = {}) {
   const docs = await Model.find(filter).setOptions({ includeDeleted: true });
   const activeDocs = docs.filter((doc) => !doc.isDeleted);
   validateMassDelete(activeDocs.length, options);
+  if (!activeDocs.length) return [];
+
+  const cascadeGroupId = options.cascadeGroupId || (activeDocs.length > 1 ? randomUUID() : null);
+  const runOptions = { ...options, cascadeGroupId };
+
+  if (options.cascadeDelete || activeDocs.length > MASS_DELETE_CONFIRM_THRESHOLD) {
+    return softDeleteManyBulk(Model, activeDocs, runOptions);
+  }
 
   const entries = [];
-  const cascadeGroupId = options.cascadeGroupId || (activeDocs.length > 1 ? randomUUID() : null);
-
   for (const doc of activeDocs) {
-    const entry = await softDeleteDocument(Model, doc, { ...options, cascadeGroupId });
+    const entry = await softDeleteDocument(Model, doc, runOptions);
     if (entry) entries.push(entry);
   }
   return entries;
 }
 
 async function softDeleteLessonContent(lesson, options = {}) {
+  const cascadeOptions = { ...options, cascadeDelete: true };
   const entries = [];
 
   if (lesson.type === 'listening') {
-    entries.push(...await softDeleteMany(ListeningExercise, { lessonId: lesson._id }, options));
+    entries.push(...await softDeleteMany(ListeningExercise, { lessonId: lesson._id }, cascadeOptions));
   } else if (lesson.type === 'sentences') {
-    entries.push(...await softDeleteMany(Sentence, { lessonId: lesson._id }, options));
+    entries.push(...await softDeleteMany(Sentence, { lessonId: lesson._id }, cascadeOptions));
   } else {
     if (lesson.wordIds?.length) {
-      entries.push(...await softDeleteMany(Word, { _id: { $in: lesson.wordIds } }, options));
+      entries.push(...await softDeleteMany(Word, { _id: { $in: lesson.wordIds } }, cascadeOptions));
     }
-    const linkedWords = await Word.find({ lessonId: lesson._id });
-    if (linkedWords.length) {
-      entries.push(...await softDeleteMany(Word, { lessonId: lesson._id }, options));
+    const linkedWords = await Word.find({ lessonId: lesson._id }).setOptions({ includeDeleted: true });
+    const activeWords = linkedWords.filter((doc) => !doc.isDeleted);
+    if (activeWords.length) {
+      entries.push(...await softDeleteMany(Word, { lessonId: lesson._id }, cascadeOptions));
+    }
+    const linkedSentences = await Sentence.find({ lessonId: lesson._id }).setOptions({ includeDeleted: true });
+    const activeSentences = linkedSentences.filter((doc) => !doc.isDeleted);
+    if (activeSentences.length) {
+      entries.push(...await softDeleteMany(Sentence, { lessonId: lesson._id }, cascadeOptions));
     }
   }
 
@@ -187,8 +279,9 @@ async function softDeleteLessonContent(lesson, options = {}) {
 async function softDeleteLessonById(lessonId, options = {}) {
   const lesson = await Lesson.findByIdIncludingDeleted(lessonId);
   if (!lesson || lesson.isDeleted) return { lessonEntry: null, childEntries: [] };
-  const childEntries = await softDeleteLessonContent(lesson, options);
-  const lessonEntry = await softDeleteDocument(Lesson, lesson, options);
+  const cascadeGroupId = options.cascadeGroupId || randomUUID();
+  const childEntries = await softDeleteLessonContent(lesson, { ...options, cascadeGroupId });
+  const lessonEntry = await softDeleteDocument(Lesson, lesson, { ...options, cascadeGroupId, cascadeDelete: true });
   return { lessonEntry, childEntries };
 }
 
@@ -200,8 +293,8 @@ async function softDeleteLessonsByFilter(filter, options = {}) {
   const recycleEntries = [];
 
   for (const lesson of lessons) {
-    const childEntries = await softDeleteLessonContent(lesson, { ...options, cascadeGroupId });
-    const lessonEntry = await softDeleteDocument(Lesson, lesson, { ...options, cascadeGroupId });
+    const childEntries = await softDeleteLessonContent(lesson, { ...options, cascadeGroupId, cascadeDelete: true });
+    const lessonEntry = await softDeleteDocument(Lesson, lesson, { ...options, cascadeGroupId, cascadeDelete: true });
     recycleEntries.push(lessonEntry, ...childEntries);
     deletedCount += 1;
   }

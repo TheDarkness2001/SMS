@@ -297,14 +297,18 @@ exports.deleteLesson = async (req, res) => {
       });
     }
 
-    const result = await softDeleteLessonById(id, getDeleteOptions(req));
+    const result = await softDeleteLessonById(id, {
+      ...getDeleteOptions(req),
+      cascadeDelete: true
+    });
 
     res.json({
       success: true,
-      message: 'Class moved to Recycle Bin',
+      message: 'Class and all content moved to Recycle Bin',
       data: {
         recycleBinId: result.lessonEntry?._id,
-        movedToRecycleBin: true
+        movedToRecycleBin: true,
+        deletedItems: (result.childEntries?.length || 0) + (result.lessonEntry ? 1 : 0)
       }
     });
   } catch (error) {

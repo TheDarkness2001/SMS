@@ -297,6 +297,8 @@
     "class": "Class",
     "languages": "Languages",
     "confirmDelete": "Are you sure you want to delete this?",
+    "confirmDeleteLesson": "Delete this entire class and all words inside?",
+    "confirmDeleteLessonSentences": "Delete this entire class and all sentences inside?",
     "confirmDeleteLevelWords": "Delete only WORDS content for this level? Sentences and listening will NOT be deleted.",
     "levelRemovedFromModule": "Level removed from this module",
     "languageRemovedFromModule": "Language removed from this module",
