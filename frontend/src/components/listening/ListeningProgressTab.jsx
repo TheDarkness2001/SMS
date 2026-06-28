@@ -13,14 +13,15 @@ const StudentNameCell = ({ student }) => (
 );
 
 const ListeningProgressTab = ({ t }) => {
-  const [studentsProgress, setStudentsProgress] = useState({ groups: [], unassigned: { students: [] } });
+  const [studentsProgress, setStudentsProgress] = useState({ groups: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
   const [groupLevelSelection, setGroupLevelSelection] = useState({});
-  const [groupLevelStats, setGroupLevelStats] = useState({});
-  const [groupLevelLoading, setGroupLevelLoading] = useState({});
+  const [groupExerciseSelection, setGroupExerciseSelection] = useState({});
+  const [groupDetailStats, setGroupDetailStats] = useState({});
+  const [groupDetailLoading, setGroupDetailLoading] = useState({});
 
   useEffect(() => {
     fetchProgress();
@@ -43,27 +44,51 @@ const ListeningProgressTab = ({ t }) => {
     }
   };
 
-  const handleGroupLevelChange = async (groupId, levelId) => {
-    setGroupLevelSelection(prev => ({ ...prev, [groupId]: levelId }));
+  const loadDetailStats = async (groupId, levelId, exerciseId) => {
+    setGroupDetailLoading((prev) => ({ ...prev, [groupId]: true }));
+    try {
+      let stats = {};
+      if (exerciseId && exerciseId !== 'all') {
+        const res = await listeningAPI.getExerciseStudentStats(exerciseId);
+        if (res.data.success) stats = res.data.data.stats || {};
+      } else if (levelId && levelId !== 'all') {
+        const res = await listeningAPI.getLevelStudentStats(levelId);
+        if (res.data.success) stats = res.data.data.stats || {};
+      }
+      setGroupDetailStats((prev) => ({ ...prev, [groupId]: stats }));
+    } catch (err) {
+      console.error('Error fetching listening detail stats:', err);
+    } finally {
+      setGroupDetailLoading((prev) => ({ ...prev, [groupId]: false }));
+    }
+  };
+
+  const handleGroupLevelChange = async (groupId, levelId, levels = []) => {
+    setGroupLevelSelection((prev) => ({ ...prev, [groupId]: levelId }));
+    setGroupExerciseSelection((prev) => ({ ...prev, [groupId]: 'all' }));
+
     if (!levelId || levelId === 'all') {
-      setGroupLevelStats(prev => {
+      setGroupDetailStats((prev) => {
         const next = { ...prev };
         delete next[groupId];
         return next;
       });
       return;
     }
-    setGroupLevelLoading(prev => ({ ...prev, [groupId]: true }));
-    try {
-      const res = await listeningAPI.getLevelStudentStats(levelId);
-      if (res.data.success) {
-        setGroupLevelStats(prev => ({ ...prev, [groupId]: res.data.data.stats || {} }));
-      }
-    } catch (err) {
-      console.error('Error fetching level stats:', err);
-    } finally {
-      setGroupLevelLoading(prev => ({ ...prev, [groupId]: false }));
+
+    await loadDetailStats(groupId, levelId, 'all');
+  };
+
+  const handleGroupExerciseChange = async (groupId, exerciseId) => {
+    const levelId = groupLevelSelection[groupId] || 'all';
+    setGroupExerciseSelection((prev) => ({ ...prev, [groupId]: exerciseId }));
+
+    if (!exerciseId || exerciseId === 'all') {
+      await loadDetailStats(groupId, levelId, 'all');
+      return;
     }
+
+    await loadDetailStats(groupId, levelId, exerciseId);
   };
 
   const isSameDay = (dateStr, targetStr) => {
@@ -77,7 +102,7 @@ const ListeningProgressTab = ({ t }) => {
 
   const filterStudents = (students) => {
     if (!dateFilter) return students;
-    return students.filter(s => isSameDay(s.lastActivityDate, dateFilter));
+    return students.filter((s) => isSameDay(s.lastActivityDate, dateFilter));
   };
 
   if (loading) {
@@ -85,16 +110,14 @@ const ListeningProgressTab = ({ t }) => {
   }
 
   const subjects = ['all'];
-  (studentsProgress.groups || []).forEach(g => {
+  (studentsProgress.groups || []).forEach((g) => {
     if (g.subjectName && !subjects.includes(g.subjectName)) subjects.push(g.subjectName);
   });
 
   const filteredGroups = (studentsProgress.groups || [])
-    .filter(g => subjectFilter === 'all' || g.subjectName === subjectFilter)
-    .map(group => ({ ...group, students: filterStudents(group.students) }))
-    .filter(g => g.students.length > 0);
-
-  const unassignedStudents = filterStudents(studentsProgress.unassigned?.students || []);
+    .filter((g) => subjectFilter === 'all' || g.subjectName === subjectFilter)
+    .map((group) => ({ ...group, students: filterStudents(group.students) }))
+    .filter((g) => g.students.length > 0);
 
   return (
     <div className="student-progress-section">
@@ -113,7 +136,7 @@ const ListeningProgressTab = ({ t }) => {
                 <label>{t('listening.filterBySubject') || 'Subject'}</label>
                 <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} className="filter-select">
                   <option value="all">{t('listening.allSubjects') || 'All Subjects'}</option>
-                  {subjects.filter(s => s !== 'all').map(subject => (
+                  {subjects.filter((s) => s !== 'all').map((subject) => (
                     <option key={subject} value={subject}>{subject}</option>
                   ))}
                 </select>
@@ -135,19 +158,24 @@ const ListeningProgressTab = ({ t }) => {
         </div>
       </div>
 
-      {filteredGroups.length === 0 && unassignedStudents.length === 0 ? (
-        <div className="no-data">{t('listening.noStudentsYet') || 'No students found.'}</div>
+      {filteredGroups.length === 0 ? (
+        <div className="no-data">
+          {t('listening.noUnlockedGroups') || 'No groups with listening practice unlocked yet. Unlock practice in the Permissions tab.'}
+        </div>
       ) : (
         <div className="progress-groups-list">
-          {filteredGroups.map(group => {
+          {filteredGroups.map((group) => {
             const selectedLevelId = groupLevelSelection[group.groupId] || 'all';
-            const levelStats = groupLevelStats[group.groupId] || null;
-            const isLevelLoading = groupLevelLoading[group.groupId];
+            const selectedExerciseId = groupExerciseSelection[group.groupId] || 'all';
+            const detailStats = groupDetailStats[group.groupId] || null;
+            const isDetailLoading = groupDetailLoading[group.groupId];
             const listeningLevels = (group.levels || []).slice().sort((a, b) =>
               (a.order || 0) - (b.order || 0) ||
               (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
             );
-            const showLevelView = selectedLevelId !== 'all' && levelStats;
+            const selectedLevel = listeningLevels.find((level) => level._id === selectedLevelId);
+            const exercises = selectedLevel?.exercises || [];
+            const showDetailView = selectedLevelId !== 'all' && detailStats;
 
             return (
               <div key={group.groupId} className="progress-group-card">
@@ -159,31 +187,43 @@ const ListeningProgressTab = ({ t }) => {
                       <div className="progress-group-subject">{group.subjectName}</div>
                     </div>
                   </div>
-                  <div className="progress-group-filter">
+                  <div className="progress-group-filter" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <select
                       className="group-lesson-select"
                       value={selectedLevelId}
-                      onChange={(e) => handleGroupLevelChange(group.groupId, e.target.value)}
+                      onChange={(e) => handleGroupLevelChange(group.groupId, e.target.value, listeningLevels)}
                     >
                       <option value="all">{t('listening.allLevels') || 'All Levels (Aggregate)'}</option>
-                      {listeningLevels.map(l => (
-                        <option key={l._id} value={l._id}>{l.name}</option>
+                      {listeningLevels.map((level) => (
+                        <option key={level._id} value={level._id}>{level.name}</option>
                       ))}
                     </select>
+                    {selectedLevelId !== 'all' && (
+                      <select
+                        className="group-lesson-select"
+                        value={selectedExerciseId}
+                        onChange={(e) => handleGroupExerciseChange(group.groupId, e.target.value)}
+                      >
+                        <option value="all">{t('listening.allExercises') || 'All Exercises'}</option>
+                        {exercises.map((exercise) => (
+                          <option key={exercise._id} value={exercise._id}>{exercise.title}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div className="progress-group-stats">
                     <span>{group.students.length} {t('listening.students') || 'students'}</span>
                   </div>
                 </div>
                 <div className="progress-group-body">
-                  {isLevelLoading ? (
+                  {isDetailLoading ? (
                     <div className="loading-state">{t('listening.loading') || 'Loading...'}</div>
                   ) : (
                     <table className="progress-table">
                       <thead>
                         <tr>
                           <th>{t('listening.studentName') || 'Student Name'}</th>
-                          {showLevelView ? (
+                          {showDetailView ? (
                             <>
                               <th>{t('listening.attempts') || 'Attempts'}</th>
                               <th>{t('listening.accuracy') || 'Accuracy'}</th>
@@ -197,14 +237,15 @@ const ListeningProgressTab = ({ t }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {group.students.map(student => {
-                          const sStats = showLevelView
-                            ? (levelStats[student._id?.toString?.() || student._id] || { attempts: 0, accuracy: 0 })
+                        {group.students.map((student) => {
+                          const studentId = student._id?.toString?.() || student._id;
+                          const sStats = showDetailView
+                            ? (detailStats[studentId] || { attempts: 0, accuracy: 0 })
                             : null;
                           return (
                             <tr key={student._id}>
                               <td><StudentNameCell student={student} /></td>
-                              {showLevelView ? (
+                              {showDetailView ? (
                                 <>
                                   <td>{sStats.attempts}</td>
                                   <td>{sStats.accuracy}%</td>
@@ -225,39 +266,6 @@ const ListeningProgressTab = ({ t }) => {
               </div>
             );
           })}
-
-          {unassignedStudents.length > 0 && (
-            <div className="progress-group-card">
-              <div className="progress-group-header-static">
-                <div className="progress-group-title">
-                  <span className="progress-group-icon">👤</span>
-                  <div>
-                    <div className="progress-group-name">{t('listening.unassignedStudents') || 'Unassigned Students'}</div>
-                  </div>
-                </div>
-              </div>
-              <div className="progress-group-body">
-                <table className="progress-table">
-                  <thead>
-                    <tr>
-                      <th>{t('listening.studentName') || 'Student Name'}</th>
-                      <th>{t('listening.listeningPractice') || 'Listening Practice'}</th>
-                      <th>{t('listening.attempts') || 'Attempts'}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {unassignedStudents.map(student => (
-                      <tr key={student._id}>
-                        <td><StudentNameCell student={student} /></td>
-                        <td>{student.listeningPracticeAccuracy}%</td>
-                        <td>{student.listeningAttempts}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>

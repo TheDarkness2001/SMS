@@ -364,6 +364,7 @@ export const listeningAPI = {
   getLeaderboard: () => api.get('/listening/leaderboard'),
   getGroupProgress: () => api.get('/listening/students/group-progress'),
   getLevelStudentStats: (levelId) => api.get(`/listening/levels/${levelId}/student-stats`),
+  getExerciseStudentStats: (exerciseId) => api.get(`/listening/exercises/${exerciseId}/student-stats`),
   getLessonStudentStats: (lessonId) => api.get(`/listening/lessons/${lessonId}/student-stats`),
   getAudioUrl: (audioFile, exerciseId) => {
     if (exerciseId) {
